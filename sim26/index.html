@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alternate Segment Theorem – HOTS Interactive Classroom</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f1117;--bg2:#181c27;--bg3:#1e2333;--panel:#1a1f2e;
+  --border:#2a3050;--border2:#3a4570;
+  --blue:#3b82f6;--violet:#7c3aed;--amber:#d97706;--emerald:#059669;
+  --rose:#e11d48;--slate:#94a3b8;--gold:#f59e0b;--cyan:#06b6d4;
+  --text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;
+  --step-w:320px;
+}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;overflow:hidden;height:100vh;display:flex;flex-direction:column}
+h1,h2,h3{font-weight:600}
+#app{display:flex;flex:1;overflow:hidden}
+#canvas-zone{flex:1;display:flex;flex-direction:column;position:relative;min-width:0}
+canvas#sim{display:block;width:100%;flex:1;cursor:crosshair}
+#solution-panel{width:var(--step-w);background:var(--panel);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;transition:width .3s}
+#solution-panel.hidden{width:0;overflow:hidden}
+#ctrl-bar{background:var(--bg2);border-top:1px solid var(--border);padding:8px 12px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;min-height:54px}
+
+/* Solution Panel */
+#sp-header{padding:10px 12px 8px;border-bottom:1px solid var(--border);flex-shrink:0}
+.badge-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.badge{padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600;letter-spacing:.4px}
+.b-math{background:#1e3a5f;color:#60a5fa}
+.b-grade{background:#1a2744;color:#818cf8}
+.b-topic{background:#1f2937;color:#a78bfa}
+.diff-tabs{display:flex;gap:4px}
+.diff-tab{padding:3px 10px;border-radius:8px;border:1px solid var(--border2);background:none;color:var(--text2);font-size:10px;cursor:pointer;transition:all .2s}
+.diff-tab.active{background:var(--violet);border-color:var(--violet);color:#fff}
+
+#sp-body{flex:1;overflow-y:auto;padding:10px 12px}
+#sp-body::-webkit-scrollbar{width:4px}
+#sp-body::-webkit-scrollbar-track{background:var(--bg2)}
+#sp-body::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+.progress-bar-wrap{margin-bottom:10px}
+.progress-label{font-size:10px;color:var(--text3);margin-bottom:4px}
+.progress-bar{height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+.progress-fill{height:100%;background:var(--violet);border-radius:2px;transition:width .4s}
+
+.step-card{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;animation:slideIn .3s ease}
+@keyframes slideIn{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:none}}
+.step-num{font-size:10px;font-weight:700;color:var(--violet);letter-spacing:.5px;margin-bottom:4px}
+.step-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px}
+.step-section{margin-bottom:8px}
+.sec-label{font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.5px;margin-bottom:3px;text-transform:uppercase}
+.sec-body{font-size:12px;line-height:1.6;color:var(--text2)}
+.formula-box{background:var(--bg2);border:1px solid var(--violet);border-radius:6px;padding:7px 10px;font-size:13px;color:#c4b5fd;font-family:'Courier New',monospace;margin:4px 0;text-align:center}
+.result-box{background:#052e16;border:1px solid var(--emerald);border-radius:6px;padding:7px 10px;color:#34d399;font-weight:700;font-size:13px;text-align:center;margin:4px 0}
+.warn-box{background:#451a03;border:1px solid var(--amber);border-radius:6px;padding:6px 10px;color:#fbbf24;font-size:11px;margin:4px 0;line-height:1.5}
+.given-table{width:100%;border-collapse:collapse;font-size:11px}
+.given-table th{color:var(--text3);font-weight:600;text-align:left;padding:3px 6px;border-bottom:1px solid var(--border)}
+.given-table td{padding:3px 6px;color:var(--text2)}
+.given-table tr:nth-child(even) td{background:#ffffff08}
+
+.step-nav{display:flex;gap:6px;margin:8px 0;align-items:center;flex-wrap:wrap}
+.btn{padding:5px 10px;border-radius:7px;border:1px solid var(--border2);background:none;color:var(--text2);font-size:11px;cursor:pointer;transition:all .2s}
+.btn:hover{background:var(--border2);color:var(--text)}
+.btn:disabled{opacity:0.35;cursor:not-allowed}
+.btn-primary{background:var(--violet);border-color:var(--violet);color:#fff}
+.btn-primary:hover{background:#6d28d9}
+.btn-sm{padding:3px 8px;font-size:10px}
+
+#sp-footer{padding:8px 12px;border-top:1px solid var(--border);flex-shrink:0}
+.self-test{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:8px}
+.st-q{font-size:12px;color:var(--text2);margin-bottom:6px;line-height:1.5}
+
+/* Canvas Overlays */
+#title-badge{position:absolute;top:10px;left:10px;background:rgba(15,17,23,.88);backdrop-filter:blur(8px);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:11px;color:var(--text2);pointer-events:none}
+#stats-panel{position:absolute;top:10px;right:10px;background:rgba(15,17,23,.88);backdrop-filter:blur(8px);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-family:'Courier New',monospace;font-size:11px;width:165px;pointer-events:none}
+.stat-row{display:flex;justify-content:space-between;margin-bottom:3px}
+.stat-k{color:var(--text3)}
+.stat-v{font-weight:600}
+#dyk{position:absolute;bottom:66px;left:50%;transform:translateX(-50%);background:rgba(15,17,23,.92);backdrop-filter:blur(8px);border:1px solid var(--border2);border-radius:8px;padding:7px 16px;font-size:11px;color:var(--text2);max-width:360px;text-align:center;font-style:italic;transition:opacity .5s;pointer-events:none;white-space:nowrap}
+
+/* Ctrl bar */
+.ctrl-label{font-size:10px;color:var(--text3);margin-bottom:2px}
+.ctrl-group{display:flex;flex-direction:column;gap:2px}
+.ctrl-group input[type=range]{width:110px;accent-color:var(--violet)}
+.ctrl-val{font-size:11px;color:var(--text);font-family:'Courier New',monospace;width:44px}
+.ctrl-divider{width:1px;background:var(--border);align-self:stretch;margin:0 4px}
+.icon-btn{width:30px;height:30px;border-radius:7px;border:1px solid var(--border2);background:none;color:var(--text2);font-size:14px;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center}
+.icon-btn:hover{background:var(--border2);color:var(--text)}
+.toggle-btn{padding:4px 10px;border-radius:7px;border:1px solid var(--border2);background:none;color:var(--text3);font-size:10px;cursor:pointer;transition:all .2s;white-space:nowrap}
+.toggle-btn.active{background:#1e2d4a;border-color:var(--blue);color:var(--blue)}
+
+/* Overlays */
+.overlay-bg{position:absolute;inset:0;background:rgba(0,0,0,.75);display:none;align-items:center;justify-content:center;z-index:100}
+.overlay-bg.show{display:flex}
+.overlay-panel{background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:22px;max-width:380px;width:92%;max-height:82vh;overflow-y:auto}
+.overlay-panel h3{margin-bottom:12px;color:var(--text);font-size:15px}
+.kbd-row{display:flex;justify-content:space-between;margin-bottom:7px;font-size:12px;color:var(--text2)}
+kbd{background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:1px 7px;font-size:10px;color:var(--text2)}
+.concept-node{display:inline-block;padding:4px 10px;border-radius:20px;font-size:11px;margin:4px;cursor:pointer;border:1px solid;transition:opacity .2s}
+.concept-node:hover{opacity:.8}
+.cn-current{background:#2d1f5e;border-color:var(--violet);color:#c4b5fd}
+.cn-pre{background:#0a2e1a;border-color:var(--emerald);color:#6ee7b7}
+.cn-app{background:#0c2340;border-color:var(--blue);color:#93c5fd}
+.cn-rel{background:#1e2233;border-color:var(--border2);color:var(--text2)}
+
+/* Real-world case study panel */
+#rw-panel{position:absolute;bottom:70px;right:10px;background:rgba(15,17,23,.93);border:1px solid var(--border2);border-radius:10px;padding:10px 14px;width:200px;display:none;font-size:11px}
+#rw-panel h4{color:var(--cyan);margin-bottom:6px;font-size:11px}
+#rw-panel p{color:var(--text2);line-height:1.5;margin-bottom:4px}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- CANVAS ZONE -->
+  <div id="canvas-zone">
+    <canvas id="sim"></canvas>
+
+    <div id="title-badge">📐 Mathematics &middot; Class 10&ndash;11 &middot; Circle Theorems (HOTS)</div>
+
+    <div id="stats-panel">
+      <div class="stat-row"><span class="stat-k">&alpha; (tangent&angle;)</span><span class="stat-v" id="sv-alpha" style="color:var(--amber)">—</span></div>
+      <div class="stat-row"><span class="stat-k">&angle;PQT (alt seg)</span><span class="stat-v" id="sv-seg" style="color:var(--emerald)">—</span></div>
+      <div class="stat-row"><span class="stat-k">central &angle;TOP</span><span class="stat-v" id="sv-arc" style="color:var(--blue)">—</span></div>
+      <div class="stat-row"><span class="stat-k">Equal?</span><span class="stat-v" id="sv-eq">—</span></div>
+    </div>
+
+    <div id="dyk">The Alternate Segment Theorem was known to ancient Greek mathematicians over 2,300 years ago!</div>
+    <div id="rw-panel"></div>
+
+    <!-- Keyboard Help Overlay -->
+    <div class="overlay-bg" id="kbd-help">
+      <div class="overlay-panel">
+        <h3>Keyboard Shortcuts</h3>
+        <div class="kbd-row"><span>Pause / Play</span><kbd>Space</kbd></div>
+        <div class="kbd-row"><span>Reset simulation</span><kbd>R</kbd></div>
+        <div class="kbd-row"><span>Next step</span><kbd>N</kbd></div>
+        <div class="kbd-row"><span>Previous step</span><kbd>P</kbd></div>
+        <div class="kbd-row"><span>Show all steps</span><kbd>A</kbd></div>
+        <div class="kbd-row"><span>Hide / show panel</span><kbd>H</kbd></div>
+        <div class="kbd-row"><span>Toggle grid</span><kbd>G</kbd></div>
+        <div class="kbd-row"><span>Toggle labels</span><kbd>L</kbd></div>
+        <div class="kbd-row"><span>Toggle formula</span><kbd>F</kbd></div>
+        <div class="kbd-row"><span>Toggle proof mode</span><kbd>D</kbd></div>
+        <div class="kbd-row"><span>Concept map</span><kbd>C</kbd></div>
+        <div class="kbd-row"><span>Beginner mode</span><kbd>1</kbd></div>
+        <div class="kbd-row"><span>Intermediate mode</span><kbd>2</kbd></div>
+        <div class="kbd-row"><span>Advanced mode</span><kbd>3</kbd></div>
+        <div class="kbd-row"><span>This help overlay</span><kbd>?</kbd></div>
+        <div style="margin-top:12px">
+          <button class="btn btn-primary" onclick="document.getElementById('kbd-help').classList.remove('show')">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Concept Map Overlay -->
+    <div class="overlay-bg" id="concept-overlay">
+      <div class="overlay-panel">
+        <h3>Concept Map</h3>
+        <p style="font-size:11px;color:var(--text3);margin-bottom:10px">
+          <span style="color:#6ee7b7">&#9632;</span> Prerequisites &nbsp;
+          <span style="color:#c4b5fd">&#9632;</span> Current Topic &nbsp;
+          <span style="color:#93c5fd">&#9632;</span> Applications &nbsp;
+          <span style="color:var(--text2)">&#9632;</span> Related
+        </p>
+        <div>
+          <span class="concept-node cn-pre" onclick="alert('PREREQUISITE\n\nA chord is a line segment whose two endpoints lie on a circle. Chord PT divides the circle into two segments.')">Chords &amp; Segments</span>
+          <span class="concept-node cn-pre" onclick="alert('PREREQUISITE\n\nA tangent to a circle touches it at exactly one point. The key property: the tangent is perpendicular to the radius at the point of contact.\n\nOT ⊥ tangent at T')">Tangent to a Circle</span>
+          <span class="concept-node cn-pre" onclick="alert('PREREQUISITE — Inscribed Angle Theorem\n\nAn inscribed angle is half the central angle that subtends the same arc.\n\n∠PQT = ½ × ∠POT\n\nThis is the key link in our proof!')">Inscribed Angle Theorem</span>
+          <span class="concept-node cn-pre" onclick="alert('PREREQUISITE\n\nAngle in a semicircle = 90°.\nThis is a special case of the Inscribed Angle Theorem where the central angle = 180°.')">Angle in Semicircle</span>
+          <span class="concept-node cn-pre" onclick="alert('PREREQUISITE\n\nIn an isosceles triangle, the two base angles are equal.\n\nIn our proof: △OTP is isosceles because OT = OP = r (both radii).\nSo ∠OTP = ∠OPT.')">Isosceles Triangles</span>
+          <span class="concept-node cn-current">⭐ Alternate Segment Theorem</span>
+          <span class="concept-node cn-app" onclick="alert('APPLICATION: Gear &amp; Cam Design\n\nEngineers design gear teeth using involute curves — the tangent to a base circle. The alternate segment theorem predicts exactly what angle the tooth face makes with the common tangent, ensuring smooth meshing.')">Gear &amp; Cam Design</span>
+          <span class="concept-node cn-app" onclick="alert('APPLICATION: Road Curve Banking\n\nWhen a road follows a circular arc, the tangent direction is the road itself. The chord connects the entry and exit points. AST tells engineers the angle between sight-line and road — critical for visibility and safe speed limits.')">Road Curve Design</span>
+          <span class="concept-node cn-app" onclick="alert('APPLICATION: Optical Lens Design\n\nLight rays entering a curved lens surface are modelled as tangents to circular arcs. The refracted ray follows the alternate segment angle. Used in designing camera lenses, telescopes and microscopes.')">Optical Lens Design</span>
+          <span class="concept-node cn-app" onclick="alert('APPLICATION: Bridge Arch Engineering\n\nThe cables of a suspension bridge are tangent to the curve of the arch at their attachment points. AST determines the cable angles, which are critical for load distribution calculations.')">Bridge Arch Engineering</span>
+          <span class="concept-node cn-rel" onclick="alert('RELATED: Tangent–Radius Theorem\n\nThe radius to the point of tangency is perpendicular to the tangent.\n\nOT ⊥ AB (where AB is the tangent at T)\n\nThis is the first step in our proof of AST.')">Tangent-Radius Theorem</span>
+          <span class="concept-node cn-rel" onclick="alert('RELATED: Angles in Same Segment\n\nAll inscribed angles subtending the same chord from the same side are equal.\n\nThis means ∠PQT is the same for ANY position of Q in the alternate segment!')">Same Segment Theorem</span>
+          <span class="concept-node cn-rel" onclick="alert('RELATED: Cyclic Quadrilateral\n\nOpposite angles of a cyclic quadrilateral (all 4 vertices on circle) sum to 180°.\n\nThis is related to AST through the supplementary angle on the other side of the chord.')">Cyclic Quadrilateral</span>
+          <span class="concept-node cn-rel" onclick="alert('NEXT TOPIC: Power of a Point\n\nFor any point P and circle, the product of distances from P to the two intersection points of any line through P is constant.\n\nAST is a special case of this more general theorem.')">Power of a Point</span>
+        </div>
+        <div style="margin-top:14px">
+          <button class="btn btn-primary" onclick="document.getElementById('concept-overlay').classList.remove('show')">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SOLUTION PANEL -->
+  <div id="solution-panel">
+    <div id="sp-header">
+      <div class="badge-row">
+        <span class="badge b-math">MATHEMATICS</span>
+        <span class="badge b-grade">CLASS 10–11</span>
+        <span class="badge b-topic">CIRCLE THEOREMS</span>
+      </div>
+      <div class="diff-tabs">
+        <button class="diff-tab active" id="dt1" onclick="setDiff(1)">🟢 Beginner</button>
+        <button class="diff-tab" id="dt2" onclick="setDiff(2)">🟡 Intermediate</button>
+        <button class="diff-tab" id="dt3" onclick="setDiff(3)">🔴 Advanced</button>
+      </div>
+    </div>
+    <div id="sp-body">
+      <div class="progress-bar-wrap">
+        <div class="progress-label" id="prog-label">Step 1 of 7</div>
+        <div class="progress-bar"><div class="progress-fill" id="prog-fill" style="width:14%"></div></div>
+      </div>
+      <div id="step-content"></div>
+      <div class="step-nav">
+        <button class="btn" id="btn-prev" onclick="prevStep()">&#8592; Prev</button>
+        <button class="btn btn-primary" id="btn-next" onclick="nextStep()">Next &#8594;</button>
+        <button class="btn btn-sm" onclick="showAllSteps()">All Steps</button>
+      </div>
+      <div id="self-test-section" style="display:none">
+        <div style="border-top:1px solid var(--border);padding-top:10px;margin-top:6px">
+          <div style="font-size:11px;font-weight:700;color:var(--violet);margin-bottom:8px">&#127919; HOTS SELF-TEST CHALLENGES</div>
+          <div class="self-test">
+            <div class="st-q"><strong>Challenge 1:</strong> If the tangent-chord angle &alpha; = 55&deg;, what is the angle in the alternate segment? Verify on the canvas.</div>
+            <button class="btn btn-sm btn-primary" onclick="loadChallenge(55)">Try This &#8594;</button>
+          </div>
+          <div class="self-test">
+            <div class="st-q"><strong>Challenge 2:</strong> A chord subtends 110&deg; at the centre. Find the tangent-chord angle at one end using the Alternate Segment Theorem.</div>
+            <button class="btn btn-sm btn-primary" onclick="loadChallenge(55)">Explore &#8594;</button>
+          </div>
+          <div class="self-test">
+            <div class="st-q"><strong>Challenge 3 (HOTS):</strong> If &angle;PQR (inscribed, same arc) = 38&deg; and &angle;TPA (tangent-chord) = 52&deg;, is PT truly a tangent? Justify using AST.</div>
+            <button class="btn btn-sm btn-primary" onclick="loadChallenge(38)">Analyse &#8594;</button>
+          </div>
+          <div class="self-test">
+            <div class="st-q"><strong>Challenge 4 (HOTS+):</strong> Two tangents are drawn from an external point to a circle. Using AST, prove that the two tangent lengths are equal.</div>
+            <button class="btn btn-sm btn-primary" onclick="alert('Think: if both tangents make equal angles with the chord joining their contact points (by AST), and the radius is equal, the tangents must be equal by RHS congruence.')">Hint &#8594;</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="sp-footer">
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-sm" style="flex:1" onclick="togglePanel()">&#8596; Hide/Show Panel (H)</button>
+        <button class="btn btn-sm" onclick="document.getElementById('concept-overlay').classList.toggle('show')">&#128506; Map</button>
+        <button class="btn btn-sm" onclick="document.getElementById('kbd-help').classList.toggle('show')">?</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CONTROL BAR -->
+<div id="ctrl-bar">
+  <div class="ctrl-group">
+    <div class="ctrl-label">Chord point T (angle)</div>
+    <input type="range" min="10" max="170" value="60" id="sl-t" oninput="onSlider()">
+    <span class="ctrl-val" id="sl-t-val">60&deg;</span>
+  </div>
+  <div class="ctrl-group">
+    <div class="ctrl-label">Point Q on arc (angle)</div>
+    <input type="range" min="200" max="340" value="280" id="sl-q" oninput="onSlider()">
+    <span class="ctrl-val" id="sl-q-val">280&deg;</span>
+  </div>
+  <div class="ctrl-group">
+    <div class="ctrl-label">Animation speed</div>
+    <input type="range" min="1" max="5" value="2" id="sl-spd" oninput="document.getElementById('sl-spd-val').textContent=this.value+'x'">
+    <span class="ctrl-val" id="sl-spd-val">2x</span>
+  </div>
+  <div class="ctrl-divider"></div>
+  <button class="icon-btn" id="btn-play" onclick="togglePlay()" title="Space">&#9654;</button>
+  <button class="icon-btn" onclick="resetSim()" title="R">&#8635;</button>
+  <div class="ctrl-divider"></div>
+  <button class="toggle-btn active" id="tog-labels" onclick="toggleLabels()">&#128221; Labels</button>
+  <button class="toggle-btn active" id="tog-grid" onclick="toggleGrid()">&#8862; Grid</button>
+  <button class="toggle-btn active" id="tog-formula" onclick="toggleFormula()">&#128208; Formula</button>
+  <button class="toggle-btn" id="tog-proof" onclick="toggleProof()">&#128220; Proof Mode</button>
+  <button class="toggle-btn" id="tog-rw" onclick="toggleRealWorld()">&#127758; Case Study</button>
+  <div class="ctrl-divider"></div>
+  <button class="icon-btn" onclick="document.getElementById('concept-overlay').classList.toggle('show')" title="Concept Map (C)">&#128506;</button>
+  <button class="icon-btn" onclick="document.getElementById('kbd-help').classList.toggle('show')" title="Keyboard Help (?)">?</button>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════════════════════════
+const COLOR_GIVEN   = '#f59e0b';   // amber — known values
+const COLOR_UNKNOWN = '#d97706';   // dark amber — unknown
+const COLOR_FORMULA = '#7c3aed';   // violet — formula
+const COLOR_ANSWER  = '#059669';   // emerald — answer
+const COLOR_TANGENT = '#06b6d4';   // cyan — tangent
+const COLOR_CHORD   = '#3b82f6';   // blue — chord
+const COLOR_Q       = '#059669';   // emerald — point Q
+const COLOR_PROOF   = '#a78bfa';   // light violet — proof lines
+const DYK_INTERVAL  = 8000;       // ms between Did You Know facts
+
+// ═══════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════
+const S = {
+  playing: true,
+  animPhase: 0,
+  step: 0,
+  diff: 1,
+  showLabels: true,
+  showGrid: true,
+  showFormula: true,
+  showProof: false,
+  showRealWorld: false,
+  panelVisible: true,
+  confettiDone: false,
+  thetaT: 60,
+  thetaQ: 280,
+  dykIdx: 0,
+  proofPhase: 0,
+};
+
+const canvas = document.getElementById('sim');
+const ctx = canvas.getContext('2d');
+
+// ═══════════════════════════════════════════════════════════
+// RESIZE
+// ═══════════════════════════════════════════════════════════
+function resize() {
+  const cz = document.getElementById('canvas-zone');
+  const ctrl = document.getElementById('ctrl-bar');
+  canvas.width  = cz.clientWidth;
+  canvas.height = cz.clientHeight - ctrl.clientHeight;
+}
+window.addEventListener('resize', () => { resize(); draw(); });
+resize();
+
+// ═══════════════════════════════════════════════════════════
+// GEOMETRY ENGINE
+// ═══════════════════════════════════════════════════════════
+function geom() {
+  const W = canvas.width, H = canvas.height;
+  const cx = W * 0.42, cy = H * 0.50;
+  const r  = Math.min(W, H) * 0.30;
+
+  const tRad = S.thetaT * Math.PI / 180;
+  const qRad = S.thetaQ * Math.PI / 180;
+
+  const T = { x: cx + r * Math.cos(tRad),         y: cy + r * Math.sin(tRad) };
+  const P = { x: cx + r * Math.cos(tRad + Math.PI), y: cy + r * Math.sin(tRad + Math.PI) };
+  const Q = { x: cx + r * Math.cos(qRad),         y: cy + r * Math.sin(qRad) };
+
+  // Tangent at T (perpendicular to radius OT)
+  const tanDx = -Math.sin(tRad), tanDy = Math.cos(tRad);
+  const tanLen = r * 0.65;
+  const tanA = { x: T.x - tanDx * tanLen, y: T.y - tanDy * tanLen };
+  const tanB = { x: T.x + tanDx * tanLen, y: T.y + tanDy * tanLen };
+
+  // Tangent-chord angle (angle between tangent direction and chord TP at T)
+  const chordAngle = Math.atan2(P.y - T.y, P.x - T.x);
+  const tanAngle   = Math.atan2(tanDy, tanDx);
+  let alpha = Math.abs(chordAngle - tanAngle) * 180 / Math.PI;
+  if (alpha > 180) alpha = 360 - alpha;
+  if (alpha > 90)  alpha = 180 - alpha;
+
+  // Inscribed angle PQT at Q
+  const qpx = P.x - Q.x, qpy = P.y - Q.y;
+  const qtx = T.x - Q.x, qty = T.y - Q.y;
+  const dot  = qpx * qtx + qpy * qty;
+  const mag  = Math.sqrt(qpx*qpx + qpy*qpy) * Math.sqrt(qtx*qtx + qty*qty);
+  const inscribed = Math.acos(Math.max(-1, Math.min(1, dot / mag))) * 180 / Math.PI;
+
+  // Central angle TOP
+  let centralArc = Math.abs(S.thetaT - ((S.thetaT + 180) % 360));
+  if (centralArc > 180) centralArc = 360 - centralArc;
+
+  const equal = Math.abs(alpha - inscribed) < 2.5;
+
+  return { W, H, cx, cy, r, P, T, Q, tanA, tanB, tanDx, tanDy, tRad, qRad,
+           chordAngle, tanAngle, alpha, inscribed, centralArc, equal };
+}
+
+// ═══════════════════════════════════════════════════════════
+// PARTICLE SYSTEM
+// ═══════════════════════════════════════════════════════════
+const MAX_PART = 280;
+const parts = Array.from({length: MAX_PART}, () => ({
+  x:0,y:0,vx:0,vy:0,life:0,decay:0,r:0,color:'#fff',active:false
+}));
+const CONF_COLORS = ['#7c3aed','#059669','#d97706','#3b82f6','#e11d48','#06b6d4','#f59e0b','#ec4899'];
+
+function spawnConfetti(cx, cy) {
+  let spawned = 0;
+  for (const p of parts) {
+    if (!p.active && spawned < 70) {
+      const angle = Math.random() * Math.PI * 2;
+      const spd   = 2.5 + Math.random() * 5.5;
+      p.x = cx; p.y = cy;
+      p.vx = Math.cos(angle) * spd;
+      p.vy = Math.sin(angle) * spd - 2.5;
+      p.life  = 1;
+      p.decay = 0.011 + Math.random() * 0.012;
+      p.r     = 2.5 + Math.random() * 4.5;
+      p.color = CONF_COLORS[Math.floor(Math.random() * CONF_COLORS.length)];
+      p.active = true;
+      spawned++;
+    }
+  }
+}
+
+function updateParticles() {
+  for (const p of parts) {
+    if (!p.active) continue;
+    p.x  += p.vx;
+    p.y  += p.vy;
+    p.vy += 0.14;
+    p.life -= p.decay;
+    if (p.life <= 0) p.active = false;
+  }
+}
+
+function drawParticles() {
+  for (const p of parts) {
+    if (!p.active) continue;
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, p.life);
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// DID YOU KNOW
+// ═══════════════════════════════════════════════════════════
+const DYKS = [
+  "The Alternate Segment Theorem is also called the Tangent-Chord Angle Theorem.",
+  "🌍 Architects use this theorem when designing curved arches and dome structures!",
+  "🏛 Euclid proved a form of this theorem in 'Elements' circa 300 BC — over 2,300 years ago.",
+  "🔧 Gear engineers use the alternate segment theorem to design involute gear teeth every day.",
+  "⚡ Surprising fact: the angle equals ∠PQT no matter where Q is placed on the alternate arc!"
+];
+setInterval(() => {
+  const el = document.getElementById('dyk');
+  el.style.opacity = 0;
+  setTimeout(() => {
+    S.dykIdx = (S.dykIdx + 1) % DYKS.length;
+    el.textContent = DYKS[S.dykIdx];
+    el.style.opacity = 1;
+  }, 500);
+}, DYK_INTERVAL);
+
+// ═══════════════════════════════════════════════════════════
+// STEPS DATA
+// ═══════════════════════════════════════════════════════════
+const STEPS = [
+  {
+    title: "What We're Given",
+    icon: "📦",
+    highlight: 'given',
+    concept: `We have a circle with centre O and radius r. A chord PT divides the circle into two segments. A tangent line (cyan) touches the circle at point T. Point Q lies in the <em>alternate segment</em> — the segment on the opposite side of chord PT from the tangent.`,
+    tableData: [
+      ["Circle","O, r","Fixed","Has centre O, any radius r"],
+      ["Chord","PT","Given","Divides circle into 2 segments"],
+      ["Tangent","A–T–B","At point T","Perpendicular to radius OT"],
+      ["Angle α","∠ATP","Measured","Between tangent AB and chord PT"],
+      ["Point Q","Q","On far arc","In the alternate (opposite) segment"],
+    ],
+    working: null,
+    formula: null,
+    result: null,
+    action: "Gold glow on chord PT, point T, tangent line, and point Q. Labels appear on all entities.",
+    misconception: "⚠️ Students often confuse 'alternate segment' with 'alternate angles' from parallel lines — these are completely different concepts! The alternate segment is simply the region on the other side of the chord."
+  },
+  {
+    title: "What We Need to Find",
+    icon: "❓",
+    highlight: 'unknown',
+    concept: `We want to find the exact relationship between:<br><br>
+• <strong style="color:#d97706">α = ∠ATP</strong> — the angle between the tangent at T and chord PT<br>
+• <strong style="color:#059669">∠PQT</strong> — the inscribed angle at Q, looking at chord PT from the alternate segment.<br><br>
+Is there a precise mathematical connection?`,
+    tableData: null,
+    working: `The key question:\n\nDoes ∠ATP = ∠PQT always hold?\nOr does it depend on the position of Q?\nOr on the size of the circle?`,
+    formula: null,
+    result: "The Alternate Segment Theorem claims: ∠ATP = ∠PQT exactly — always!",
+    action: "Pulsing orange '?' appears near α at T. Green '?' pulsing at Q. Drag Q to see both angles update.",
+    misconception: "⚠️ Common mistake: students guess this is just the exterior angle theorem. It is NOT — it requires the tangent property of circles, which makes it a much deeper result."
+  },
+  {
+    title: "The Governing Formula",
+    icon: "📋",
+    highlight: 'formula',
+    concept: `The <strong>Alternate Segment Theorem</strong> (also called the Tangent-Chord Angle Theorem) states:<br><br><em>The angle between a tangent to a circle and a chord drawn from the point of tangency equals the inscribed angle subtending the same chord from the opposite (alternate) arc.</em>`,
+    tableData: null,
+    formula: "∠(tangent, chord at T) = ∠(inscribed at Q in alt. segment)",
+    working: `Formal statement:\n  If AB is tangent to circle at T,\n  PT is a chord, and\n  Q is any point on the arc PT\n  not containing the tangent side,\n\n  THEN: ∠ATP = ∠PQT\n\nWHY this formula applies:\n  It uses three fundamental circle\n  properties chained together:\n  ① Radius ⊥ Tangent\n  ② Isosceles triangle (equal radii)\n  ③ Inscribed Angle Theorem\n  We derive it step by step in Step 5.`,
+    result: "∠ATP = ∠PQT (the Alternate Segment Theorem)",
+    action: "Violet formula overlay pulses above the circle. Radius lines OT and OP appear dashed. Toggle 'Proof Mode' to see the chain.",
+    misconception: "⚠️ The theorem ONLY applies when Q is in the alternate segment (the arc NOT adjacent to the tangent). If Q is on the same arc as the tangent, the angle is supplementary (sums to 180°)!"
+  },
+  {
+    title: "Substituting Values",
+    icon: "🔢",
+    highlight: 'both',
+    concept: `Now we observe the theorem dynamically. Drag the sliders to any position of T and Q — the tangent-chord angle α (amber) and the inscribed angle ∠PQT (green) remain equal. This is the visual proof!`,
+    tableData: null,
+    formula: "∠ATP = α  ⟹  ∠PQT = α",
+    working: `For ANY slider position:\n\n• Tangent-chord angle α\n  = [amber arc at T on canvas]\n\n• Inscribed angle ∠PQT\n  = [green arc at Q on canvas]\n\n• They are ALWAYS equal!\n\nTry extreme positions:\n  T near 10° → check equality\n  T near 170° → check equality\n  Q anywhere → equality holds\n\nThis is the power of the theorem:\n  it is universally true.`,
+    result: "∠PQT = α — dynamically verified for all positions!",
+    action: "Both angle arcs glow simultaneously. Canvas shows live equality check. The 'Equal? ✓' indicator updates in the stats panel.",
+    misconception: "⚠️ There are TWO tangent-chord angles at T — one on each side of the chord. Each equals the inscribed angle in its respective alternate segment. The two angles at T always sum to 180°."
+  },
+  {
+    title: "Formal Proof (HOTS Derivation)",
+    icon: "🧮",
+    highlight: 'proof',
+    concept: `Now we prove it rigorously. This is the HOTS-level derivation that chains three theorems together. Enable <strong>Proof Mode</strong> in the control bar to see proof steps highlighted on the canvas.`,
+    tableData: null,
+    formula: "∠PQT = ½ · ∠TOP = ½ · 2α = α",
+    working: `PROOF — Step by step:\n\nLet ∠ATP = α (tangent-chord angle)\n\n① OT ⊥ tangent (radius ⊥ tangent)\n   ∴ ∠OTA = 90°\n\n② ∠OTP = ∠OTA − ∠ATP\n        = 90° − α\n\n③ △OTP is isosceles (OT = OP = r)\n   ∴ ∠OPT = ∠OTP = 90° − α\n\n④ Angle sum in △OTP:\n   ∠TOP = 180° − (90°−α) − (90°−α)\n        = 180° − 180° + 2α\n        = 2α\n\n⑤ Inscribed Angle Theorem:\n   ∠PQT = ½ × ∠TOP\n         = ½ × 2α\n         = α\n\n∴ ∠ATP = ∠PQT = α   Q.E.D. ∎`,
+    result: "Proof complete — ∠ATP = ∠PQT = α (Q.E.D.)",
+    action: "Toggle 'Proof Mode' on — proof steps appear on canvas in sequence, with the right-angle mark at T, dashed radii OT and OP, and each step lighting up.",
+    misconception: "⚠️ HOTS Trap: Step ⑤ requires Q to be on the MAJOR arc relative to the central angle ∠TOP. If Q were on the minor arc, the inscribed angle would equal 180° − α (supplementary). Always check which arc Q is on!"
+  },
+  {
+    title: "The Final Answer",
+    icon: "✅",
+    highlight: 'answer',
+    concept: `The Alternate Segment Theorem is fully established. For any circle, any chord PT, and any point Q in the alternate segment, the tangent-chord angle at T ALWAYS equals the inscribed angle at Q.`,
+    tableData: null,
+    formula: null,
+    working: `VERIFICATION — plug back in:\n\nIf α = 65° (tangent-chord angle):\n\n  Central ∠TOP = 2 × 65° = 130°\n  \n  Inscribed ∠PQT = ½ × 130° = 65° ✓\n\nIf α = 30°:\n  Central ∠TOP = 60°\n  Inscribed ∠PQT = ½ × 60° = 30° ✓\n\nIf α = 90°:\n  Central ∠TOP = 180°\n  ∠PQT = 90° (angle in semicircle!) ✓\n\n  → The 90° case is the Angle in\n    Semicircle theorem — a special\n    case of AST!`,
+    result: "∠(tangent, chord PT at T) = ∠PQT in the alternate segment — for all circles, all positions.",
+    action: "Canvas flashes white. Large green answer box appears. Confetti burst (70 particles). Checkmark displays on canvas.",
+    misconception: null
+  },
+  {
+    title: "Real-World Case Studies",
+    icon: "🌍",
+    highlight: 'realworld',
+    concept: `The Alternate Segment Theorem is not just abstract geometry — it appears in engineering, architecture, optics, and sports. Enable the <strong>Case Study</strong> toggle to see an overlay on the canvas.`,
+    tableData: null,
+    formula: null,
+    working: `CASE STUDY 1 — GEAR ENGINEERING\n  Involute gear teeth are designed using\n  tangents to base circles. AST predicts\n  the exact pressure angle between meshing\n  teeth, ensuring smooth, efficient transfer\n  of torque. Standard pressure angle = 20°.\n\nCASE STUDY 2 — OPTICAL LENS DESIGN\n  Light entering a curved lens surface\n  follows the tangent direction. The\n  refracted ray's angle is predicted by\n  AST. Used in camera lenses, microscopes,\n  telescopes, and VR headsets.\n\nCASE STUDY 3 — ROAD BANKING\n  A circular road bend has a tangent\n  direction (the road itself) and a chord\n  (the sight line). AST gives engineers\n  the correct angle to calculate safe\n  speed and banking gradient.\n\nCASE STUDY 4 — BILLIARDS & SNOOKER\n  A ball rolling along a curved cushion\n  (circular arc) and rebounding follows\n  AST — the angle of departure equals\n  the alternate segment angle. Top players\n  use this instinctively.`,
+    result: "AST underpins engineering, optics, civil engineering, and sports science.",
+    action: "Click the 'Case Study' toggle in the control bar to see an overlay panel with real-world application descriptions.",
+    misconception: "⚠️ HOTS Extension: The AST generalises to the Power of a Point theorem. If you continue studying circle geometry, you will see that AST is a beautiful special case of a much deeper universal law."
+  }
+];
+
+// ═══════════════════════════════════════════════════════════
+// DRAWING ENGINE
+// ═══════════════════════════════════════════════════════════
+function drawGrid(g) {
+  if (!S.showGrid) return;
+  ctx.strokeStyle = 'rgba(42,48,80,0.45)';
+  ctx.lineWidth = 0.5;
+  const step = 40;
+  for (let x = 0; x < g.W; x += step) {
+    ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,g.H); ctx.stroke();
+  }
+  for (let y = 0; y < g.H; y += step) {
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(g.W,y); ctx.stroke();
+  }
+}
+
+function drawPoint(x, y, color, label, glowing, r=6) {
+  ctx.save();
+  if (glowing) { ctx.shadowColor = color; ctx.shadowBlur = 16; }
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fillStyle = color;
+  ctx.fill();
+  ctx.restore();
+  if (S.showLabels && label) {
+    ctx.save();
+    if (glowing) { ctx.shadowColor = color; ctx.shadowBlur = 8; }
+    ctx.fillStyle = color;
+    ctx.font = 'bold 14px Segoe UI';
+    ctx.textAlign = 'center';
+    ctx.fillText(label, x, y - 12);
+    ctx.restore();
+  }
+}
+
+function draw() {
+  const g = geom();
+  ctx.clearRect(0, 0, g.W, g.H);
+
+  // Background
+  ctx.fillStyle = '#0f1117';
+  ctx.fillRect(0, 0, g.W, g.H);
+
+  drawGrid(g);
+
+  const hl  = STEPS[S.step].highlight;
+  const ph  = S.animPhase;
+  const pulse = 0.7 + 0.3 * Math.sin(ph * 2.5);
+
+  // ─── SEGMENT FILLS ───────────────────────────────────────
+  // Alternate segment (where Q is) — lightly filled
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(g.cx, g.cy, g.r, g.tRad + Math.PI, g.tRad, false);
+  ctx.closePath();
+  ctx.fillStyle = hl === 'answer'
+    ? `rgba(5,150,105,${0.07 + 0.03*pulse})`
+    : `rgba(59,130,246,${0.05 + 0.02*pulse})`;
+  ctx.fill();
+  ctx.restore();
+
+  // Label alternate segment
+  if (S.showLabels) {
+    const segAngle = g.tRad + Math.PI * 1.5;
+    ctx.fillStyle = '#3a4570';
+    ctx.font = '10px Segoe UI';
+    ctx.textAlign = 'center';
+    ctx.fillText('alternate segment', g.cx + Math.cos(segAngle)*g.r*0.52, g.cy + Math.sin(segAngle)*g.r*0.52 + 5);
+  }
+
+  // ─── CIRCLE ──────────────────────────────────────────────
+  ctx.save();
+  if (hl === 'formula' || hl === 'proof') {
+    ctx.shadowColor = COLOR_FORMULA; ctx.shadowBlur = 8 * pulse;
+  }
+  ctx.beginPath();
+  ctx.arc(g.cx, g.cy, g.r, 0, Math.PI * 2);
+  ctx.strokeStyle = '#2a3050';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.restore();
+
+  // ─── CENTRE O ────────────────────────────────────────────
+  ctx.beginPath();
+  ctx.arc(g.cx, g.cy, 3, 0, Math.PI * 2);
+  ctx.fillStyle = '#475569';
+  ctx.fill();
+  if (S.showLabels) {
+    ctx.fillStyle = '#64748b';
+    ctx.font = '11px Segoe UI';
+    ctx.textAlign = 'left';
+    ctx.fillText('O', g.cx + 7, g.cy + 4);
+  }
+
+  // ─── RADII OT and OP (proof mode) ────────────────────────
+  if (S.showProof || hl === 'proof' || hl === 'formula') {
+    ctx.save();
+    ctx.setLineDash([5,4]);
+    ctx.strokeStyle = 'rgba(124,58,237,0.45)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(g.cx, g.cy); ctx.lineTo(g.T.x, g.T.y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(g.cx, g.cy); ctx.lineTo(g.P.x, g.P.y); ctx.stroke();
+    if (S.showLabels) {
+      ctx.fillStyle = '#7c3aed';
+      ctx.font = '10px Courier New';
+      ctx.textAlign = 'center';
+      ctx.fillText('r', (g.cx+g.T.x)/2 + 10, (g.cy+g.T.y)/2);
+      ctx.fillText('r', (g.cx+g.P.x)/2 - 10, (g.cy+g.P.y)/2);
+    }
+    ctx.restore();
+  }
+
+  // ─── CHORD PT ────────────────────────────────────────────
+  const chordGlow = (hl==='given'||hl==='both'||hl==='answer'||hl==='proof');
+  ctx.save();
+  if (chordGlow) { ctx.shadowColor = COLOR_GIVEN; ctx.shadowBlur = 10 * pulse; }
+  ctx.beginPath();
+  ctx.moveTo(g.P.x, g.P.y);
+  ctx.lineTo(g.T.x, g.T.y);
+  ctx.strokeStyle = chordGlow ? COLOR_GIVEN : COLOR_CHORD;
+  ctx.lineWidth = chordGlow ? 2.5 : 1.5;
+  ctx.stroke();
+  ctx.restore();
+
+  // Chord label
+  if (S.showLabels) {
+    const mx = (g.P.x+g.T.x)/2, my = (g.P.y+g.T.y)/2;
+    const nx = -(g.T.y-g.P.y), ny = g.T.x-g.P.x;
+    const nl = Math.sqrt(nx*nx+ny*ny);
+    ctx.fillStyle = COLOR_GIVEN;
+    ctx.font = 'bold 11px Segoe UI';
+    ctx.textAlign = 'center';
+    ctx.fillText('chord PT', mx + nx/nl*20, my + ny/nl*20);
+  }
+
+  // ─── TANGENT LINE ─────────────────────────────────────────
+  const tanGlow = (hl==='given'||hl==='both'||hl==='answer');
+  ctx.save();
+  if (tanGlow) { ctx.shadowColor = COLOR_TANGENT; ctx.shadowBlur = 10 * pulse; }
+  ctx.beginPath();
+  ctx.moveTo(g.tanA.x, g.tanA.y);
+  ctx.lineTo(g.tanB.x, g.tanB.y);
+  ctx.strokeStyle = COLOR_TANGENT;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.restore();
+
+  if (S.showLabels) {
+    ctx.fillStyle = COLOR_TANGENT;
+    ctx.font = '10px Segoe UI';
+    ctx.textAlign = 'center';
+    ctx.fillText('tangent', (g.tanB.x+g.T.x)/2, g.tanB.y - 10);
+    ctx.fillText('A', g.tanA.x - 10, g.tanA.y + 4);
+    ctx.fillText('B', g.tanB.x + 10, g.tanB.y + 4);
+  }
+
+  // ─── RIGHT ANGLE MARK at T (proof) ───────────────────────
+  if (S.showProof || hl==='proof') {
+    const td = { x: g.tanDx, y: g.tanDy };
+    const rdx = (g.T.x - g.cx), rdy = (g.T.y - g.cy);
+    const rn = Math.sqrt(rdx*rdx+rdy*rdy);
+    const rx = rdx/rn, ry = rdy/rn;
+    const sz = 11;
+    ctx.save();
+    ctx.strokeStyle = '#a78bfa';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(g.T.x + td.x*sz,          g.T.y + td.y*sz);
+    ctx.lineTo(g.T.x + td.x*sz + rx*sz,  g.T.y + td.y*sz + ry*sz);
+    ctx.lineTo(g.T.x + rx*sz,            g.T.y + ry*sz);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // ─── LINES QP and QT ─────────────────────────────────────
+  const qLineGlow = (hl==='unknown'||hl==='both'||hl==='answer');
+  ctx.save();
+  if (qLineGlow) { ctx.shadowColor = COLOR_Q; ctx.shadowBlur = 8; }
+  ctx.strokeStyle = qLineGlow ? '#059669' : '#2a3050';
+  ctx.lineWidth = qLineGlow ? 1.5 : 1;
+  ctx.beginPath(); ctx.moveTo(g.Q.x, g.Q.y); ctx.lineTo(g.P.x, g.P.y); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(g.Q.x, g.Q.y); ctx.lineTo(g.T.x, g.T.y); ctx.stroke();
+  ctx.restore();
+
+  // ─── POINTS P, T, Q ──────────────────────────────────────
+  drawPoint(g.P.x, g.P.y, COLOR_GIVEN,   'P', hl==='given'||hl==='answer');
+  drawPoint(g.T.x, g.T.y, COLOR_TANGENT, 'T', hl==='given'||hl==='answer');
+  drawPoint(g.Q.x, g.Q.y, COLOR_Q,       'Q', hl==='unknown'||hl==='both'||hl==='answer', 7);
+
+  // ─── TANGENT-CHORD ANGLE α ───────────────────────────────
+  {
+    const from = Math.min(g.chordAngle, g.tanAngle);
+    const to   = Math.max(g.chordAngle, g.tanAngle);
+    const angGlow = hl==='both'||hl==='proof'||hl==='answer'||hl==='formula';
+    ctx.save();
+    if (angGlow) { ctx.shadowColor = '#d97706'; ctx.shadowBlur = 8; }
+    ctx.beginPath();
+    ctx.arc(g.T.x, g.T.y, 26, from, to);
+    ctx.strokeStyle = '#d97706';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+    const midA = (from + to) / 2;
+    if (S.showLabels) {
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = '#d97706';
+      ctx.font = 'bold 13px Segoe UI';
+      ctx.textAlign = 'center';
+      ctx.fillText('α', g.T.x + Math.cos(midA)*40, g.T.y + Math.sin(midA)*40);
+      ctx.font = '10px Courier New';
+      ctx.fillText(g.alpha.toFixed(1)+'°', g.T.x + Math.cos(midA)*56, g.T.y + Math.sin(midA)*56);
+    }
+    ctx.restore();
+  }
+
+  // ─── INSCRIBED ANGLE at Q ────────────────────────────────
+  {
+    const qpA = Math.atan2(g.P.y - g.Q.y, g.P.x - g.Q.x);
+    const qtA = Math.atan2(g.T.y - g.Q.y, g.T.x - g.Q.x);
+    const from = Math.min(qpA, qtA), to = Math.max(qpA, qtA);
+    const qAngGlow = hl==='both'||hl==='answer';
+    ctx.save();
+    if (qAngGlow) { ctx.shadowColor = COLOR_Q; ctx.shadowBlur = 8; }
+    ctx.beginPath();
+    ctx.arc(g.Q.x, g.Q.y, 22, from, to);
+    ctx.strokeStyle = '#059669';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+    const midQ = (from + to) / 2;
+    if (S.showLabels) {
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = '#059669';
+      ctx.font = 'bold 12px Segoe UI';
+      ctx.textAlign = 'center';
+      ctx.fillText('∠PQT', g.Q.x + Math.cos(midQ)*38, g.Q.y + Math.sin(midQ)*38);
+      ctx.font = '10px Courier New';
+      ctx.fillText(g.inscribed.toFixed(1)+'°', g.Q.x + Math.cos(midQ)*56, g.Q.y + Math.sin(midQ)*56);
+    }
+    ctx.restore();
+  }
+
+  // ─── FORMULA OVERLAY ─────────────────────────────────────
+  if (S.showFormula && (hl==='formula'||hl==='proof'||hl==='both'||hl==='answer')) {
+    ctx.save();
+    ctx.globalAlpha = 0.75 + 0.25 * pulse;
+    const bx = g.cx - 115, by = 12, bw = 230, bh = 32;
+    ctx.fillStyle = 'rgba(20,14,40,0.9)';
+    ctx.strokeStyle = COLOR_FORMULA;
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 7); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#c4b5fd';
+    ctx.font = 'bold 13px Courier New';
+    ctx.textAlign = 'center';
+    ctx.fillText('∠ATP = ∠PQT = α', g.cx, by + 21);
+    ctx.restore();
+  }
+
+  // ─── PROOF STEP DISPLAY (on canvas) ──────────────────────
+  if (S.showProof) {
+    const lines = [
+      '① OT ⊥ tangent → ∠OTA = 90°',
+      '② ∠OTP = 90° − α',
+      '③ △OTP isosceles (OT=OP=r)',
+      '④ ∠TOP = 2α',
+      '⑤ ∠PQT = ½·2α = α  ∎'
+    ];
+    const ppx = 8, ppy = g.H/2 - 75, ppw = 210, pph = 118;
+    ctx.fillStyle = 'rgba(10,12,24,0.92)';
+    ctx.strokeStyle = '#2a3050';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.roundRect(ppx, ppy, ppw, pph, 8); ctx.fill(); ctx.stroke();
+    lines.forEach((ln, i) => {
+      ctx.fillStyle = i <= S.proofPhase ? '#a78bfa' : '#2a3050';
+      ctx.font = '10px Courier New';
+      ctx.textAlign = 'left';
+      ctx.fillText(ln, ppx + 8, ppy + 18 + i * 22);
+    });
+  }
+
+  // ─── ANSWER STATE ─────────────────────────────────────────
+  if (hl === 'answer') {
+    ctx.save();
+    ctx.fillStyle = 'rgba(2,20,10,0.88)';
+    ctx.strokeStyle = '#059669';
+    ctx.lineWidth = 2;
+    const bx = g.cx - 145, by = g.H - 140, bw = 290, bh = 48;
+    ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 12); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#34d399';
+    ctx.font = 'bold 15px Segoe UI';
+    ctx.textAlign = 'center';
+    ctx.fillText('✓  ∠ATP = ∠PQT = ' + g.alpha.toFixed(1) + '°   Q.E.D.', g.cx, by + 30);
+    ctx.restore();
+    if (!S.confettiDone) {
+      spawnConfetti(g.cx, g.cy);
+      S.confettiDone = true;
+    }
+  } else {
+    S.confettiDone = false;
+  }
+
+  // ─── EQUALITY CHECK LABEL ────────────────────────────────
+  if (hl === 'both' || hl === 'answer') {
+    const eq = g.equal;
+    ctx.fillStyle = eq ? '#059669' : '#e11d48';
+    ctx.font = 'bold 12px Segoe UI';
+    ctx.textAlign = 'center';
+    ctx.fillText(eq ? '✓ α = ∠PQT  (Theorem verified!)' : 'Adjust sliders to verify...', g.cx, g.H - 80);
+  }
+
+  drawParticles();
+
+  // Update stats panel
+  document.getElementById('sv-alpha').textContent = g.alpha.toFixed(2) + '°';
+  document.getElementById('sv-seg').textContent   = g.inscribed.toFixed(2) + '°';
+  document.getElementById('sv-arc').textContent   = (g.alpha * 2).toFixed(2) + '°';
+  const eq = document.getElementById('sv-eq');
+  eq.textContent  = g.equal ? '✓ Yes' : '~ No';
+  eq.style.color  = g.equal ? '#059669' : '#e11d48';
+}
+
+// ═══════════════════════════════════════════════════════════
+// ANIMATION LOOP
+// ═══════════════════════════════════════════════════════════
+let lastTs = 0;
+function loop(ts) {
+  const dt = Math.min((ts - lastTs) / 1000, 0.05);
+  lastTs = ts;
+  if (S.playing) {
+    S.animPhase += dt * 1.2;
+    updateParticles();
+    if (S.showProof) {
+      S.proofPhase = Math.floor(S.animPhase * 0.6) % 6;
+    }
+  }
+  draw();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+// ═══════════════════════════════════════════════════════════
+// SOLUTION ENGINE UI
+// ═══════════════════════════════════════════════════════════
+function renderStep(idx) {
+  idx = Math.max(0, Math.min(STEPS.length - 1, idx));
+  S.step = idx;
+  const pct = ((idx + 1) / STEPS.length * 100).toFixed(0);
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('prog-label').textContent = 'Step ' + (idx+1) + ' of ' + STEPS.length;
+  const st = STEPS[idx];
+  let html = `<div class="step-card">`;
+  html += `<div class="step-num">STEP ${idx+1} &nbsp;${st.icon}</div>`;
+  html += `<div class="step-title">${st.title}</div>`;
+  html += `<div class="step-section"><div class="sec-label">📖 Concept</div><div class="sec-body">${st.concept}</div></div>`;
+  if (st.tableData) {
+    html += `<div class="step-section"><div class="sec-label">📋 Given</div>
+      <table class="given-table">
+        <tr><th>What</th><th>Symbol</th><th>Value</th><th>Role</th></tr>
+        ${st.tableData.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}
+      </table></div>`;
+  }
+  if (st.formula) {
+    html += `<div class="step-section"><div class="sec-label">📋 Formula</div><div class="formula-box">${st.formula}</div></div>`;
+  }
+  if (st.working) {
+    html += `<div class="step-section"><div class="sec-label">🔢 Working</div>
+      <div class="sec-body" style="font-family:'Courier New';font-size:11px;white-space:pre-line;line-height:1.7">${st.working}</div></div>`;
+  }
+  if (st.result && (S.diff < 3 || idx === STEPS.length - 1 || idx === STEPS.length - 2)) {
+    html += `<div class="step-section"><div class="result-box">✅ ${st.result}</div></div>`;
+  }
+  if (st.misconception) {
+    html += `<div class="warn-box">${st.misconception}</div>`;
+  }
+  html += `<div class="sec-body" style="font-size:10px;color:var(--text3);margin-top:6px;border-top:1px solid var(--border);padding-top:6px">🎯 Canvas: ${st.action}</div>`;
+  html += `</div>`;
+  document.getElementById('step-content').innerHTML = html;
+  document.getElementById('btn-prev').disabled = (idx === 0);
+  document.getElementById('btn-next').disabled = (idx === STEPS.length - 1);
+  if (idx === STEPS.length - 1) {
+    document.getElementById('self-test-section').style.display = 'block';
+  }
+}
+
+function nextStep() { renderStep(S.step + 1); }
+function prevStep() { renderStep(S.step - 1); }
+
+function showAllSteps() {
+  let html = '';
+  STEPS.forEach((st, i) => {
+    html += `<div class="step-card" style="cursor:pointer" onclick="renderStep(${i})">
+      <div class="step-num">STEP ${i+1} &nbsp;${st.icon}</div>
+      <div class="step-title">${st.title}</div>
+      <div class="sec-body" style="font-size:11px">${st.concept.replace(/<[^>]+>/g,'').substring(0,90)}...</div>
+    </div>`;
+  });
+  document.getElementById('step-content').innerHTML = html;
+}
+
+renderStep(0);
+
+// ═══════════════════════════════════════════════════════════
+// CONTROLS
+// ═══════════════════════════════════════════════════════════
+function onSlider() {
+  S.thetaT = parseInt(document.getElementById('sl-t').value);
+  S.thetaQ = parseInt(document.getElementById('sl-q').value);
+  document.getElementById('sl-t-val').textContent = S.thetaT + '°';
+  document.getElementById('sl-q-val').textContent = S.thetaQ + '°';
+}
+function togglePlay() {
+  S.playing = !S.playing;
+  document.getElementById('btn-play').innerHTML = S.playing ? '&#9646;&#9646;' : '&#9654;';
+}
+function resetSim() {
+  S.animPhase = 0; S.step = 0; S.confettiDone = false;
+  parts.forEach(p => p.active = false);
+  document.getElementById('sl-t').value = 60;
+  document.getElementById('sl-q').value = 280;
+  S.thetaT = 60; S.thetaQ = 280;
+  document.getElementById('sl-t-val').textContent = '60°';
+  document.getElementById('sl-q-val').textContent = '280°';
+  document.getElementById('self-test-section').style.display = 'none';
+  renderStep(0);
+}
+function togglePanel() {
+  S.panelVisible = !S.panelVisible;
+  document.getElementById('solution-panel').classList.toggle('hidden', !S.panelVisible);
+}
+function toggleLabels() {
+  S.showLabels = !S.showLabels;
+  document.getElementById('tog-labels').classList.toggle('active', S.showLabels);
+}
+function toggleGrid() {
+  S.showGrid = !S.showGrid;
+  document.getElementById('tog-grid').classList.toggle('active', S.showGrid);
+}
+function toggleFormula() {
+  S.showFormula = !S.showFormula;
+  document.getElementById('tog-formula').classList.toggle('active', S.showFormula);
+}
+function toggleProof() {
+  S.showProof = !S.showProof;
+  document.getElementById('tog-proof').classList.toggle('active', S.showProof);
+}
+function toggleRealWorld() {
+  S.showRealWorld = !S.showRealWorld;
+  document.getElementById('tog-rw').classList.toggle('active', S.showRealWorld);
+  const rw = document.getElementById('rw-panel');
+  if (S.showRealWorld) {
+    rw.style.display = 'block';
+    rw.innerHTML = `<h4>&#127758; Real-World Case Studies</h4>
+      <p><strong style="color:var(--cyan)">Gear Engineering:</strong> Involute gear teeth use tangent-circle geometry. The pressure angle = AST angle = 20° (standard).</p>
+      <p><strong style="color:var(--cyan)">Optical Lenses:</strong> Light entering curved lens surfaces follows AST — critical for camera and telescope design.</p>
+      <p><strong style="color:var(--cyan)">Road Banking:</strong> The tangent direction (road) and chord (sight line) form an AST angle used to set safe speed limits.</p>
+      <p><strong style="color:var(--cyan)">Billiards:</strong> Ball rebound off circular cushion = alternate segment angle. Used by professional players intuitively.</p>`;
+  } else {
+    rw.style.display = 'none';
+  }
+}
+function setDiff(d) {
+  S.diff = d;
+  [1,2,3].forEach(i => document.getElementById('dt'+i).classList.toggle('active', i===d));
+  renderStep(S.step);
+}
+function loadChallenge(angle) {
+  S.thetaT = angle;
+  document.getElementById('sl-t').value = angle;
+  document.getElementById('sl-t-val').textContent = angle + '°';
+  renderStep(3);
+}
+
+// ═══════════════════════════════════════════════════════════
+// KEYBOARD HANDLER
+// ═══════════════════════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  const tag = e.target.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+  switch (e.key) {
+    case ' ':  e.preventDefault(); togglePlay(); break;
+    case 'r': case 'R': resetSim(); break;
+    case 'n': case 'N': nextStep(); break;
+    case 'p': case 'P': prevStep(); break;
+    case 'a': case 'A': showAllSteps(); break;
+    case 'h': case 'H': togglePanel(); break;
+    case 'g': case 'G': toggleGrid(); break;
+    case 'l': case 'L': toggleLabels(); break;
+    case 'f': case 'F': toggleFormula(); break;
+    case 'd': case 'D': toggleProof(); break;
+    case 'c': case 'C': document.getElementById('concept-overlay').classList.toggle('show'); break;
+    case '1': setDiff(1); break;
+    case '2': setDiff(2); break;
+    case '3': setDiff(3); break;
+    case '?': document.getElementById('kbd-help').classList.toggle('show'); break;
+    case 'Escape':
+      document.getElementById('kbd-help').classList.remove('show');
+      document.getElementById('concept-overlay').classList.remove('show');
+      break;
+  }
+});
+</script>
+</body>
+</html>
