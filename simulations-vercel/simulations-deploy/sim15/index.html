@@ -1,0 +1,1410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APEX-EDU v4 — Balloon Elevation: Angles of Elevation</title>
+<style>
+/* ══════════════════════════════════════════════════════
+   CSS VARIABLES — SEMANTIC PALETTE (APEX-EDU v4)
+   ══════════════════════════════════════════════════════ */
+:root {
+  --bg-canvas:    #F8F5F0;
+  --bg-panel:     #F0EBE3;
+  --bg-card:      #FDFBF8;
+  --bg-proof:     #EEF2F8;
+  --ink-primary:  #1A1714;
+  --ink-secondary:#5C5652;
+  --ink-ghost:    #A8A29E;
+  --fill-color:   #3D6B9E;
+  --drain-color:  #C25D2E;
+  --highlight:    #C9961A;
+  --correct:      #2A7A6B;
+  --proof:        #4A6FA5;
+  --sin-color:    #C25D2E;
+  --cos-color:    #2A7A6B;
+  --hyp-color:    #5B4A8A;
+  --font-body:    Georgia, 'Times New Roman', serif;
+  --font-label:   'Verdana', Geneva, Tahoma, sans-serif;
+  --font-mono:    'Courier New', Courier, monospace;
+  --font-math:    Georgia, serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg-canvas);
+  color: var(--ink-primary);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ══ HEADER ══ */
+.apex-header {
+  background: var(--ink-primary);
+  color: var(--bg-canvas);
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.apex-logo {
+  font-family: var(--font-label);
+  font-size: 13px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  opacity: 0.9;
+}
+.apex-topic {
+  font-family: var(--font-label);
+  font-size: 12px;
+  opacity: 0.65;
+}
+.phase-indicator {
+  display: flex; gap: 6px; align-items: center;
+}
+.phase-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: rgba(255,255,255,0.25);
+  transition: background 0.3s;
+  cursor: pointer;
+}
+.phase-dot.active { background: var(--highlight); }
+.phase-dot.done   { background: rgba(255,255,255,0.6); }
+
+/* ══ LAYOUT ══ */
+.apex-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+.canvas-zone {
+  flex: 1;
+  position: relative;
+  background: var(--bg-canvas);
+  min-width: 0;
+}
+#mainCanvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.panel-zone {
+  width: 320px;
+  flex-shrink: 0;
+  background: var(--bg-panel);
+  border-left: 1px solid rgba(26,23,20,0.10);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.proof-panel {
+  width: 280px;
+  flex-shrink: 0;
+  background: var(--bg-proof);
+  border-right: 1px solid rgba(26,23,20,0.10);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ══ PHASE BANNER ══ */
+.phase-banner {
+  background: var(--ink-primary);
+  color: var(--bg-canvas);
+  padding: 8px 16px;
+  font-family: var(--font-label);
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+/* ══ PANEL CONTENT ══ */
+.panel-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+.panel-scroll::-webkit-scrollbar { width: 4px; }
+.panel-scroll::-webkit-scrollbar-thumb { background: var(--ink-ghost); border-radius: 2px; }
+
+/* ══ STEP CARDS ══ */
+.step-card {
+  background: var(--bg-card);
+  border-radius: 8px;
+  border: 1px solid rgba(26,23,20,0.08);
+  margin-bottom: 12px;
+  overflow: hidden;
+  transition: border-color 0.3s;
+}
+.step-card.active-step { border-color: var(--fill-color); }
+.step-header {
+  padding: 10px 14px;
+  display: flex; align-items: center; gap: 10px;
+  cursor: pointer;
+}
+.step-num {
+  width: 24px; height: 24px; border-radius: 50%;
+  background: var(--fill-color); color: white;
+  font-family: var(--font-label); font-size: 11px; font-weight: bold;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.step-num.done-num { background: var(--correct); }
+.step-title {
+  font-family: var(--font-label); font-size: 12px;
+  font-weight: bold; color: var(--ink-secondary);
+}
+.step-body {
+  padding: 0 14px 12px;
+  font-size: 14px; line-height: 1.6;
+  display: none;
+}
+.step-body.open { display: block; }
+
+/* ══ FORMULA DISPLAY ══ */
+.formula-box {
+  background: rgba(61,107,158,0.07);
+  border-left: 3px solid var(--fill-color);
+  padding: 10px 14px;
+  margin: 10px 0;
+  font-family: var(--font-math);
+  font-size: 15px;
+  border-radius: 0 6px 6px 0;
+}
+.formula-box .why-toggle {
+  font-family: var(--font-label);
+  font-size: 11px; color: var(--fill-color);
+  cursor: pointer; text-decoration: underline;
+  display: block; margin-top: 6px;
+}
+.why-content {
+  display: none;
+  font-family: var(--font-label);
+  font-size: 12px; color: var(--ink-secondary);
+  margin-top: 8px; padding-top: 8px;
+  border-top: 1px solid rgba(26,23,20,0.08);
+  line-height: 1.5;
+}
+.why-content.open { display: block; }
+
+/* ══ REPR TOGGLES ══ */
+.repr-bar {
+  display: flex; gap: 4px; margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.repr-btn {
+  font-family: var(--font-label); font-size: 10px;
+  padding: 3px 8px; border-radius: 4px;
+  border: 1px solid rgba(26,23,20,0.15);
+  background: transparent; color: var(--ink-secondary);
+  cursor: pointer; transition: all 0.2s;
+}
+.repr-btn.active {
+  background: var(--fill-color); color: white; border-color: var(--fill-color);
+}
+
+/* ══ PREDICTION WIDGET ══ */
+.prediction-zone {
+  background: rgba(201,150,26,0.08);
+  border: 1px solid rgba(201,150,26,0.3);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 10px 0;
+}
+.prediction-label {
+  font-family: var(--font-label); font-size: 11px;
+  color: var(--highlight); font-weight: bold;
+  text-transform: uppercase; letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+.pred-input {
+  width: 100%; padding: 8px 10px;
+  border: 1px solid rgba(201,150,26,0.4);
+  border-radius: 6px; font-size: 15px;
+  font-family: var(--font-math);
+  background: var(--bg-card); color: var(--ink-primary);
+  margin-bottom: 8px;
+}
+.pred-input:focus { outline: 2px solid var(--highlight); }
+
+/* ══ BUTTONS ══ */
+.btn {
+  font-family: var(--font-label); font-size: 12px;
+  padding: 8px 14px; border-radius: 6px;
+  border: 1px solid rgba(26,23,20,0.20);
+  background: var(--bg-card); color: var(--ink-primary);
+  cursor: pointer; transition: all 0.15s;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.btn:hover { background: rgba(61,107,158,0.08); border-color: var(--fill-color); }
+.btn.primary {
+  background: var(--fill-color); color: white;
+  border-color: var(--fill-color);
+}
+.btn.primary:hover { opacity: 0.88; }
+.btn.correct-btn {
+  background: var(--correct); color: white; border-color: var(--correct);
+}
+
+/* ══ FILL IN THE BLANK ══ */
+.blank {
+  display: inline-block;
+  border-bottom: 2px solid var(--highlight);
+  min-width: 60px; padding: 0 4px;
+  font-family: var(--font-math); font-size: 15px;
+  color: var(--ink-primary); background: transparent;
+  text-align: center; outline: none;
+}
+.blank:focus { background: rgba(201,150,26,0.08); border-radius: 4px 4px 0 0; }
+.blank.correct-blank { border-color: var(--correct); color: var(--correct); }
+.blank.wrong-blank   { border-color: var(--drain-color); color: var(--drain-color); }
+
+/* ══ PROOF PANEL ══ */
+.proof-header {
+  padding: 12px 14px;
+  font-family: var(--font-label); font-size: 11px;
+  font-weight: bold; color: var(--proof);
+  text-transform: uppercase; letter-spacing: 1px;
+  border-bottom: 1px solid rgba(74,111,165,0.2);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.proof-table { padding: 10px 14px; }
+.proof-row {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 8px; padding: 6px 0;
+  border-bottom: 1px solid rgba(26,23,20,0.06);
+  font-size: 12px; line-height: 1.4;
+}
+.proof-row.hdr {
+  font-family: var(--font-label); font-size: 10px;
+  font-weight: bold; color: var(--ink-ghost);
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.proof-stmt { color: var(--ink-primary); font-family: var(--font-math); }
+.proof-rsn  { color: var(--ink-secondary); font-family: var(--font-label); font-size: 11px; }
+.proof-qed  { padding: 8px 14px; font-family: var(--font-math); font-size: 13px;
+  color: var(--proof); font-style: italic; }
+
+/* ══ FEEDBACK OVERLAY ══ */
+.feedback-overlay {
+  position: absolute; top: 20px; right: 20px;
+  background: var(--bg-card);
+  border: 2px solid var(--correct);
+  border-radius: 8px; padding: 10px 16px;
+  font-family: var(--font-label); font-size: 13px;
+  color: var(--correct); font-weight: bold;
+  display: none; z-index: 100;
+  animation: fadeSlide 0.3s ease;
+}
+.feedback-overlay.show { display: block; }
+.feedback-overlay.wrong-fb { border-color: var(--drain-color); color: var(--drain-color); }
+@keyframes fadeSlide {
+  from { opacity:0; transform: translateY(-10px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+
+/* ══ MISC CALLOUTS ══ */
+.info-callout {
+  background: rgba(42,122,107,0.07);
+  border-left: 3px solid var(--correct);
+  padding: 8px 12px; margin: 8px 0;
+  border-radius: 0 6px 6px 0;
+  font-family: var(--font-label); font-size: 12px; color: var(--ink-secondary);
+}
+.warn-callout {
+  background: rgba(194,93,46,0.07);
+  border-left: 3px solid var(--drain-color);
+  padding: 8px 12px; margin: 8px 0;
+  border-radius: 0 6px 6px 0;
+  font-family: var(--font-label); font-size: 12px; color: var(--ink-secondary);
+}
+.cross-bridge {
+  background: rgba(91,74,138,0.07);
+  border: 1px dashed rgba(91,74,138,0.4);
+  border-radius: 8px; padding: 10px 14px; margin: 10px 0;
+  font-family: var(--font-label); font-size: 12px;
+  color: var(--hyp-color); line-height: 1.5;
+}
+
+/* ══ CONTROLS BAR ══ */
+.controls-bar {
+  padding: 10px 16px;
+  border-top: 1px solid rgba(26,23,20,0.10);
+  background: var(--bg-panel);
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+
+/* ══ SELF-TEST ══ */
+.selftest-card {
+  background: var(--bg-card);
+  border: 1px solid rgba(26,23,20,0.10);
+  border-radius: 8px; padding: 12px 14px; margin-bottom: 10px;
+}
+.selftest-q {
+  font-size: 13px; line-height: 1.6; margin-bottom: 8px; color: var(--ink-primary);
+}
+
+/* ══ PHASE 0 OVERLAY ══ */
+.phase0-overlay {
+  position: absolute; inset: 0;
+  background: var(--bg-canvas);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 50;
+  padding: 20px;
+}
+.phase0-card {
+  background: var(--bg-card);
+  border: 1px solid rgba(26,23,20,0.12);
+  border-radius: 12px; padding: 28px;
+  max-width: 460px; width: 100%;
+  text-align: center;
+}
+.phase0-q {
+  font-size: 17px; line-height: 1.6;
+  margin-bottom: 20px; color: var(--ink-primary);
+}
+.phase0-opts { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.phase0-opt {
+  font-family: var(--font-label); font-size: 13px;
+  padding: 10px 18px; border-radius: 8px;
+  border: 1.5px solid rgba(26,23,20,0.20);
+  background: var(--bg-canvas); color: var(--ink-primary);
+  cursor: pointer; transition: all 0.2s;
+}
+.phase0-opt:hover { border-color: var(--fill-color); background: rgba(61,107,158,0.06); }
+
+/* ══ RESPONSIVE ══ */
+@media (max-width: 900px) {
+  .proof-panel { display: none; }
+  .panel-zone { width: 280px; }
+}
+@media (max-width: 640px) {
+  .apex-body { flex-direction: column; }
+  .canvas-zone { height: 55vw; min-height: 200px; }
+  .panel-zone { width: 100%; max-height: 50vh; overflow-y: auto; }
+}
+
+/* ══ SLIDER CUSTOM ══ */
+.geo-slider-wrap { margin: 14px 0; }
+.geo-slider-wrap label {
+  font-family: var(--font-label); font-size: 11px;
+  color: var(--ink-secondary); display: block; margin-bottom: 4px;
+}
+.geo-slider {
+  width: 100%; accent-color: var(--fill-color);
+  height: 4px; cursor: pointer;
+}
+.slider-val {
+  font-family: var(--font-label); font-size: 12px;
+  color: var(--fill-color); font-weight: bold; margin-left: 8px;
+}
+
+/* ══ BADGE ══ */
+.badge {
+  display: inline-block;
+  font-family: var(--font-label); font-size: 10px;
+  padding: 2px 7px; border-radius: 10px;
+  font-weight: bold; letter-spacing: 0.5px;
+}
+.badge-grade { background: rgba(91,74,138,0.12); color: var(--hyp-color); }
+.badge-ncert { background: rgba(61,107,158,0.12); color: var(--fill-color); }
+
+/* ══ ANSWER REVEAL ══ */
+.answer-reveal {
+  background: rgba(42,122,107,0.08);
+  border: 1.5px solid var(--correct);
+  border-radius: 8px; padding: 12px 16px; margin: 10px 0;
+  display: none;
+}
+.answer-reveal.show { display: block; }
+.answer-big {
+  font-family: var(--font-math); font-size: 22px;
+  color: var(--correct); font-weight: bold;
+  display: block; text-align: center; margin-bottom: 6px;
+}
+
+/* ══ TRANSITION ══ */
+.phase-fade { animation: phaseFade 0.4s ease; }
+@keyframes phaseFade {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+</style>
+</head>
+<body>
+
+<!-- ══ HEADER ══ -->
+<header class="apex-header">
+  <span class="apex-logo">APEX·EDU v4</span>
+  <span class="apex-topic">
+    <span class="badge badge-ncert">NCERT Class 10</span>&nbsp;
+    Trigonometry · Angles of Elevation · Fig 14.14
+  </span>
+  <div class="phase-indicator" id="phaseDots"></div>
+</header>
+
+<!-- ══ MAIN BODY ══ -->
+<div class="apex-body">
+
+  <!-- PROOF PANEL (left) -->
+  <aside class="proof-panel" id="proofPanel">
+    <div class="proof-header">
+      <span>Formal Proof</span>
+      <button class="btn" style="padding:3px 8px;font-size:10px" onclick="toggleProof()">Hide</button>
+    </div>
+    <div class="panel-scroll proof-table" id="proofContent">
+      <div class="proof-row hdr">
+        <div>Statement</div><div>Reason</div>
+      </div>
+      <div class="proof-row">
+        <div class="proof-stmt">Let A = girl's eye level<br>AB = BD = 88.2 − 1.2 = 87 m</div>
+        <div class="proof-rsn">Balloon height from ground 88.2 m, eye height 1.2 m; effective height = 87 m</div>
+      </div>
+      <div class="proof-row">
+        <div class="proof-stmt">In △ACB (position 1):<br>tan 60° = AB/BC</div>
+        <div class="proof-rsn">tan θ = opposite/adjacent; AB is vertical, BC is horizontal distance at position 1</div>
+      </div>
+      <div class="proof-row">
+        <div class="proof-stmt">BC = AB/tan 60° = 87/√3 = 29√3 m</div>
+        <div class="proof-rsn">tan 60° = √3; algebraic rearrangement</div>
+      </div>
+      <div class="proof-row">
+        <div class="proof-stmt">In △ADB (position 2):<br>tan 30° = AB/BD</div>
+        <div class="proof-rsn">Same vertical height; BD is horizontal distance at position 2</div>
+      </div>
+      <div class="proof-row">
+        <div class="proof-stmt">BD = AB/tan 30° = 87·√3 = 87√3 m</div>
+        <div class="proof-rsn">tan 30° = 1/√3; rearrangement gives BD = 87√3</div>
+      </div>
+      <div class="proof-row">
+        <div class="proof-stmt">Distance = BD − BC<br>= 87√3 − 29√3 = 58√3 m</div>
+        <div class="proof-rsn">Balloon moved from C to D (horizontally); both distances from same reference A</div>
+      </div>
+      <div class="proof-row">
+        <div class="proof-stmt">58√3 ≈ 58 × 1.732 ≈ 100.4 m</div>
+        <div class="proof-rsn">√3 ≈ 1.732; numerical evaluation</div>
+      </div>
+      <div class="proof-qed">∴ Distance travelled ≈ <strong>58√3 m ≈ 100.4 m</strong> &nbsp;∎</div>
+    </div>
+  </aside>
+
+  <!-- CANVAS ZONE -->
+  <div class="canvas-zone">
+    <canvas id="mainCanvas"></canvas>
+
+    <!-- Phase 0 overlay -->
+    <div class="phase0-overlay" id="phase0Overlay">
+      <div class="phase0-card">
+        <div style="font-family:var(--font-label);font-size:11px;color:var(--ink-ghost);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px">Phase 0 · Prior Knowledge</div>
+        <p class="phase0-q">A 5 m ladder leans against a wall. The foot makes a <strong>60° angle</strong> with the ground. Which side of the triangle is "opposite" the 60° angle?</p>
+        <div class="phase0-opts">
+          <button class="phase0-opt" onclick="phase0Answer('ground')">The ground (foot to wall)</button>
+          <button class="phase0-opt" onclick="phase0Answer('wall')">The wall (vertical height)</button>
+          <button class="phase0-opt" onclick="phase0Answer('ladder')">The ladder itself</button>
+        </div>
+        <div id="phase0Feedback" style="margin-top:14px;font-family:var(--font-label);font-size:13px;display:none"></div>
+      </div>
+    </div>
+
+    <!-- Feedback overlay -->
+    <div class="feedback-overlay" id="feedbackOverlay"></div>
+  </div>
+
+  <!-- PANEL ZONE (right) -->
+  <aside class="panel-zone">
+    <div class="phase-banner" id="phaseBanner">Phase 1 · Hook</div>
+    <div class="panel-scroll" id="panelScroll">
+      <!-- Dynamically populated -->
+    </div>
+    <div class="controls-bar">
+      <button class="btn primary" id="nextPhaseBtn" onclick="nextPhase()">Next Phase →</button>
+      <button class="btn" onclick="resetSim()">↺ Reset</button>
+      <button class="btn" id="proofToggleBtn" onclick="toggleProof()">Proof ▸</button>
+    </div>
+  </aside>
+
+</div>
+
+<script>
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  TOPIC ANALYSIS — APEX-EDU v4                               ║
+// ║  Subject: Math → Trigonometry → Angles of Elevation         ║
+// ║  Problem: NCERT Class 10, Ex 9.1 Q15 (Fig 14.14)           ║
+// ║  Girl (1.2m) sees balloon at 88.2m height.                  ║
+// ║  Angle at first = 60°, later = 30°. Find distance moved.   ║
+// ║  Key: effective height = 88.2 - 1.2 = 87 m                 ║
+// ║  tan 60° = 87/BC → BC = 87/√3 = 29√3                      ║
+// ║  tan 30° = 87/BD → BD = 87√3                               ║
+// ║  Distance = BD - BC = 87√3 - 29√3 = 58√3 ≈ 100.4 m        ║
+// ║                                                              ║
+// ║  TOP 5 MISCONCEPTIONS:                                       ║
+// ║  1. Using full 88.2m instead of 87m (eye height ignored)    ║
+// ║  2. Confusing sin/cos/tan — using sin instead of tan        ║
+// ║  3. Subtracting angles (60-30=30) instead of distances      ║
+// ║  4. Forgetting BD-BC order (taking BC-BD → negative)        ║
+// ║  5. tan 30 = √3 (swapping tan30 and tan60 values)           ║
+// ╚══════════════════════════════════════════════════════════════╝
+
+// ══ CANVAS SETUP ══
+const canvas = document.getElementById('mainCanvas');
+const ctx    = canvas.getContext('2d');
+
+function resize() {
+  const zone = canvas.parentElement;
+  canvas.width  = zone.offsetWidth;
+  canvas.height = zone.offsetHeight;
+}
+window.addEventListener('resize', () => { resize(); draw(); });
+resize();
+
+// ══ STUDENT MODEL ══
+const StudentModel = {
+  phase: 1,
+  wrongAnswers: 0,
+  rightAnswers: 0,
+  predictionValue: null,
+  scaffoldingLevel: 0.5,
+  phase0Done: false,
+  blanksFilled: {},
+  reprMode: 'visual',
+  showBalloonPos2: false,
+  animProgress: 0,
+  balloonX_frac: 0,  // 0 = position 1, 1 = position 2 (slider)
+};
+
+// ══ PHYSICS SIM ══
+let animT = 0;
+let balloonAnim = 0;
+let showAngle1  = true;
+let showAngle2  = true;
+let balloonFrac = 0.0;   // 0 = near, 1 = far
+let lastTime    = 0;
+let animFrame   = null;
+
+// ══ GEOMETRY CONSTANTS ══
+// Effective height = 88.2 - 1.2 = 87 m
+// BC = 87/√3 = 29√3 ≈ 50.2m
+// BD = 87√3 ≈ 150.7m
+// Distance = 58√3 ≈ 100.4m
+const SQRT3 = Math.sqrt(3);
+const H_EFF = 87;          // effective height in metres
+const BC    = 87 / SQRT3;  // 29√3 ≈ 50.2
+const BD    = 87 * SQRT3;  // 87√3 ≈ 150.7
+const DIST  = BD - BC;     // 58√3 ≈ 100.4
+
+// ══ DRAW FUNCTION ══
+function draw(ts) {
+  if (ts) {
+    const dt = Math.min((ts - lastTime) / 1000, 0.05);
+    lastTime = ts;
+    animT += dt;
+    balloonAnim += dt * 0.8;
+  }
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const W = canvas.width, H = canvas.height;
+
+  // Background
+  ctx.fillStyle = '#F8F5F0';
+  ctx.fillRect(0, 0, W, H);
+
+  // Draw scene
+  drawScene(W, H);
+
+  animFrame = requestAnimationFrame(draw);
+}
+
+function drawScene(W, H) {
+  // Layout: girl at left, scene fills canvas
+  const margin = 40;
+  const groundY = H - 70;
+  const sceneW  = W - margin * 2;
+
+  // SCALE: fit BD horizontally with margin
+  // BD ≈ 150.7m → sceneW
+  const scale = sceneW * 0.60 / BD;  // px per metre
+
+  const girlX = margin + 20;
+  const girlEyeY = groundY - 1.2 * scale * 8; // visual scale for girl
+
+  // Positions on ground scale
+  const balloonX1_screen = girlX + BC * scale;
+  const balloonX2_screen = girlX + BD * scale;
+  const balloonY_screen  = groundY - H_EFF * scale;
+
+  // Balloon position (animated by slider)
+  const balloonX_screen = balloonX1_screen + balloonFrac * (balloonX2_screen - balloonX1_screen);
+
+  // ══ GROUND ══
+  ctx.strokeStyle = 'rgba(26,23,20,0.22)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(margin - 10, groundY);
+  ctx.lineTo(W - margin + 10, groundY);
+  ctx.stroke();
+
+  // Ground hatching
+  ctx.strokeStyle = 'rgba(26,23,20,0.08)';
+  ctx.lineWidth = 1;
+  for (let x = margin; x < W - margin; x += 20) {
+    ctx.beginPath();
+    ctx.moveTo(x, groundY);
+    ctx.lineTo(x - 8, groundY + 8);
+    ctx.stroke();
+  }
+
+  // ══ GIRL ══
+  drawGirl(ctx, girlX, groundY, scale);
+
+  // Girl's eye position
+  const eyeX = girlX + 5;
+  const eyeY = groundY - 14 * (scale > 0 ? Math.max(1, scale * 2.5) : 1);
+  // Simplified: fix eye at visual level
+  const EYE_Y = groundY - 28;
+
+  // ══ DASHED HEIGHT LINE (vertical from ground to balloon) ══
+  // Show vertical reference at balloon position
+  ctx.setLineDash([6, 4]);
+  ctx.strokeStyle = 'rgba(26,23,20,0.18)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(balloonX_screen, groundY);
+  ctx.lineTo(balloonX_screen, balloonY_screen - 10);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // ══ HEIGHT LABEL (87m) ══
+  if (StudentModel.phase >= 3) {
+    ctx.fillStyle = var_inkSecondary;
+    ctx.font = '11px Verdana';
+    ctx.textAlign = 'right';
+    ctx.fillText('87 m', balloonX_screen - 4, (groundY + balloonY_screen) / 2);
+    ctx.textAlign = 'left';
+    // Small bracket
+    ctx.strokeStyle = 'rgba(26,23,20,0.18)';
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.moveTo(balloonX_screen - 2, groundY - 2);
+    ctx.lineTo(balloonX_screen - 6, groundY - 2);
+    ctx.lineTo(balloonX_screen - 6, balloonY_screen + 2);
+    ctx.lineTo(balloonX_screen - 2, balloonY_screen + 2);
+    ctx.stroke();
+  }
+
+  // ══ HORIZONTAL DISTANCES (dashed floor lines) ══
+  if (StudentModel.phase >= 3) {
+    // BC distance
+    ctx.setLineDash([5, 3]);
+    ctx.strokeStyle = 'rgba(61,107,158,0.45)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(eyeX, groundY - 2);
+    ctx.lineTo(balloonX1_screen, groundY - 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    // Label BC
+    ctx.fillStyle = '#3D6B9E';
+    ctx.font = 'bold 11px Verdana';
+    ctx.textAlign = 'center';
+    ctx.fillText('BC = 29√3 m', (eyeX + balloonX1_screen) / 2, groundY - 8);
+
+    // BD distance (if phase >= 4 or balloon at pos 2)
+    if (StudentModel.phase >= 4 || balloonFrac > 0.3) {
+      ctx.setLineDash([5, 3]);
+      ctx.strokeStyle = 'rgba(194,93,46,0.45)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(eyeX, groundY + 6);
+      ctx.lineTo(balloonX2_screen, groundY + 6);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#C25D2E';
+      ctx.font = 'bold 11px Verdana';
+      ctx.textAlign = 'center';
+      ctx.fillText('BD = 87√3 m', (eyeX + balloonX2_screen) / 2, groundY + 16);
+    }
+  }
+
+  // ══ LINE OF SIGHT — Position 1 (60°) ══
+  if (showAngle1 || StudentModel.phase <= 2) {
+    ctx.strokeStyle = '#3D6B9E';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(eyeX, EYE_Y);
+    ctx.lineTo(balloonX1_screen, balloonY_screen);
+    ctx.stroke();
+    // Angle arc at eye
+    const ang1 = -Math.atan2(EYE_Y - balloonY_screen, balloonX1_screen - eyeX);
+    drawAngleArc(eyeX, EYE_Y, 22, -ang1, 0, '60°', '#3D6B9E');
+  }
+
+  // ══ LINE OF SIGHT — Position 2 (30°) ══
+  if (showAngle2 && StudentModel.phase >= 2) {
+    ctx.strokeStyle = '#C25D2E';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(eyeX, EYE_Y);
+    ctx.lineTo(balloonX2_screen, balloonY_screen);
+    ctx.stroke();
+    // Angle arc at eye
+    const ang2 = -Math.atan2(EYE_Y - balloonY_screen, balloonX2_screen - eyeX);
+    drawAngleArc(eyeX, EYE_Y, 38, -ang2, 0, '30°', '#C25D2E');
+  }
+
+  // ══ LINE OF SIGHT to current balloon position ══
+  if (balloonFrac > 0.01 && balloonFrac < 0.99 && StudentModel.phase === 2) {
+    ctx.strokeStyle = 'rgba(201,150,26,0.5)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 3]);
+    ctx.beginPath();
+    ctx.moveTo(eyeX, EYE_Y);
+    ctx.lineTo(balloonX_screen, balloonY_screen);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // ══ BALLOON at Position 1 ══
+  drawBalloon(ctx, balloonX1_screen, balloonY_screen, 16, '#3D6B9E', '①', animT);
+
+  // ══ BALLOON at Position 2 ══
+  if (StudentModel.phase >= 2) {
+    drawBalloon(ctx, balloonX2_screen, balloonY_screen, 16, '#C25D2E', '②', animT + 1.2);
+  }
+
+  // ══ ANIMATED BALLOON (slider) ══
+  if (StudentModel.phase === 2) {
+    const bx = balloonX_screen;
+    drawBalloon(ctx, bx, balloonY_screen - 6 * Math.sin(animT * 1.5), 20, '#C9961A', '', animT);
+    // Current angle label
+    const curAng = Math.atan2(EYE_Y - (balloonY_screen - 6 * Math.sin(animT * 1.5)), bx - eyeX) * 180 / Math.PI;
+    ctx.fillStyle = '#C9961A';
+    ctx.font = 'bold 12px Verdana';
+    ctx.textAlign = 'center';
+    ctx.fillText(Math.abs(curAng).toFixed(1) + '°', bx, balloonY_screen - 30);
+  }
+
+  // ══ HEIGHT LABELS (88.2m from ground) ══
+  if (StudentModel.phase >= 1) {
+    ctx.fillStyle = 'rgba(26,23,20,0.45)';
+    ctx.font = '10px Verdana';
+    ctx.textAlign = 'right';
+    ctx.fillText('88.2 m', balloonX2_screen + 2, (groundY + balloonY_screen) / 2 - 16);
+  }
+
+  // ══ GIRL HEIGHT LABEL ══
+  if (StudentModel.phase >= 3) {
+    ctx.fillStyle = 'rgba(42,122,107,0.8)';
+    ctx.font = '10px Verdana';
+    ctx.textAlign = 'left';
+    ctx.fillText('1.2 m', girlX + 14, groundY - 10);
+  }
+
+  // ══ DISTANCE ARROW (Phase 4+) ══
+  if (StudentModel.phase >= 4) {
+    ctx.strokeStyle = 'rgba(91,74,138,0.7)';
+    ctx.lineWidth = 2;
+    const arrY = balloonY_screen - 22;
+    ctx.beginPath();
+    ctx.moveTo(balloonX1_screen, arrY);
+    ctx.lineTo(balloonX2_screen, arrY);
+    ctx.stroke();
+    // Arrowheads
+    drawArrowhead(balloonX1_screen, arrY, Math.PI, '#5B4A8A');
+    drawArrowhead(balloonX2_screen, arrY, 0, '#5B4A8A');
+    ctx.fillStyle = '#5B4A8A';
+    ctx.font = 'bold 12px Verdana';
+    ctx.textAlign = 'center';
+    ctx.fillText('58√3 ≈ 100.4 m', (balloonX1_screen + balloonX2_screen) / 2, arrY - 8);
+  }
+
+  ctx.textAlign = 'left';
+}
+
+const var_inkSecondary = '#5C5652';
+
+function drawGirl(ctx, x, groundY, scale) {
+  const g = ctx;
+  const baseH = 28; // visual height of girl in px
+  // Body
+  g.strokeStyle = '#1A1714';
+  g.lineWidth = 1.5;
+  // Legs
+  g.beginPath();
+  g.moveTo(x, groundY);
+  g.lineTo(x + 4, groundY - baseH * 0.4);
+  g.lineTo(x + 8, groundY);
+  g.stroke();
+  // Body
+  g.beginPath();
+  g.moveTo(x + 4, groundY - baseH * 0.4);
+  g.lineTo(x + 4, groundY - baseH * 0.75);
+  g.stroke();
+  // Arms
+  g.beginPath();
+  g.moveTo(x, groundY - baseH * 0.6);
+  g.lineTo(x + 4, groundY - baseH * 0.55);
+  g.lineTo(x + 8, groundY - baseH * 0.65);
+  g.stroke();
+  // Head
+  g.beginPath();
+  g.arc(x + 4, groundY - baseH * 0.88, 5, 0, Math.PI * 2);
+  g.fillStyle = '#C9961A';
+  g.fill();
+  g.stroke();
+  // Label
+  g.fillStyle = '#5C5652';
+  g.font = '10px Verdana';
+  g.textAlign = 'center';
+  g.fillText('A', x + 4, groundY + 14);
+  g.textAlign = 'left';
+}
+
+function drawBalloon(ctx, x, y, r, color, label, t) {
+  // Balloon body (with gentle float)
+  const floatY = y + 2 * Math.sin(t * 0.8);
+  ctx.fillStyle = color;
+  ctx.globalAlpha = 0.82;
+  ctx.beginPath();
+  ctx.ellipse(x, floatY, r, r * 1.2, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.strokeStyle = 'rgba(26,23,20,0.3)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  // Balloon string
+  ctx.strokeStyle = 'rgba(26,23,20,0.4)';
+  ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  ctx.moveTo(x, floatY + r * 1.2);
+  ctx.lineTo(x, floatY + r * 1.2 + 8);
+  ctx.stroke();
+  // Basket (small rect)
+  ctx.fillStyle = '#8B6914';
+  ctx.fillRect(x - 4, floatY + r * 1.2 + 8, 8, 5);
+  // Label
+  if (label) {
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 11px Verdana';
+    ctx.textAlign = 'center';
+    ctx.fillText(label, x, floatY + 4);
+  }
+  ctx.textAlign = 'left';
+}
+
+function drawAngleArc(cx, cy, r, startA, endA, label, color) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.8;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, endA, startA > endA ? startA : -startA, startA < 0);
+  ctx.stroke();
+  const midA = (startA + endA) / 2;
+  ctx.fillStyle = color;
+  ctx.font = 'bold 11px Georgia';
+  ctx.textAlign = 'center';
+  const lx = cx + (r + 14) * Math.cos(midA / 2);
+  const ly = cy - (r + 6) * Math.sin(Math.abs(startA) / 2);
+  ctx.fillText(label, lx, ly);
+  ctx.textAlign = 'left';
+}
+
+function drawArrowhead(x, y, angle, color, size = 7) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(-size, -size * 0.5);
+  ctx.lineTo(-size, size * 0.5);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+// ══ PHASE SYSTEM ══
+const PHASES = [
+  'Phase 0 · Prior Knowledge',
+  'Phase 1 · Hook',
+  'Phase 2 · Explore',
+  'Phase 3 · Challenge',
+  'Phase 4 · Formula Reveal',
+  'Phase 5 · Proof',
+  'Phase 6 · Master',
+];
+
+function buildPhaseDots() {
+  const container = document.getElementById('phaseDots');
+  container.innerHTML = '';
+  for (let i = 0; i < 7; i++) {
+    const d = document.createElement('div');
+    d.className = 'phase-dot';
+    d.title = PHASES[i];
+    d.onclick = () => jumpToPhase(i);
+    container.appendChild(d);
+  }
+}
+
+function updatePhaseDots() {
+  const dots = document.querySelectorAll('.phase-dot');
+  dots.forEach((d, i) => {
+    d.classList.remove('active', 'done');
+    if (i === StudentModel.phase) d.classList.add('active');
+    else if (i < StudentModel.phase) d.classList.add('done');
+  });
+}
+
+// ══ PHASE CONTENT ══
+function renderPhasePanel() {
+  const panel = document.getElementById('panelScroll');
+  const banner = document.getElementById('phaseBanner');
+  banner.textContent = PHASES[StudentModel.phase];
+  panel.innerHTML = '';
+  panel.className = 'panel-scroll phase-fade';
+
+  switch (StudentModel.phase) {
+    case 1: renderPhase1(panel); break;
+    case 2: renderPhase2(panel); break;
+    case 3: renderPhase3(panel); break;
+    case 4: renderPhase4(panel); break;
+    case 5: renderPhase5(panel); break;
+    case 6: renderPhase6(panel); break;
+  }
+  updatePhaseDots();
+}
+
+function renderPhase1(panel) {
+  panel.innerHTML = `
+    <div class="step-card active-step">
+      <div class="step-header">
+        <div class="step-num">!</div>
+        <div class="step-title">The Surprising Fact</div>
+      </div>
+      <div class="step-body open">
+        <p style="margin-bottom:10px">Look at the two balloons on the canvas. ① is close (60° angle). ② is far (30° angle).</p>
+        <div class="warn-callout">
+          <strong>Did you expect this?</strong><br>
+          As the balloon moves <em>away</em>, the angle of elevation <em>decreases</em>. A <strong>smaller angle</strong> means a <strong>more distant</strong> object at the same height.
+        </div>
+        <p style="margin-top:10px;font-size:13px;color:var(--ink-secondary)">The balloon is <em>not rising or falling</em> — it's moving horizontally. The height stays 88.2 m throughout. Only your viewing angle changes.</p>
+      </div>
+    </div>
+    <div class="step-card">
+      <div class="step-header">
+        <div class="step-num">?</div>
+        <div class="step-title">Which ratio do we need?</div>
+      </div>
+      <div class="step-body open">
+        <p style="margin-bottom:10px;font-size:13px">We know the <strong>vertical height</strong> and we want the <strong>horizontal distance</strong>. The ratio of vertical to horizontal is:</p>
+        <div class="formula-box">tan θ = opposite/adjacent = <em>height/distance</em>
+          <span class="why-toggle" onclick="toggleWhy(this)">Why tan and not sin or cos?</span>
+          <div class="why-content">
+            <strong>sin θ</strong> = opposite/hypotenuse (needs the line of sight length)<br>
+            <strong>cos θ</strong> = adjacent/hypotenuse (same problem)<br>
+            <strong>tan θ</strong> = opposite/adjacent ✓ — we have both sides of the right triangle (height and ground distance)!
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderPhase2(panel) {
+  panel.innerHTML = `
+    <div class="step-card active-step">
+      <div class="step-header"><div class="step-num">2</div><div class="step-title">Explore the Scene</div></div>
+      <div class="step-body open">
+        <p style="font-size:13px;margin-bottom:12px">Drag the slider to move the balloon. Watch how the angle changes with distance.</p>
+        <div class="geo-slider-wrap">
+          <label>Balloon position <span class="slider-val" id="balSliderVal">Near (60°)</span></label>
+          <input type="range" class="geo-slider" id="balloonSlider" min="0" max="100" value="0"
+            oninput="onBalloonSlider(this.value)">
+        </div>
+        <div class="repr-bar">
+          <button class="repr-btn active" onclick="setRepr('visual',this)">Visual</button>
+          <button class="repr-btn" onclick="setRepr('numeric',this)">Numeric</button>
+          <button class="repr-btn" onclick="setRepr('verbal',this)">Verbal</button>
+        </div>
+        <div id="reprContent">
+          <div class="info-callout">
+            The balloon stays at <strong>88.2 m</strong> above ground the entire time. The girl's eyes are at <strong>1.2 m</strong>.
+            Effective vertical height = <strong>87 m</strong>.
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="step-card">
+      <div class="step-header"><div class="step-num">💡</div><div class="step-title">Key Insight</div></div>
+      <div class="step-body open">
+        <p style="font-size:13px">The right triangles share the <strong>same vertical leg (87 m)</strong>. Only the horizontal leg (ground distance) changes. This is why we can use tan at two positions and compare.</p>
+      </div>
+    </div>`;
+}
+
+function renderPhase3(panel) {
+  panel.innerHTML = `
+    <div class="step-card active-step">
+      <div class="step-header"><div class="step-num">!</div><div class="step-title">Prediction Gate</div></div>
+      <div class="step-body open">
+        <p style="font-size:13px;margin-bottom:10px"><strong>Before we solve:</strong> The balloon travels from position ① to position ②. Estimate the distance in metres.</p>
+        <div class="prediction-zone">
+          <div class="prediction-label">📐 Your Prediction</div>
+          <input class="pred-input" type="number" id="predInput" placeholder="? metres" min="0" max="500">
+          <button class="btn primary" onclick="submitPrediction()">Lock In Prediction</button>
+        </div>
+        <div id="predFeedback" style="margin-top:8px"></div>
+      </div>
+    </div>
+    <div class="step-card" id="solveCard" style="display:none">
+      <div class="step-header"><div class="step-num">3</div><div class="step-title">Solution Steps</div></div>
+      <div class="step-body open" id="solveBody">
+        ${buildSolveSteps()}
+      </div>
+    </div>`;
+}
+
+function buildSolveSteps() {
+  return `
+    <p style="font-size:13px;font-weight:bold;margin-bottom:10px;color:var(--fill-color)">Step 1: Find the effective height</p>
+    <p style="font-size:13px;margin-bottom:8px">Height of balloon above girl's eyes:<br>
+    88.2 m − 1.2 m = <input class="blank" id="b1" size="4" onblur="checkBlank('b1','87','87 m ✓')"> m</p>
+
+    <p style="font-size:13px;font-weight:bold;margin:12px 0 8px;color:var(--fill-color)">Step 2: Horizontal distance at 60° (position ①)</p>
+    <div class="formula-box" style="font-size:13px">
+      tan 60° = 87 / BC<br>
+      √3 = 87 / BC<br>
+      BC = 87 / √3 = <input class="blank" id="b2" size="6" onblur="checkBlank('b2','29√3','29√3 ✓')">
+      <span class="why-toggle" onclick="toggleWhy(this)">Why divide by √3?</span>
+      <div class="why-content">tan 60° = √3, so rearranging: BC = 87 ÷ √3 = 87√3/3 = 29√3</div>
+    </div>
+
+    <p style="font-size:13px;font-weight:bold;margin:12px 0 8px;color:var(--drain-color)">Step 3: Horizontal distance at 30° (position ②)</p>
+    <div class="formula-box" style="font-size:13px;border-left-color:var(--drain-color);background:rgba(194,93,46,0.05)">
+      tan 30° = 87 / BD<br>
+      1/√3 = 87 / BD<br>
+      BD = <input class="blank" id="b3" size="6" onblur="checkBlank('b3','87√3','87√3 ✓')">
+      <span class="why-toggle" onclick="toggleWhy(this)">Why multiply by √3?</span>
+      <div class="why-content">tan 30° = 1/√3, so rearranging: BD = 87 ÷ (1/√3) = 87 × √3 = 87√3</div>
+    </div>
+
+    <p style="font-size:13px;font-weight:bold;margin:12px 0 8px;color:var(--hyp-color)">Step 4: Distance travelled = BD − BC</p>
+    <div class="formula-box" style="font-size:13px;border-left-color:var(--hyp-color);background:rgba(91,74,138,0.05)">
+      = 87√3 − 29√3<br>
+      = <input class="blank" id="b4" size="5" onblur="checkBlank('b4','58√3','58√3 ✓')">√3<br>
+      ≈ 58 × 1.732 ≈ <strong>100.4 m</strong>
+    </div>
+
+    <button class="btn primary" style="margin-top:12px" onclick="showAnswer()">Reveal Full Answer</button>
+    <div class="answer-reveal" id="answerReveal">
+      <span class="answer-big">58√3 ≈ 100.4 m</span>
+      <p style="font-size:13px;color:var(--ink-secondary)">The balloon travelled approximately <strong>100.4 metres</strong> (exact: 58√3 m) during the interval.</p>
+    </div>`;
+}
+
+function renderPhase4(panel) {
+  panel.innerHTML = `
+    <div class="step-card active-step">
+      <div class="step-header"><div class="step-num">4</div><div class="step-title">The Formula Emerges</div></div>
+      <div class="step-body open">
+        <p style="font-size:13px;margin-bottom:12px">You've seen it — now here it is in one line. Every symbol came from the geometry you explored.</p>
+        <div class="formula-box" style="font-size:15px;text-align:center;padding:14px">
+          <div style="margin-bottom:8px">d = <span style="font-style:italic">h</span>(cot α − cot β)</div>
+          <div style="font-size:12px;color:var(--ink-secondary);font-family:var(--font-label)">
+            where h = effective height, α = first angle, β = second angle
+          </div>
+        </div>
+        <div class="repr-bar" style="margin-top:12px">
+          <button class="repr-btn active" onclick="setRepr4('algebraic',this)">Algebraic</button>
+          <button class="repr-btn" onclick="setRepr4('numeric',this)">Numeric</button>
+          <button class="repr-btn" onclick="setRepr4('verbal',this)">Verbal</button>
+        </div>
+        <div id="repr4Content">
+          <div class="info-callout" style="margin-top:8px">
+            d = h/tan β − h/tan α = 87/tan 30° − 87/tan 60° = 87√3 − 29√3 = <strong>58√3 m</strong>
+          </div>
+        </div>
+        <p style="font-size:12px;color:var(--ink-ghost);margin-top:10px">Click each symbol to learn its meaning:</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+          <span class="badge badge-grade" style="cursor:pointer" onclick="showSymbol('h')">h = 87 m</span>
+          <span class="badge badge-ncert" style="cursor:pointer" onclick="showSymbol('alpha')">α = 60° (near)</span>
+          <span class="badge" style="background:rgba(194,93,46,0.12);color:var(--drain-color);cursor:pointer" onclick="showSymbol('beta')">β = 30° (far)</span>
+          <span class="badge" style="background:rgba(91,74,138,0.12);color:var(--hyp-color);cursor:pointer" onclick="showSymbol('d')">d = distance</span>
+        </div>
+        <div id="symbolExplain" style="display:none;margin-top:10px;font-size:13px;font-family:var(--font-label);color:var(--ink-secondary);padding:8px;background:var(--bg-panel);border-radius:6px"></div>
+      </div>
+    </div>`;
+}
+
+function renderPhase5(panel) {
+  panel.innerHTML = `
+    <div class="step-card active-step">
+      <div class="step-header"><div class="step-num">5</div><div class="step-title">Derivation from First Principles</div></div>
+      <div class="step-body open">
+        <p style="font-size:12px;font-family:var(--font-label);color:var(--ink-secondary);margin-bottom:10px">
+          The formal proof is in the left panel. Here's the algebraic derivation:
+        </p>
+        <div style="font-family:var(--font-mono);font-size:12px;line-height:1.8;background:var(--bg-proof);padding:12px;border-radius:8px;color:var(--ink-primary)">
+Let eye-level height above ground = 1.2 m<br>
+Let balloon height above ground = 88.2 m<br>
+∴ h = 88.2 − 1.2 = <strong>87 m</strong><br><br>
+At position C (angle 60°):<br>
+  tan 60° = h/BC<br>
+  √3 = 87/BC<br>
+  BC = 87/√3 = <strong>29√3</strong><br><br>
+At position D (angle 30°):<br>
+  tan 30° = h/BD<br>
+  1/√3 = 87/BD<br>
+  BD = 87√3 = <strong>87√3</strong><br><br>
+Distance CD = BD − BC<br>
+  = 87√3 − 29√3<br>
+  = <strong>58√3</strong><br>
+  ≈ 58 × 1.732<br>
+  ≈ <strong>100.4 m</strong> &nbsp;&nbsp;∎
+        </div>
+        <div class="info-callout" style="margin-top:10px">
+          <strong>Note:</strong> cot 60° = 1/√3 and cot 30° = √3, so the general formula d = h(cot α − cot β) = 87(√3 − 1/√3) = 87(2/√3) = 174/√3 = 58√3 ✓
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderPhase6(panel) {
+  panel.innerHTML = `
+    <div class="step-card active-step">
+      <div class="step-header"><div class="step-num">6</div><div class="step-title">Self-Test — Three Variants</div></div>
+      <div class="step-body open">
+
+        <div class="selftest-card">
+          <div class="selftest-q"><strong>Q1 (Scale).</strong> A 1.5 m tall boy watches a kite flying at 79.5 m height. First angle of elevation 60°, then 45°. Find the distance the kite travelled.</div>
+          <details style="margin-top:8px">
+            <summary style="font-family:var(--font-label);font-size:11px;cursor:pointer;color:var(--fill-color)">Show Answer</summary>
+            <div style="font-size:12px;margin-top:6px;font-family:var(--font-label);color:var(--ink-secondary)">h = 79.5−1.5 = 78 m. BC = 78/√3 = 26√3. BD = 78/1 = 78. Distance = 78 − 26√3 ≈ 78 − 45.03 ≈ <strong>32.97 m</strong></div>
+          </details>
+        </div>
+
+        <div class="selftest-card">
+          <div class="selftest-q"><strong>Q2 (Inverse).</strong> The balloon travelled 58√3 m. The first angle was 60°. The balloon is 88.2 m high. What is the second angle?</div>
+          <details style="margin-top:8px">
+            <summary style="font-family:var(--font-label);font-size:11px;cursor:pointer;color:var(--fill-color)">Show Answer</summary>
+            <div style="font-size:12px;margin-top:6px;font-family:var(--font-label);color:var(--ink-secondary)">BC = 29√3. BD = BC + 58√3 = 29√3 + 58√3 = 87√3. tan β = 87/87√3 = 1/√3. ∴ β = <strong>30°</strong></div>
+          </details>
+        </div>
+
+        <div class="selftest-card">
+          <div class="selftest-q"><strong>Q3 (Context shift — Error Hunt!).</strong> A student wrote: "tan 60° = height/BC so BC = height × √3 = 87√3." Find the error and correct it.</div>
+          <details style="margin-top:8px">
+            <summary style="font-family:var(--font-label);font-size:11px;cursor:pointer;color:var(--fill-color)">Show Answer</summary>
+            <div style="font-size:12px;margin-top:6px;font-family:var(--font-label);color:var(--ink-secondary)">
+              <strong>Error:</strong> tan 60° = √3, so BC = height/√3, NOT height × √3.<br>
+              Multiplying by √3 gives BD (the position at 30°), not BC.<br>
+              Correct: BC = 87/√3 = <strong>29√3</strong>
+            </div>
+          </details>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="cross-bridge">
+      <strong>🔗 Cross-Topic Bridge</strong><br><br>
+      <strong>Backward:</strong> This is the same tan θ = opp/adj you first used for ladders against walls — the right-angle triangle is just tilted in your mind.<br><br>
+      <strong>Forward:</strong> Next chapter, the Sine Rule lets you solve non-right triangles the same way — useful when the balloon is not directly overhead.<br><br>
+      <strong>Real World:</strong> Surveyors, GPS engineers, and telescope operators use this exact calculation to find horizontal distance from two measured angles.
+    </div>
+
+    <div class="step-card">
+      <div class="step-header"><div class="step-num">💡</div><div class="step-title">Did You Know?</div></div>
+      <div class="step-body open">
+        <p style="font-size:13px">The same formula (two elevation angles → horizontal distance) is used in <strong>rangefinders</strong> used by golfers, soldiers, and wildlife photographers. They measure the angle twice and compute your formula automatically.</p>
+      </div>
+    </div>`;
+}
+
+// ══ INTERACTION HANDLERS ══
+function phase0Answer(choice) {
+  const fb = document.getElementById('phase0Feedback');
+  fb.style.display = 'block';
+  if (choice === 'wall') {
+    fb.style.color = '#2A7A6B';
+    fb.innerHTML = `✓ Correct! The wall (opposite side) faces the 60° angle. Today's problem uses exactly this triangle — but instead of a ladder, we have a line of sight to a balloon. <button class="btn primary" style="margin-top:10px" onclick="dismissPhase0()">Start Exploring →</button>`;
+    StudentModel.rightAnswers++;
+  } else {
+    fb.style.color = '#C25D2E';
+    StudentModel.wrongAnswers++;
+    if (choice === 'ground') {
+      fb.innerHTML = `The ground (adjacent side) is <em>next to</em> the 60° angle, not opposite it. The side <em>opposite</em> the angle is the wall — vertical height.<br><button class="btn" style="margin-top:8px" onclick="dismissPhase0()">Continue anyway →</button>`;
+    } else {
+      fb.innerHTML = `The ladder is the hypotenuse — the longest side, always opposite the right angle (90°). The side opposite the 60° angle is the wall.<br><button class="btn" style="margin-top:8px" onclick="dismissPhase0()">Continue →</button>`;
+    }
+  }
+}
+
+function dismissPhase0() {
+  document.getElementById('phase0Overlay').style.display = 'none';
+  StudentModel.phase0Done = true;
+  StudentModel.phase = 1;
+  renderPhasePanel();
+}
+
+function submitPrediction() {
+  const val = parseFloat(document.getElementById('predInput').value);
+  if (isNaN(val)) { showFeedback('Enter a number first', false); return; }
+  StudentModel.predictionValue = val;
+  const err = Math.abs(val - 100.4) / 100.4 * 100;
+  const fb = document.getElementById('predFeedback');
+  let msg = '';
+  if (err < 10) { msg = `Close! Your prediction (${val} m) is within 10% of the answer. Strong quantitative intuition.`; }
+  else if (err < 25) { msg = `Reasonable estimate (${val} m). The actual answer is ~100.4 m — off by about ${err.toFixed(0)}%.`; }
+  else { msg = `Your prediction was ${val} m. The actual answer is ~100.4 m — let's work through why.`; }
+  fb.innerHTML = `<div class="info-callout">${msg}</div>`;
+  document.getElementById('solveCard').style.display = 'block';
+}
+
+function checkBlank(id, correct, successMsg) {
+  const inp = document.getElementById(id);
+  if (!inp) return;
+  const val = inp.value.trim().replace(/\s/g,'').toLowerCase();
+  const expected = correct.toLowerCase().replace(/\s/g,'');
+  if (val === expected || val === expected.replace('√','sqrt')) {
+    inp.classList.remove('wrong-blank');
+    inp.classList.add('correct-blank');
+    inp.value = successMsg;
+    StudentModel.rightAnswers++;
+    showFeedback('Correct!', true);
+  } else if (val !== '') {
+    inp.classList.add('wrong-blank');
+    StudentModel.wrongAnswers++;
+    showFeedback('Not quite — check your tan value', false);
+  }
+}
+
+function showAnswer() {
+  const el = document.getElementById('answerReveal');
+  if (el) { el.classList.add('show'); StudentModel.phase = 4; renderPhasePanel(); }
+}
+
+function showFeedback(msg, correct) {
+  const el = document.getElementById('feedbackOverlay');
+  el.textContent = correct ? '✓ ' + msg : '✗ ' + msg;
+  el.className = 'feedback-overlay show' + (correct ? '' : ' wrong-fb');
+  setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+function toggleWhy(el) {
+  const content = el.nextElementSibling;
+  content.classList.toggle('open');
+  el.textContent = content.classList.contains('open') ? 'Hide explanation' : el.textContent.includes('Hide') ? 'Why?' : el.textContent;
+}
+
+function setRepr(mode, btn) {
+  StudentModel.reprMode = mode;
+  document.querySelectorAll('.repr-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const content = document.getElementById('reprContent');
+  if (!content) return;
+  const reprs = {
+    visual: `<div class="info-callout">The balloon stays at <strong>88.2 m</strong>. Effective height above girl's eyes = <strong>87 m</strong>. Two right triangles share the vertical leg.</div>`,
+    numeric: `<div class="info-callout">
+      Angle 1 (near): <strong>60°</strong>, BC = 87/√3 ≈ <strong>50.2 m</strong><br>
+      Angle 2 (far): <strong>30°</strong>, BD = 87√3 ≈ <strong>150.7 m</strong><br>
+      Distance = 150.7 − 50.2 ≈ <strong>100.4 m</strong>
+    </div>`,
+    verbal: `<div class="info-callout">The balloon floats horizontally at 87 metres above the girl's eyes. At first, she looks up steeply (60°) then less steeply (30°). The difference in horizontal distances — found using tangent — is the distance the balloon moved.</div>`,
+  };
+  content.innerHTML = reprs[mode] || reprs.visual;
+}
+
+function setRepr4(mode, btn) {
+  document.querySelectorAll('.repr-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const content = document.getElementById('repr4Content');
+  if (!content) return;
+  const reprs = {
+    algebraic: `<div class="info-callout">d = 87/tan 30° − 87/tan 60° = 87√3 − 29√3 = <strong>58√3 m</strong></div>`,
+    numeric:   `<div class="info-callout">87 × 1.732 − 87/1.732 = 150.68 − 50.23 = <strong>100.45 m ≈ 100.4 m</strong></div>`,
+    verbal:    `<div class="info-callout">Subtract the closer horizontal distance (at 60°) from the farther horizontal distance (at 30°). Both computed using: distance = effective height ÷ tangent of angle.</div>`,
+  };
+  content.innerHTML = reprs[mode] || reprs.algebraic;
+}
+
+function showSymbol(sym) {
+  const el = document.getElementById('symbolExplain');
+  el.style.display = 'block';
+  const info = {
+    h: '<strong>h = 87 m</strong>: The effective vertical height = balloon height (88.2 m) − girl\'s eye level (1.2 m). Always subtract the observer\'s height!',
+    alpha: '<strong>α = 60°</strong>: The first (steeper) angle of elevation — when the balloon is closer.',
+    beta: '<strong>β = 30°</strong>: The second (shallower) angle — when the balloon has moved farther away.',
+    d: '<strong>d</strong>: The horizontal distance the balloon travelled = BD − BC = 87√3 − 29√3 = 58√3 ≈ 100.4 m',
+  };
+  el.innerHTML = info[sym] || '';
+}
+
+function toggleProof() {
+  const panel = document.getElementById('proofPanel');
+  const btn   = document.getElementById('proofToggleBtn');
+  if (panel.style.display === 'none') {
+    panel.style.display = 'flex';
+    btn.textContent = 'Hide Proof';
+  } else {
+    panel.style.display = 'none';
+    btn.textContent = 'Proof ▸';
+  }
+}
+
+function onBalloonSlider(val) {
+  balloonFrac = val / 100;
+  const label = document.getElementById('balSliderVal');
+  if (label) {
+    const angle = 60 - (val / 100) * 30;
+    label.textContent = val < 5 ? 'Near (60°)' : val > 95 ? 'Far (30°)' : `~${angle.toFixed(0)}°`;
+  }
+}
+
+function nextPhase() {
+  if (StudentModel.phase < 6) {
+    StudentModel.phase++;
+    renderPhasePanel();
+  }
+}
+
+function jumpToPhase(n) {
+  if (n === 0) { document.getElementById('phase0Overlay').style.display = 'flex'; return; }
+  StudentModel.phase = n;
+  if (n >= 2) balloonFrac = n >= 4 ? 1 : 0;
+  renderPhasePanel();
+}
+
+function resetSim() {
+  StudentModel.phase = 1;
+  StudentModel.wrongAnswers = 0;
+  StudentModel.rightAnswers = 0;
+  StudentModel.predictionValue = null;
+  balloonFrac = 0;
+  document.getElementById('phase0Overlay').style.display = 'none';
+  renderPhasePanel();
+}
+
+// ══ KEYBOARD SHORTCUTS ══
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  const k = e.key;
+  if (k === ' ') { e.preventDefault(); /* pause toggle future */ }
+  if (k === 'r' || k === 'R') resetSim();
+  if (k === 'ArrowRight' || k === 'n' || k === 'N') nextPhase();
+  if (k === 'f' || k === 'F') toggleProof();
+  if (k >= '1' && k <= '6') jumpToPhase(parseInt(k));
+  if (k === '0') { document.getElementById('phase0Overlay').style.display = 'flex'; }
+});
+
+// ══ INIT ══
+buildPhaseDots();
+updatePhaseDots();
+renderPhasePanel();
+lastTime = performance.now();
+requestAnimationFrame(draw);
+</script>
+</body>
+</html>

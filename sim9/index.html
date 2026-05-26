@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APEX-EDU · Heights & Distances · Angles of Depression</title>
+<style>
+:root {
+  --bg: #FAFAF5;
+  --ink: #1C1917;
+  --ink-light: #6B6560;
+  --accent: #3B5B8C;
+  --accent-warm: #C4622D;
+  --highlight: #D4A843;
+  --panel-bg: #F2EDE5;
+  --panel-border: #DDD5C8;
+  --success: #2A7C6F;
+  --danger: #B44A3A;
+  --font-body: Georgia, 'Times New Roman', serif;
+  --font-mono: 'Courier New', Courier, monospace;
+  --font-label: Verdana, Geneva, sans-serif;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--ink);
+  overflow: hidden;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.top-bar {
+  background: var(--ink);
+  color: var(--bg);
+  padding: 8px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  z-index: 100;
+}
+.top-bar .brand { font-weight: bold; letter-spacing: 1px; }
+.top-bar .topic { opacity: 0.7; }
+.top-bar .badge-row { display: flex; gap: 8px; }
+.badge {
+  background: rgba(255,255,255,0.12);
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-family: var(--font-label);
+}
+.main-container {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+.canvas-area {
+  flex: 1;
+  position: relative;
+  background: var(--bg);
+}
+#simCanvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.panel {
+  width: 360px;
+  min-width: 320px;
+  background: var(--panel-bg);
+  border-left: 1px solid var(--panel-border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.panel-header {
+  padding: 16px 20px 8px;
+  border-bottom: 1px solid var(--panel-border);
+}
+.panel-header h2 {
+  font-size: 18px;
+  font-weight: normal;
+  margin-bottom: 4px;
+}
+.panel-header .phase-label {
+  font-size: 11px;
+  font-family: var(--font-label);
+  color: var(--ink-light);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.progress-bar {
+  height: 3px;
+  background: rgba(28,25,23,0.08);
+  margin: 12px 0 0;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.4s ease;
+  border-radius: 2px;
+}
+.panel-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+}
+.panel-content::-webkit-scrollbar { width: 6px; }
+.panel-content::-webkit-scrollbar-thumb { background: var(--panel-border); border-radius: 3px; }
+.phase-card {
+  display: none;
+  animation: fadeIn 0.4s ease;
+}
+.phase-card.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.challenge-box {
+  background: var(--bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  position: relative;
+}
+.challenge-box::before {
+  content: "CHALLENGE";
+  position: absolute;
+  top: -10px;
+  left: 12px;
+  background: var(--panel-bg);
+  padding: 0 8px;
+  font-size: 10px;
+  font-family: var(--font-label);
+  font-weight: bold;
+  color: var(--accent);
+  letter-spacing: 1px;
+}
+.challenge-text {
+  font-size: 15px;
+  line-height: 1.6;
+  margin-top: 6px;
+}
+.difficulty {
+  margin-top: 10px;
+  font-size: 11px;
+  font-family: var(--font-label);
+  color: var(--ink-light);
+}
+.prediction-widget {
+  background: var(--bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.prediction-widget h4 {
+  font-size: 14px;
+  margin-bottom: 12px;
+  color: var(--accent);
+}
+.prediction-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+  align-items: flex-end;
+}
+.prediction-field { flex: 1; }
+.prediction-field label {
+  display: block;
+  font-size: 11px;
+  font-family: var(--font-label);
+  color: var(--ink-light);
+  margin-bottom: 4px;
+}
+.prediction-field input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  background: var(--bg);
+  color: var(--ink);
+}
+.prediction-field input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-family: var(--font-label);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-primary {
+  background: var(--accent);
+  color: white;
+}
+.btn-primary:hover { background: #2d4a70; }
+.btn-secondary {
+  background: transparent;
+  border: 1px solid var(--panel-border);
+  color: var(--ink);
+}
+.btn-secondary:hover { background: var(--panel-border); }
+.btn-success {
+  background: var(--success);
+  color: white;
+}
+.btn-success:hover { background: #1f5e52; }
+.btn-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+.step-card {
+  background: var(--bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.step-card h3 {
+  font-size: 15px;
+  margin-bottom: 10px;
+  color: var(--accent);
+}
+.step-card p, .step-card li {
+  font-size: 14px;
+  line-height: 1.7;
+  margin-bottom: 8px;
+}
+.step-card ul { padding-left: 20px; }
+.formula-box {
+  background: rgba(59,91,140,0.06);
+  border-left: 3px solid var(--accent);
+  padding: 12px 16px;
+  margin: 12px 0;
+  border-radius: 0 6px 6px 0;
+  font-family: var(--font-mono);
+  font-size: 15px;
+}
+.formula-box .formula-line {
+  display: block;
+  margin: 4px 0;
+}
+.answer-reveal {
+  background: rgba(42,124,111,0.08);
+  border: 1px solid var(--success);
+  border-radius: 8px;
+  padding: 16px;
+  margin: 12px 0;
+  text-align: center;
+}
+.answer-reveal .big-answer {
+  font-size: 28px;
+  font-weight: bold;
+  color: var(--success);
+  font-family: var(--font-mono);
+}
+.answer-reveal .answer-label {
+  font-size: 12px;
+  color: var(--ink-light);
+  margin-top: 4px;
+}
+.prediction-result {
+  background: rgba(212,168,67,0.08);
+  border: 1px solid var(--highlight);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 12px 0;
+  font-size: 13px;
+}
+.fill-blank {
+  display: inline-block;
+  width: 50px;
+  padding: 2px 6px;
+  border: none;
+  border-bottom: 2px solid var(--accent);
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 15px;
+  text-align: center;
+  color: var(--accent);
+  margin: 0 2px;
+}
+.fill-blank:focus { outline: none; background: rgba(59,91,140,0.08); }
+.fill-blank.correct { border-color: var(--success); color: var(--success); }
+.fill-blank.wrong { border-color: var(--danger); color: var(--danger); }
+.why-toggle {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--accent);
+  cursor: pointer;
+  font-family: var(--font-label);
+}
+.why-toggle:hover { text-decoration: underline; }
+.why-content {
+  display: none;
+  margin-top: 8px;
+  padding: 10px;
+  background: rgba(59,91,140,0.04);
+  border-radius: 6px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink-light);
+}
+.why-content.show { display: block; }
+.did-you-know {
+  font-style: italic;
+  font-size: 12px;
+  color: var(--ink-light);
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--panel-border);
+  line-height: 1.6;
+}
+.test-option {
+  display: block;
+  width: 100%;
+  padding: 10px 14px;
+  margin: 6px 0;
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  background: var(--bg);
+  text-align: left;
+  font-family: var(--font-body);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.test-option:hover { border-color: var(--accent); background: rgba(59,91,140,0.04); }
+.test-option.correct { border-color: var(--success); background: rgba(42,124,111,0.08); }
+.test-option.wrong { border-color: var(--danger); background: rgba(180,74,58,0.08); }
+.teacher-btn {
+  position: fixed;
+  bottom: 16px;
+  right: 376px;
+  background: var(--ink);
+  color: var(--bg);
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-family: var(--font-label);
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+  z-index: 50;
+}
+.teacher-btn:hover { opacity: 1; }
+.teacher-panel {
+  display: none;
+  position: fixed;
+  bottom: 50px;
+  right: 376px;
+  width: 320px;
+  background: var(--bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  z-index: 51;
+  font-size: 12px;
+  line-height: 1.7;
+  max-height: 400px;
+  overflow-y: auto;
+}
+.teacher-panel.show { display: block; }
+.teacher-panel h4 {
+  font-size: 13px;
+  margin-bottom: 8px;
+  color: var(--accent);
+}
+.teacher-panel ul { padding-left: 18px; margin-bottom: 10px; }
+.hint-toast {
+  position: fixed;
+  top: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--ink);
+  color: var(--bg);
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: var(--font-label);
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+  z-index: 200;
+}
+.hint-toast.show { opacity: 1; }
+@media (max-width: 768px) {
+  .main-container { flex-direction: column; }
+  .panel {
+    width: 100%;
+    min-width: auto;
+    max-height: 45vh;
+    border-left: none;
+    border-top: 1px solid var(--panel-border);
+  }
+  .teacher-btn { right: 16px; bottom: auto; top: 50px; }
+  .teacher-panel { right: 16px; top: 85px; bottom: auto; width: calc(100% - 32px); }
+}
+</style>
+<base target="_blank">
+</head>
+<body>
+
+<div class="top-bar">
+  <div>
+    <span class="brand">APEX-EDU</span>
+    <span class="topic"> · Trigonometry · Heights & Distances</span>
+  </div>
+  <div class="badge-row">
+    <span class="badge">Class 9-10</span>
+    <span class="badge">Angles of Depression</span>
+    <span class="badge" id="phaseBadge">Phase 1: Hook</span>
+  </div>
+</div>
+
+<div class="main-container">
+  <div class="canvas-area">
+    <canvas id="simCanvas"></canvas>
+  </div>
+  <div class="panel">
+    <div class="panel-header">
+      <h2 id="panelTitle">The Observer's View</h2>
+      <div class="phase-label" id="phaseLabel">Phase 1 · Hook</div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width: 10%"></div></div>
+    </div>
+    <div class="panel-content" id="panelContent">
+
+      <!-- PHASE 1: HOOK -->
+      <div class="phase-card active" id="phase1">
+        <div class="challenge-box">
+          <div class="challenge-text">
+            From the top of a tall building, you look down at two points on a smaller building nearby — its roof and its base. The angles your gaze makes with the horizontal are <strong>30 degrees</strong> and <strong>45 degrees</strong>.<br><br>
+            The smaller building is only <strong>8 metres</strong> tall. Can you figure out how tall the big building is — and how far apart they stand?
+          </div>
+          <div class="difficulty">Difficulty: ●●●○○ · Class 9-10 · NCERT Ch. 9</div>
+        </div>
+        <p style="font-size:14px; line-height:1.7; margin-bottom:12px;">
+          <strong>First, a quick prediction:</strong> Before we solve this, take a guess. How tall do you think the multi-storeyed building is? And how far apart are the two buildings?
+        </p>
+        <div class="prediction-widget">
+          <h4>Your Prediction</h4>
+          <div class="prediction-row">
+            <div class="prediction-field">
+              <label>Height of big building (m)</label>
+              <input type="number" id="predHeight" placeholder="e.g. 20" min="8" max="50" step="0.1">
+            </div>
+            <div class="prediction-field">
+              <label>Distance between buildings (m)</label>
+              <input type="number" id="predDistance" placeholder="e.g. 15" min="1" max="50" step="0.1">
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="app.submitPrediction()">Make Prediction & Explore</button>
+        </div>
+        <div class="did-you-know">
+          Did you know? The Great Pyramid of Giza was originally 146.6 m tall. Ancient Egyptian surveyors used angles of elevation (the reverse of depression) to verify its height using nothing but shadows and basic trigonometry — over 4,500 years ago.
+        </div>
+      </div>
+
+      <!-- PHASE 2: EXPLORE -->
+      <div class="phase-card" id="phase2">
+        <p style="font-size:14px; line-height:1.7; margin-bottom:12px;">
+          <strong>Explore freely.</strong> The scene shows two buildings. From the observer's eye on the tall building, two lines of sight drop down to the smaller building.
+        </p>
+        <div class="step-card">
+          <h3>Try These</h3>
+          <ul>
+            <li>Drag the <strong>Observer Height</strong> slider — watch both angles change</li>
+            <li>Drag the <strong>Distance</strong> slider — see how the angles respond</li>
+            <li>Drag the <strong>Small Building</strong> slider — notice the gap between lines</li>
+            <li>Notice: the <strong>angle of depression</strong> from the observer equals the <strong>angle of elevation</strong> from the ground (alternate interior angles)</li>
+          </ul>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="app.advanceToPhase(3)">I'm Ready — Solve the Challenge</button>
+        </div>
+        <div class="did-you-know">
+          Did you know? Modern drones and satellites use the exact same principle — measuring angles of depression to calculate terrain elevation and building heights from aerial photographs.
+        </div>
+      </div>
+
+      <!-- PHASE 3: CHALLENGE -->
+      <div class="phase-card" id="phase3">
+        <div class="challenge-box">
+          <div class="challenge-text">
+            <strong>The angles of depression</strong> of the top and the bottom of an <strong>8 m tall building</strong> from the top of a multi-storeyed building are <strong>30 degrees</strong> and <strong>45 degrees</strong>, respectively.<br><br>
+            Find the <strong>height</strong> of the multi-storeyed building and the <strong>distance</strong> between the two buildings.
+          </div>
+        </div>
+        <p style="font-size:13px; color:var(--ink-light); margin-bottom:12px;">
+          Your prediction: Height ≈ <span id="predHDisplay">--</span> m, Distance ≈ <span id="predDDisplay">--</span> m
+        </p>
+        <div class="step-card">
+          <h3>Step 1 · The Scene</h3>
+          <p>Imagine standing on the roof of a tall building. You look down at a smaller 8 m building next door. Your line of sight to the <strong>bottom</strong> of the small building makes a 45 degree angle below horizontal. Your line of sight to the <strong>top</strong> makes a 30 degree angle below horizontal.</p>
+          <p>Two right triangles are hidden in this picture. Can you spot them on the canvas?</p>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="app.advanceStep()">Continue to Step 2</button>
+        </div>
+      </div>
+
+      <!-- PHASE 4: REVEAL -->
+      <div class="phase-card" id="phase4">
+        <div id="stepContainer"></div>
+      </div>
+
+      <!-- PHASE 5: MASTER -->
+      <div class="phase-card" id="phase5">
+        <div class="step-card">
+          <h3>Self-Test — Same Math, New Scenes</h3>
+          <p style="font-size:13px; color:var(--ink-light); margin-bottom:12px;">Test your understanding with three variations:</p>
+          <div id="testContainer"></div>
+        </div>
+        <div class="step-card">
+          <h3>The Bigger Picture</h3>
+          <p>This same mathematics powers:</p>
+          <ul>
+            <li><strong>Aviation:</strong> Pilots use angles of depression to calculate altitude and ground distance</li>
+            <li><strong>Surveying:</strong> Theodolites measure angles to map terrain and property boundaries</li>
+            <li><strong>Astronomy:</strong> Parallax — measuring star distances by observing from opposite sides of Earth's orbit</li>
+            <li><strong>Photogrammetry:</strong> Converting 2D aerial photos into 3D elevation maps</li>
+          </ul>
+        </div>
+        <div class="did-you-know">
+          Did you know? The word "trigonometry" comes from Greek trigōnon (triangle) + metron (measure). It was developed by ancient Greek astronomers — notably Hipparchus, who used it to predict eclipses in 150 BC.
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-secondary" onclick="app.reset()">Start Over</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="teacher-btn" onclick="app.toggleTeacher()">For Teachers</div>
+<div class="teacher-panel" id="teacherPanel">
+  <h4>NCERT / CBSE Alignment</h4>
+  <p>Chapter 9 · Some Applications of Trigonometry · Exercise 9.1 · Q9</p>
+  <h4>Learning Objectives</h4>
+  <ul>
+    <li>Understand angle of depression as measured below the horizontal</li>
+    <li>Apply alternate interior angles: angle of depression = angle of elevation</li>
+    <li>Set up and solve two simultaneous right-triangle equations</li>
+    <li>Use tan theta = opposite/adjacent in real-world contexts</li>
+    <li>Work with exact values involving root 3</li>
+  </ul>
+  <h4>Common Errors</h4>
+  <ul>
+    <li>Confusing angle of depression with angle from vertical</li>
+    <li>Forgetting that tan(45) = 1, not root 3</li>
+    <li>Adding the two angles (30 + 45 = 75) instead of using them separately</li>
+    <li>Using sin or cos instead of tan for opposite/adjacent ratios</li>
+  </ul>
+  <h4>Prerequisites</h4>
+  <ul>
+    <li>Trigonometric ratios: sin, cos, tan</li>
+    <li>Special angles: 30, 45, 60</li>
+    <li>Alternate interior angles theorem</li>
+    <li>Solving linear equations with radicals</li>
+  </ul>
+</div>
+
+<div class="hint-toast" id="hintToast"></div>
+
+<script>
+// Math constants
+const DEG = Math.PI / 180;
+const RAD = 180 / Math.PI;
+const SQRT3 = Math.sqrt(3);
+
+// Application state
+const app = {
+  phase: 1,
+  step: 0,
+  totalSteps: 7,
+  predHeight: null,
+  predDistance: null,
+  showConstruction: true,
+  showUnitCircle: false,
+  showGrid: true,
+  smallBuildingHeight: 8,
+  angleTop: 30,
+  angleBottom: 45,
+  bigBuildingHeight: 12 + 4 * SQRT3,
+  distance: 12 + 4 * SQRT3,
+  sliderHeight: { value: 12 + 4 * SQRT3, min: 10, max: 35, label: "Observer Height", unit: "m" },
+  sliderDistance: { value: 12 + 4 * SQRT3, min: 5, max: 40, label: "Distance", unit: "m" },
+  sliderSmallHeight: { value: 8, min: 4, max: 15, label: "Small Building", unit: "m" },
+  draggingSlider: null,
+  canvas: null,
+  ctx: null,
+  width: 0,
+  height: 0,
+  animTime: 0,
+  currentTest: 0,
+  testScore: 0,
+};
+
+function init() {
+  app.canvas = document.getElementById('simCanvas');
+  app.ctx = app.canvas.getContext('2d');
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+  app.canvas.addEventListener('mousedown', onPointerDown);
+  app.canvas.addEventListener('mousemove', onPointerMove);
+  app.canvas.addEventListener('mouseup', onPointerUp);
+  app.canvas.addEventListener('touchstart', e => { e.preventDefault(); onPointerDown(e.touches[0]); });
+  app.canvas.addEventListener('touchmove', e => { e.preventDefault(); onPointerMove(e.touches[0]); });
+  app.canvas.addEventListener('touchend', onPointerUp);
+  document.addEventListener('keydown', onKeyDown);
+  requestAnimationFrame(gameLoop);
+}
+
+function resizeCanvas() {
+  const area = document.querySelector('.canvas-area');
+  app.width = area.clientWidth;
+  app.height = area.clientHeight;
+  const dpr = window.devicePixelRatio || 1;
+  app.canvas.width = app.width * dpr;
+  app.canvas.height = app.height * dpr;
+  app.ctx.scale(dpr, dpr);
+  app.canvas.style.width = app.width + 'px';
+  app.canvas.style.height = app.height + 'px';
+}
+
+function gameLoop(timestamp) {
+  app.animTime = timestamp / 1000;
+  draw();
+  requestAnimationFrame(gameLoop);
+}
+
+function draw() {
+  const ctx = app.ctx;
+  const W = app.width;
+  const H = app.height;
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#FAFAF5';
+  ctx.fillRect(0, 0, W, H);
+  if (app.showGrid) drawGrid(ctx, W, H);
+
+  const groundY = H * 0.78;
+  const sceneLeft = W * 0.12;
+  const sceneRight = W * 0.88;
+  const buildingWidth = Math.min(80, W * 0.08);
+
+  let bigH, dist, smallH;
+  if (app.phase <= 2) {
+    bigH = app.sliderHeight.value;
+    dist = app.sliderDistance.value;
+    smallH = app.sliderSmallHeight.value;
+  } else {
+    bigH = app.bigBuildingHeight;
+    dist = app.distance;
+    smallH = app.smallBuildingHeight;
+  }
+
+  const maxHeight = Math.max(bigH, smallH) * 1.3;
+  const pixelsPerMeter = (groundY - H * 0.08) / maxHeight;
+  const bigBuildingX = sceneLeft;
+  const smallBuildingX = bigBuildingX + dist * pixelsPerMeter;
+  const bigBuildingTop = groundY - bigH * pixelsPerMeter;
+  const smallBuildingTop = groundY - smallH * pixelsPerMeter;
+
+  drawGround(ctx, 0, groundY, W, H - groundY);
+
+  if (app.showConstruction) {
+    ctx.save();
+    ctx.setLineDash([8, 4]);
+    ctx.strokeStyle = 'rgba(59, 91, 140, 0.35)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(bigBuildingX + buildingWidth / 2, bigBuildingTop);
+    ctx.lineTo(smallBuildingX + buildingWidth / 2, bigBuildingTop);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(bigBuildingX + buildingWidth / 2, bigBuildingTop);
+    ctx.lineTo(smallBuildingX + buildingWidth / 2, groundY);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(smallBuildingX + buildingWidth / 2, bigBuildingTop);
+    ctx.lineTo(smallBuildingX + buildingWidth / 2, groundY);
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(196, 98, 45, 0.3)';
+    ctx.beginPath();
+    ctx.moveTo(smallBuildingX + buildingWidth / 2 + 30, smallBuildingTop);
+    ctx.lineTo(smallBuildingX + buildingWidth / 2 + 30, bigBuildingTop);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  drawBuilding(ctx, bigBuildingX, groundY, buildingWidth, bigH * pixelsPerMeter, '#C4B9A8', '#A89880', true, "Multi-storeyed");
+  drawBuilding(ctx, smallBuildingX, groundY, buildingWidth, smallH * pixelsPerMeter, '#D4C8B8', '#B8A890', false, "8 m Building");
+
+  const eyeX = bigBuildingX + buildingWidth / 2;
+  const eyeY = bigBuildingTop;
+  ctx.fillStyle = '#1C1917';
+  ctx.beginPath();
+  ctx.arc(eyeX, eyeY, 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#1C1917';
+  ctx.font = 'bold 12px Verdana';
+  ctx.fillText("Observer", eyeX - 28, eyeY - 12);
+
+  const dx = (smallBuildingX + buildingWidth / 2) - eyeX;
+  const dyTop = eyeY - smallBuildingTop;
+  const dyBottom = eyeY - groundY;
+  const actualAngleTop = Math.atan2(dyTop, dx) * RAD;
+  const actualAngleBottom = Math.atan2(dyBottom, dx) * RAD;
+
+  ctx.strokeStyle = '#3B5B8C';
+  ctx.lineWidth = 2.5;
+  ctx.setLineDash([]);
+  ctx.beginPath();
+  ctx.moveTo(eyeX, eyeY);
+  ctx.lineTo(smallBuildingX + buildingWidth / 2, smallBuildingTop);
+  ctx.stroke();
+
+  ctx.strokeStyle = '#2A7C6F';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(eyeX, eyeY);
+  ctx.lineTo(smallBuildingX + buildingWidth / 2, groundY);
+  ctx.stroke();
+
+  const arcRadius = 60;
+  ctx.strokeStyle = '#3B5B8C';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(eyeX, eyeY, arcRadius, 0, actualAngleTop * DEG);
+  ctx.stroke();
+  const labelAngleTop = actualAngleTop * DEG / 2;
+  const labelXTop = eyeX + (arcRadius + 20) * Math.cos(labelAngleTop);
+  const labelYTop = eyeY + (arcRadius + 20) * Math.sin(labelAngleTop);
+  ctx.fillStyle = '#3B5B8C';
+  ctx.font = 'bold 13px Verdana';
+  ctx.fillText(actualAngleTop.toFixed(1) + " deg", labelXTop + 5, labelYTop);
+
+  ctx.strokeStyle = '#2A7C6F';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(eyeX, eyeY, arcRadius + 25, 0, actualAngleBottom * DEG);
+  ctx.stroke();
+  const labelAngleBottom = actualAngleBottom * DEG / 2;
+  const labelXBot = eyeX + (arcRadius + 45) * Math.cos(labelAngleBottom);
+  const labelYBot = eyeY + (arcRadius + 45) * Math.sin(labelAngleBottom);
+  ctx.fillStyle = '#2A7C6F';
+  ctx.font = 'bold 13px Verdana';
+  ctx.fillText(actualAngleBottom.toFixed(1) + " deg", labelXBot + 5, labelYBot);
+
+  ctx.fillStyle = '#1C1917';
+  ctx.font = '13px Georgia';
+  ctx.fillText("H = " + bigH.toFixed(2) + " m", bigBuildingX + buildingWidth + 8, (groundY + bigBuildingTop) / 2);
+  ctx.fillText("h = " + smallH.toFixed(1) + " m", smallBuildingX + buildingWidth + 8, (groundY + smallBuildingTop) / 2);
+  ctx.fillText("d = " + dist.toFixed(2) + " m", (bigBuildingX + smallBuildingX + buildingWidth) / 2 - 30, groundY + 22);
+
+  if (app.showConstruction) {
+    ctx.fillStyle = '#C4622D';
+    ctx.font = '12px Georgia';
+    const diffH = bigH - smallH;
+    ctx.fillText("H-h = " + diffH.toFixed(2) + " m", smallBuildingX + buildingWidth / 2 + 35, (smallBuildingTop + bigBuildingTop) / 2);
+  }
+
+  ctx.strokeStyle = 'rgba(28, 25, 23, 0.15)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(eyeX, eyeY);
+  ctx.lineTo(eyeX + 120, eyeY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = 'rgba(28, 25, 23, 0.4)';
+  ctx.font = '11px Verdana';
+  ctx.fillText("horizontal", eyeX + 60, eyeY - 4);
+
+  if (app.phase >= 3 || app.showUnitCircle) {
+    drawUnitCircleInset(ctx, W - 140, 80, 55, actualAngleTop);
+  }
+
+  if (app.phase <= 2) {
+    drawSlider(ctx, W * 0.05, H - 80, W * 0.25, app.sliderHeight, 0);
+    drawSlider(ctx, W * 0.35, H - 80, W * 0.25, app.sliderDistance, 1);
+    drawSlider(ctx, W * 0.65, H - 80, W * 0.25, app.sliderSmallHeight, 2);
+  }
+
+  if (app.phase === 1) {
+    ctx.fillStyle = 'rgba(28, 25, 23, 0.7)';
+    ctx.font = 'bold 18px Georgia';
+    ctx.fillText("Drag the sliders to explore the scene", W / 2 - 160, H * 0.12);
+  }
+}
+
+function drawGrid(ctx, W, H) {
+  ctx.strokeStyle = 'rgba(28, 25, 23, 0.04)';
+  ctx.lineWidth = 1;
+  const step = 40;
+  for (let x = 0; x < W; x += step) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+  for (let y = 0; y < H; y += step) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+}
+
+function drawGround(ctx, x, y, w, h) {
+  ctx.fillStyle = '#C8C0B0';
+  ctx.fillRect(x, y, w, h);
+  ctx.strokeStyle = 'rgba(28, 25, 23, 0.06)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < w; i += 30) { ctx.beginPath(); ctx.moveTo(x + i, y); ctx.lineTo(x + i + 15, y + h); ctx.stroke(); }
+  ctx.strokeStyle = 'rgba(28, 25, 23, 0.15)';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + w, y); ctx.stroke();
+}
+
+function drawBuilding(ctx, x, y, w, h, colorLight, colorDark, isTall, label) {
+  const grad = ctx.createLinearGradient(x, y - h, x + w, y - h);
+  grad.addColorStop(0, colorLight);
+  grad.addColorStop(1, colorDark);
+  ctx.fillStyle = grad;
+  ctx.fillRect(x, y - h, w, h);
+  ctx.fillStyle = colorDark;
+  ctx.fillRect(x - 2, y - h - 4, w + 4, 4);
+  ctx.fillStyle = 'rgba(59, 91, 140, 0.25)';
+  const winW = w * 0.25;
+  const winH = h * 0.08;
+  const cols = 2;
+  const rows = Math.floor(h / (winH * 2.5));
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const wx = x + w * 0.15 + c * (winW + w * 0.1);
+      const wy = y - h + h * 0.1 + r * (winH * 2.5);
+      if (wy + winH < y - 10) ctx.fillRect(wx, wy, winW, winH);
+    }
+  }
+  ctx.fillStyle = '#1C1917';
+  ctx.font = '11px Verdana';
+  ctx.fillText(label, x + 2, y + 14);
+}
+
+function drawUnitCircleInset(ctx, cx, cy, r, angleDeg) {
+  const angle = angleDeg * DEG;
+  ctx.fillStyle = 'rgba(250, 250, 245, 0.9)';
+  ctx.strokeStyle = 'rgba(28, 25, 23, 0.15)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(cx - r - 10, cy - r - 10, r * 2 + 20, r * 2 + 40, 8);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#6B6560';
+  ctx.font = '10px Verdana';
+  ctx.fillText("Unit Circle", cx - 20, cy - r - 2);
+  ctx.strokeStyle = 'rgba(28, 25, 23, 0.3)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.strokeStyle = 'rgba(28, 25, 23, 0.2)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(cx - r - 5, cy); ctx.lineTo(cx + r + 5, cy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx, cy + r + 5); ctx.lineTo(cx, cy - r - 5); ctx.stroke();
+  const endX = cx + r * Math.cos(angle);
+  const endY = cy + r * Math.sin(angle);
+  ctx.strokeStyle = '#3B5B8C';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(endX, endY);
+  ctx.stroke();
+  ctx.setLineDash([4, 3]);
+  ctx.strokeStyle = '#C4622D';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(endX, endY);
+  ctx.lineTo(endX, cy);
+  ctx.stroke();
+  ctx.strokeStyle = '#2A7C6F';
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(endX, cy);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#D4A843';
+  ctx.beginPath();
+  ctx.arc(endX, endY, 4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#3B5B8C';
+  ctx.font = 'bold 10px Verdana';
+  ctx.fillText("theta = " + angleDeg.toFixed(1) + " deg", cx - 25, cy + r + 18);
+  ctx.fillStyle = '#2A7C6F';
+  ctx.font = '9px Verdana';
+  ctx.fillText("cos = " + Math.cos(angle).toFixed(2), cx - 30, cy + r + 30);
+  ctx.fillStyle = '#C4622D';
+  ctx.fillText("sin = " + Math.sin(angle).toFixed(2), cx + 5, cy + r + 30);
+}
+
+function drawSlider(ctx, x, y, width, slider, index) {
+  const trackY = y;
+  const fillW = ((slider.value - slider.min) / (slider.max - slider.min)) * width;
+  const thumbX = x + fillW;
+  ctx.strokeStyle = 'rgba(28, 25, 23, 0.12)';
+  ctx.lineWidth = 4;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(x, trackY);
+  ctx.lineTo(x + width, trackY);
+  ctx.stroke();
+  ctx.strokeStyle = '#3B5B8C';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(x, trackY);
+  ctx.lineTo(x + fillW, trackY);
+  ctx.stroke();
+  ctx.fillStyle = '#FAFAF5';
+  ctx.strokeStyle = '#3B5B8C';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(thumbX, trackY, 10, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#1C1917';
+  ctx.font = '12px Verdana';
+  ctx.fillText(slider.label + ": " + slider.value.toFixed(1) + slider.unit, x, trackY - 18);
+  ctx.fillStyle = '#6B6560';
+  ctx.font = '10px Verdana';
+  ctx.fillText(slider.min, x - 8, trackY + 18);
+  ctx.fillText(slider.max, x + width + 2, trackY + 18);
+  slider._hitX = x;
+  slider._hitY = trackY;
+  slider._hitW = width;
+  slider._index = index;
+}
+
+function onPointerDown(e) {
+  const rect = app.canvas.getBoundingClientRect();
+  const mx = (e.clientX - rect.left);
+  const my = (e.clientY - rect.top);
+  if (app.phase <= 2) {
+    for (const slider of [app.sliderHeight, app.sliderDistance, app.sliderSmallHeight]) {
+      const thumbX = slider._hitX + ((slider.value - slider.min) / (slider.max - slider.min)) * slider._hitW;
+      if (Math.abs(mx - thumbX) < 20 && Math.abs(my - slider._hitY) < 20) {
+        app.draggingSlider = slider;
+        return;
+      }
+    }
+  }
+}
+
+function onPointerMove(e) {
+  if (!app.draggingSlider) return;
+  const rect = app.canvas.getBoundingClientRect();
+  const mx = (e.clientX - rect.left);
+  const s = app.draggingSlider;
+  let ratio = (mx - s._hitX) / s._hitW;
+  ratio = Math.max(0, Math.min(1, ratio));
+  s.value = s.min + ratio * (s.max - s.min);
+}
+
+function onPointerUp() { app.draggingSlider = null; }
+
+function onKeyDown(e) {
+  if (e.key === 'r' || e.key === 'R') app.reset();
+  if (e.key === 'n' || e.key === 'N') {
+    if (app.phase === 3) app.advanceStep();
+    else if (app.phase < 5) app.advanceToPhase(app.phase + 1);
+  }
+  if (e.key === 'g' || e.key === 'G') app.showGrid = !app.showGrid;
+  if (e.key === 'c' || e.key === 'C') app.showConstruction = !app.showConstruction;
+}
+
+app.submitPrediction = function() {
+  const h = parseFloat(document.getElementById('predHeight').value);
+  const d = parseFloat(document.getElementById('predDistance').value);
+  if (!h || !d) { showHint("Please enter both predictions first!"); return; }
+  app.predHeight = h;
+  app.predDistance = d;
+  document.getElementById('predHDisplay').textContent = h.toFixed(1);
+  document.getElementById('predDDisplay').textContent = d.toFixed(1);
+  app.sliderHeight.value = app.bigBuildingHeight;
+  app.sliderDistance.value = app.distance;
+  app.sliderSmallHeight.value = app.smallBuildingHeight;
+  app.advanceToPhase(2);
+};
+
+app.advanceToPhase = function(phase) {
+  document.querySelectorAll('.phase-card').forEach(c => c.classList.remove('active'));
+  document.getElementById('phase' + phase).classList.add('active');
+  app.phase = phase;
+  const phaseNames = ['', 'Hook', 'Explore', 'Challenge', 'Reveal', 'Master'];
+  document.getElementById('phaseBadge').textContent = 'Phase ' + phase + ': ' + phaseNames[phase];
+  document.getElementById('phaseLabel').textContent = 'Phase ' + phase + ' · ' + phaseNames[phase];
+  document.getElementById('progressFill').style.width = (phase / 5 * 100) + '%';
+  const titles = ['', "The Observer's View", 'Free Exploration', 'The Challenge', 'Step-by-Step Solution', 'Master the Concept'];
+  document.getElementById('panelTitle').textContent = titles[phase];
+  if (phase === 3) { app.step = 1; renderStep1(); }
+  if (phase === 4) { renderAllSteps(); }
+  if (phase === 5) { renderSelfTests(); }
+};
+
+app.advanceStep = function() {
+  app.step++;
+  if (app.step > app.totalSteps) { app.advanceToPhase(4); return; }
+  renderStep(app.step);
+};
+
+app.reset = function() {
+  app.phase = 1;
+  app.step = 0;
+  app.currentTest = 0;
+  app.testScore = 0;
+  app.sliderHeight.value = 20;
+  app.sliderDistance.value = 15;
+  app.sliderSmallHeight.value = 8;
+  document.querySelectorAll('.phase-card').forEach(c => c.classList.remove('active'));
+  document.getElementById('phase1').classList.add('active');
+  document.getElementById('phaseBadge').textContent = 'Phase 1: Hook';
+  document.getElementById('phaseLabel').textContent = 'Phase 1 · Hook';
+  document.getElementById('progressFill').style.width = '10%';
+  document.getElementById('panelTitle').textContent = "The Observer's View";
+  document.getElementById('predHeight').value = '';
+  document.getElementById('predDistance').value = '';
+};
+
+app.toggleTeacher = function() {
+  document.getElementById('teacherPanel').classList.toggle('show');
+};
+
+function showHint(msg) {
+  const toast = document.getElementById('hintToast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+function toggleWhy(el) {
+  const content = el.nextElementSibling;
+  content.classList.toggle('show');
+}
+
+function renderStep1() {
+  const container = document.getElementById('stepContainer');
+  container.innerHTML = `
+    <div class="step-card" id="step-1">
+      <h3>Step 1 · The Scene</h3>
+      <p>Imagine standing on the roof of a tall multi-storeyed building. You look across at a smaller building that's only <strong>8 metres</strong> tall.</p>
+      <p>From your eye level, you look <strong>down</strong> at two points:</p>
+      <ul>
+        <li>The <strong>bottom</strong> of the small building — your gaze is 45 degrees below horizontal</li>
+        <li>The <strong>top</strong> of the small building — your gaze is 30 degrees below horizontal</li>
+      </ul>
+      <p>Two invisible right triangles are formed. Can you see them on the canvas?</p>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="app.advanceStep()">Continue to Step 2</button>
+      </div>
+    </div>
+  `;
+}
+
+function renderAllSteps() {
+  const container = document.getElementById('stepContainer');
+  const H = app.bigBuildingHeight;
+  const d = app.distance;
+  const h = app.smallBuildingHeight;
+  container.innerHTML = `
+    <div class="step-card">
+      <h3>Step 2 · The Key Insight</h3>
+      <p>The <strong>angle of depression</strong> from the observer equals the <strong>angle of elevation</strong> from the ground point — they're <em>alternate interior angles</em> between parallel horizontal lines.</p>
+      <div class="formula-box">
+        <span class="formula-line">Angle of depression = Angle of elevation</span>
+        <span class="formula-line">From the bottom of small building: elevation = 45 deg</span>
+        <span class="formula-line">From the top of small building: elevation = 30 deg</span>
+      </div>
+      <div class="why-toggle" onclick="toggleWhy(this)">Why are they equal?</div>
+      <div class="why-content">
+        The observer's horizontal line of sight and the ground are parallel. The line of sight is a transversal. Alternate interior angles between parallel lines are always equal. This is why we can "flip" the problem and solve it from ground level.
+      </div>
+    </div>
+
+    <div class="step-card">
+      <h3>Step 3 · Setting Up the Triangles</h3>
+      <p>Let <strong>H</strong> = height of multi-storeyed building, <strong>d</strong> = distance between buildings.</p>
+      <p><strong>Triangle 1</strong> (to the bottom of small building — 45 deg):</p>
+      <div class="formula-box">
+        <span class="formula-line">tan 45 deg = opposite / adjacent = H / d</span>
+        <span class="formula-line">1 = H / d  →  <strong>H = d</strong></span>
+      </div>
+      <p><strong>Triangle 2</strong> (to the top of small building — 30 deg):</p>
+      <div class="formula-box">
+        <span class="formula-line">tan 30 deg = (H - 8) / d</span>
+        <span class="formula-line">1/root 3 = (H - 8) / d</span>
+      </div>
+      <div class="why-toggle" onclick="toggleWhy(this)">Why H - 8?</div>
+      <div class="why-content">
+        The vertical side of the second triangle only reaches from the top of the small building up to the observer's eye. That's the big building's height MINUS the small building's height: H - 8.
+      </div>
+    </div>
+
+    <div class="step-card">
+      <h3>Step 4 · Solving the Equations</h3>
+      <p>We have two equations:</p>
+      <div class="formula-box">
+        <span class="formula-line">(1)  H = d</span>
+        <span class="formula-line">(2)  1/root 3 = (H - 8) / d</span>
+      </div>
+      <p>Substitute (1) into (2):</p>
+      <div class="formula-box">
+        <span class="formula-line">1/root 3 = (d - 8) / d</span>
+        <span class="formula-line">d/root 3 = d - 8</span>
+        <span class="formula-line">d - d/root 3 = 8</span>
+        <span class="formula-line">d(1 - 1/root 3) = 8</span>
+        <span class="formula-line">d = 8 / (1 - 1/root 3)</span>
+      </div>
+      <div class="why-toggle" onclick="toggleWhy(this)">Why not just add the angles?</div>
+      <div class="why-content">
+        The two angles describe two DIFFERENT triangles, not parts of one triangle. Each angle gives us one equation with two unknowns. We need both equations together to solve for H and d.
+      </div>
+    </div>
+
+    <div class="step-card">
+      <h3>Step 5 · Rationalising</h3>
+      <p>Multiply numerator and denominator by root 3:</p>
+      <div class="formula-box">
+        <span class="formula-line">d = 8 root 3 / (root 3 - 1)</span>
+        <span class="formula-line">Multiply by (root 3 + 1)/(root 3 + 1):</span>
+        <span class="formula-line">d = 8 root 3(root 3 + 1) / (3 - 1)</span>
+        <span class="formula-line">d = 8 root 3(root 3 + 1) / 2</span>
+        <span class="formula-line">d = 4 root 3(root 3 + 1)</span>
+        <span class="formula-line">d = 4(3 + root 3) = <strong>12 + 4 root 3</strong> metres</span>
+      </div>
+      <p>Since H = d:</p>
+      <div class="formula-box">
+        <span class="formula-line">H = <strong>12 + 4 root 3</strong> metres ≈ <strong>18.93 m</strong></span>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <h3>Step 6 · The Answer</h3>
+      <div class="answer-reveal">
+        <div class="big-answer">H = 12 + 4 root 3 m</div>
+        <div class="answer-label">≈ 18.93 metres</div>
+        <div style="margin-top:8px; font-size:14px; color:var(--ink-light);">
+          d = 12 + 4 root 3 m ≈ 18.93 metres
+        </div>
+      </div>
+      <div class="prediction-result">
+        Your prediction: Height ≈ ${app.predHeight ? app.predHeight.toFixed(1) : '--'} m, 
+        Distance ≈ ${app.predDistance ? app.predDistance.toFixed(1) : '--'} m<br>
+        ${app.predHeight ? 
+          (Math.abs(app.predHeight - H) < 2 ? "Excellent prediction! Spot on!" :
+           Math.abs(app.predHeight - H) < 5 ? "Good guess! Pretty close." :
+           "Interesting — the building is taller than most people guess!") : ""}
+      </div>
+    </div>
+
+    <div class="step-card">
+      <h3>Step 7 · Verification</h3>
+      <p>Let's check our answer makes sense:</p>
+      <div class="formula-box">
+        <span class="formula-line">Check tan 45 deg = H/d = ${H.toFixed(2)}/${d.toFixed(2)} = 1 ✓</span>
+        <span class="formula-line">Check tan 30 deg = (H-8)/d = ${(H-8).toFixed(2)}/${d.toFixed(2)} = ${((H-8)/d).toFixed(4)} ≈ 1/root 3 = ${(1/SQRT3).toFixed(4)} ✓</span>
+      </div>
+      <p>Both checks pass. The answer is correct!</p>
+      <div class="btn-row">
+        <button class="btn btn-success" onclick="app.advanceToPhase(5)">Master the Concept</button>
+      </div>
+    </div>
+  `;
+}
+
+const tests = [
+  {
+    question: "From the top of a 20 m building, the angle of depression of a point on the ground is 60 degrees. How far is the point from the building?",
+    options: ["20/root 3 m", "20 root 3 m", "10 m", "40 m"],
+    correct: 0,
+    explanation: "tan 60 = 20/d, so d = 20/tan 60 = 20/root 3 = 20 root 3/3 ≈ 11.55 m. Option 1 is correct."
+  },
+  {
+    question: "Two buildings stand 30 m apart. From the top of the taller one (height H), the angle of depression to the top of a 10 m building is 30 degrees. Find H.",
+    options: ["10 + 10 root 3 m", "10 + 30/root 3 m", "30 + 10 root 3 m", "40 m"],
+    correct: 0,
+    explanation: "tan 30 = (H-10)/30, so H-10 = 30/root 3 = 10 root 3, thus H = 10 + 10 root 3 ≈ 27.32 m."
+  },
+  {
+    question: "A tower and a building stand on level ground. From the top of the tower (30 m), the angle of depression to the top of a 15 m building is 45 degrees. Find the distance between them.",
+    options: ["15 m", "15 root 3 m", "30 m", "45 m"],
+    correct: 0,
+    explanation: "tan 45 = (30-15)/d = 15/d, so d = 15/tan 45 = 15/1 = 15 m."
+  }
+];
+
+function renderSelfTests() {
+  const container = document.getElementById('testContainer');
+  container.innerHTML = '';
+  tests.forEach((test, i) => {
+    const div = document.createElement('div');
+    div.innerHTML = `<p style="font-weight:bold; margin-bottom:8px;">${i+1}. ${test.question}</p>`;
+    test.options.forEach((opt, j) => {
+      const btn = document.createElement('button');
+      btn.className = 'test-option';
+      btn.textContent = opt;
+      btn.onclick = () => checkTestAnswer(i, j, btn);
+      div.appendChild(btn);
+    });
+    const exp = document.createElement('div');
+    exp.id = 'test-exp-' + i;
+    exp.style.cssText = 'display:none; margin-top:8px; padding:10px; background:rgba(59,91,140,0.04); border-radius:6px; font-size:13px;';
+    div.appendChild(exp);
+    container.appendChild(div);
+    if (i < tests.length - 1) {
+      const hr = document.createElement('hr');
+      hr.style.cssText = 'border:none; border-top:1px solid var(--panel-border); margin:16px 0;';
+      container.appendChild(hr);
+    }
+  });
+}
+
+function checkTestAnswer(testIdx, optionIdx, btn) {
+  const test = tests[testIdx];
+  const expDiv = document.getElementById('test-exp-' + testIdx);
+  const allBtns = btn.parentElement.querySelectorAll('.test-option');
+  allBtns.forEach(b => b.disabled = true);
+
+  if (optionIdx === test.correct) {
+    btn.classList.add('correct');
+    app.testScore++;
+    expDiv.innerHTML = '<span style="color:var(--success);">Correct!</span> ' + test.explanation;
+  } else {
+    btn.classList.add('wrong');
+    allBtns[test.correct].classList.add('correct');
+    expDiv.innerHTML = '<span style="color:var(--danger);">Not quite.</span> ' + test.explanation;
+  }
+  expDiv.style.display = 'block';
+}
+
+// Start
+init();
+</script>
+</body>
+</html>

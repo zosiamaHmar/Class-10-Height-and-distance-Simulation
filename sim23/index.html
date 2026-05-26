@@ -1,0 +1,1522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APEX-EDU · Cloud & Lake Reflection · Interactive Trigonometry</title>
+<style>
+/* ╔══════════════════════════════════════════╗
+   ║  CSS VARIABLES & RESET                   ║
+   ╚══════════════════════════════════════════╝ */
+:root {
+  --bg:          #FAFAF5;
+  --ink:         #1C1917;
+  --ink-light:   #6B6560;
+  --accent:      #3B5B8C;
+  --accent-warm: #C4622D;
+  --highlight:   #D4A843;
+  --panel-bg:    #F2EDE5;
+  --panel-border:#DDD5C8;
+  --success:     #2A7C6F;
+  --canvas-bg:   #E8E4DC;
+  --sky-day:     #B8D4E3;
+  --sky-dusk:    #E8C8A0;
+  --ground:      #8B7355;
+  --tower:       #6B6560;
+  --shadow:      #3A3530;
+  --sun:         #F4D03F;
+  --sun-glow:    #F9E79F;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: Georgia, 'Times New Roman', serif;
+  background: var(--bg);
+  color: var(--ink);
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* ╔══════════════════════════════════════════╗
+   ║  LAYOUT                                  ║
+   ╚══════════════════════════════════════════╝ */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.header-bar {
+  background: var(--ink);
+  color: var(--bg);
+  padding: 8px 20px;
+  font-size: 13px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-bar .topic-tag {
+  color: var(--highlight);
+  font-weight: bold;
+}
+
+.main-stage {
+  display: flex;
+  flex: 1;
+  position: relative;
+}
+
+/* Canvas area */
+.canvas-wrapper {
+  flex: 1;
+  position: relative;
+  background: var(--canvas-bg);
+  min-height: 500px;
+  overflow: hidden;
+}
+
+#simCanvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Solution Panel */
+.solution-panel {
+  width: 380px;
+  background: var(--panel-bg);
+  border-left: 2px solid var(--panel-border);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  max-height: calc(100vh - 40px);
+}
+
+.panel-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--panel-border);
+  background: linear-gradient(135deg, var(--panel-bg) 0%, #E8E0D4 100%);
+}
+
+.panel-header h2 {
+  font-size: 18px;
+  margin-bottom: 4px;
+  color: var(--ink);
+}
+
+.panel-header .meta {
+  font-size: 12px;
+  color: var(--ink-light);
+  font-family: Verdana, Geneva, sans-serif;
+}
+
+.progress-track {
+  padding: 12px 20px;
+  background: rgba(0,0,0,0.03);
+}
+
+.progress-bar {
+  height: 4px;
+  background: var(--panel-border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  width: 0%;
+  transition: width 0.6s ease;
+}
+
+.step-label {
+  font-size: 11px;
+  color: var(--ink-light);
+  margin-top: 6px;
+  font-family: Verdana, Geneva, sans-serif;
+}
+
+/* Step Cards */
+.step-content {
+  flex: 1;
+  padding: 0;
+}
+
+.step-card {
+  padding: 20px;
+  border-bottom: 1px solid var(--panel-border);
+  display: none;
+  animation: fadeIn 0.4s ease;
+}
+
+.step-card.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.step-number {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--accent);
+  font-weight: bold;
+  margin-bottom: 12px;
+  font-family: Verdana, Geneva, sans-serif;
+}
+
+.step-title {
+  font-size: 20px;
+  margin-bottom: 16px;
+  line-height: 1.3;
+}
+
+.step-body {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--ink);
+}
+
+.step-body p {
+  margin-bottom: 14px;
+}
+
+.formula-box {
+  background: var(--bg);
+  border: 2px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin: 16px 0;
+  text-align: center;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 18px;
+  position: relative;
+}
+
+.formula-box .formula-label {
+  position: absolute;
+  top: -10px;
+  left: 16px;
+  background: var(--panel-bg);
+  padding: 0 8px;
+  font-size: 11px;
+  color: var(--ink-light);
+  font-family: Verdana, Geneva, sans-serif;
+}
+
+.inline-formula {
+  font-family: 'Courier New', Courier, monospace;
+  background: rgba(59,91,140,0.08);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.95em;
+}
+
+/* Interactive Elements */
+.prediction-widget {
+  background: var(--bg);
+  border: 2px solid var(--highlight);
+  border-radius: 10px;
+  padding: 20px;
+  margin: 16px 0;
+}
+
+.prediction-widget h4 {
+  font-size: 14px;
+  margin-bottom: 12px;
+  color: var(--ink);
+}
+
+.slider-container {
+  margin: 12px 0;
+}
+
+.slider-container input[type="range"] {
+  width: 100%;
+  height: 6px;
+  -webkit-appearance: none;
+  background: var(--panel-border);
+  border-radius: 3px;
+  outline: none;
+}
+
+.slider-container input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  background: var(--highlight);
+  border-radius: 50%;
+  cursor: pointer;
+  border: 3px solid var(--bg);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+.slider-value {
+  text-align: center;
+  font-size: 24px;
+  font-weight: bold;
+  color: var(--accent);
+  margin-top: 8px;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.btn {
+  display: inline-block;
+  padding: 10px 24px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: Georgia, serif;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 12px;
+}
+
+.btn:hover {
+  background: #2A4A6E;
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: var(--ink-light);
+  margin-left: 8px;
+}
+
+.btn-secondary:hover {
+  background: var(--ink);
+}
+
+/* Fill-in-the-blank */
+.fill-blank {
+  display: inline-block;
+  min-width: 50px;
+  border-bottom: 2px solid var(--accent);
+  text-align: center;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 16px;
+  padding: 0 4px;
+  margin: 0 2px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid var(--accent);
+  color: var(--accent);
+  font-weight: bold;
+}
+
+.fill-blank:focus {
+  outline: none;
+  border-bottom-color: var(--highlight);
+}
+
+.fill-blank.correct {
+  border-bottom-color: var(--success);
+  color: var(--success);
+}
+
+.fill-blank.wrong {
+  border-bottom-color: var(--accent-warm);
+  color: var(--accent-warm);
+}
+
+/* Challenge Card */
+.challenge-card {
+  background: linear-gradient(135deg, var(--accent) 0%, #2A4A6E 100%);
+  color: white;
+  padding: 20px;
+  border-radius: 10px;
+  margin: 16px 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.challenge-card::before {
+  content: "🏆";
+  position: absolute;
+  top: 10px;
+  right: 16px;
+  font-size: 28px;
+  opacity: 0.3;
+}
+
+.challenge-card h3 {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 10px;
+  opacity: 0.9;
+}
+
+.challenge-card p {
+  font-size: 15px;
+  line-height: 1.6;
+  font-style: italic;
+}
+
+.challenge-card .difficulty {
+  margin-top: 12px;
+  font-size: 12px;
+  font-family: Verdana, Geneva, sans-serif;
+}
+
+/* Watch on Canvas button */
+.watch-canvas {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--accent);
+  font-size: 13px;
+  cursor: pointer;
+  margin-top: 12px;
+  font-family: Verdana, Geneva, sans-serif;
+}
+
+.watch-canvas:hover {
+  color: var(--highlight);
+}
+
+/* Warning/Note */
+.warning-box {
+  background: rgba(196,98,45,0.08);
+  border-left: 3px solid var(--accent-warm);
+  padding: 12px 16px;
+  margin: 14px 0;
+  font-size: 14px;
+  border-radius: 0 6px 6px 0;
+}
+
+.warning-box::before {
+  content: "⚠ ";
+  color: var(--accent-warm);
+  font-weight: bold;
+}
+
+/* Answer reveal */
+.answer-reveal {
+  background: linear-gradient(135deg, var(--success) 0%, #1E5C50 100%);
+  color: white;
+  padding: 20px;
+  border-radius: 10px;
+  margin: 16px 0;
+  text-align: center;
+}
+
+.answer-reveal .big-answer {
+  font-size: 32px;
+  font-weight: bold;
+  margin: 8px 0;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.answer-reveal .prediction-compare {
+  font-size: 13px;
+  opacity: 0.9;
+  margin-top: 8px;
+}
+
+/* Navigation */
+.panel-nav {
+  padding: 16px 20px;
+  border-top: 1px solid var(--panel-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--panel-bg);
+  position: sticky;
+  bottom: 0;
+}
+
+.nav-btn {
+  padding: 8px 16px;
+  background: var(--bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: Georgia, serif;
+  transition: all 0.2s;
+}
+
+.nav-btn:hover:not(:disabled) {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.nav-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Teacher Dashboard Toggle */
+.teacher-toggle {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 44px;
+  height: 44px;
+  background: var(--ink);
+  color: var(--bg);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  z-index: 100;
+  transition: transform 0.2s;
+}
+
+.teacher-toggle:hover {
+  transform: scale(1.1);
+}
+
+/* Teacher Dashboard */
+.teacher-dashboard {
+  display: none;
+  position: fixed;
+  bottom: 70px;
+  right: 20px;
+  width: 340px;
+  max-height: 500px;
+  background: white;
+  border: 2px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+  z-index: 99;
+  overflow-y: auto;
+}
+
+.teacher-dashboard.visible {
+  display: block;
+}
+
+.teacher-dashboard h3 {
+  font-size: 14px;
+  margin-bottom: 12px;
+  color: var(--ink);
+  border-bottom: 1px solid var(--panel-border);
+  padding-bottom: 8px;
+}
+
+.teacher-dashboard ul {
+  list-style: none;
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.teacher-dashboard li::before {
+  content: "✓ ";
+  color: var(--success);
+  font-weight: bold;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .main-stage { flex-direction: column; }
+  .solution-panel { width: 100%; max-height: none; border-left: none; border-top: 2px solid var(--panel-border); }
+  .canvas-wrapper { min-height: 400px; }
+}
+
+/* Achievement toast */
+.achievement-toast {
+  position: fixed;
+  top: 60px;
+  right: 20px;
+  background: var(--ink);
+  color: var(--bg);
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  display: none;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  z-index: 200;
+  animation: slideIn 0.4s ease;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* Controls overlay on canvas */
+.canvas-controls {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  display: flex;
+  gap: 8px;
+  z-index: 10;
+}
+
+.canvas-control-btn {
+  background: rgba(28,25,23,0.8);
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: Verdana, Geneva, sans-serif;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.canvas-control-btn:hover {
+  background: var(--accent);
+}
+
+/* Did You Know */
+.did-you-know {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  max-width: 280px;
+  background: rgba(250,250,245,0.95);
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-style: italic;
+  color: var(--ink-light);
+  border: 1px solid var(--panel-border);
+  line-height: 1.5;
+  z-index: 10;
+}
+
+/* Hint system */
+.hint-box {
+  background: rgba(212,168,67,0.1);
+  border: 1px dashed var(--highlight);
+  padding: 12px;
+  border-radius: 6px;
+  margin: 12px 0;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.hint-box .hint-content {
+  display: none;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--highlight);
+}
+
+.hint-box.expanded .hint-content {
+  display: block;
+}
+
+/* Score display */
+.score-display {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(28,25,23,0.85);
+  color: white;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: Verdana, Geneva, sans-serif;
+  z-index: 10;
+}
+</style>
+<base target="_blank">
+</head>
+<body>
+
+<div class="app-container">
+  <div class="header-bar">
+    <div><span class="topic-tag">APEX-EDU</span> · Trigonometry · Height & Distance</div>
+    <div style="font-size:11px;opacity:0.7;">Class 10 · NCERT Ch.8</div>
+  </div>
+
+  <div class="main-stage">
+    <!-- CANVAS AREA -->
+    <div class="canvas-wrapper">
+      <canvas id="simCanvas"></canvas>
+
+      <div class="canvas-controls">
+        <button class="canvas-control-btn" onclick="sim.togglePlay()">⏯ Play/Pause</button>
+        <button class="canvas-control-btn" onclick="sim.reset()">↺ Reset</button>
+        <button class="canvas-control-btn" onclick="sim.setMode('elevation')">☁️ Elevation 30°</button>
+        <button class="canvas-control-btn" onclick="sim.setMode('depression')">🪞 Reflection 60°</button>
+        <button class="canvas-control-btn" onclick="sim.setMode('both')">Both</button>
+      </div>
+
+      <div class="score-display" id="scoreDisplay">
+        ✓ <span id="correctCount">0</span> correct | streak: <span id="streakCount">0</span>
+      </div>
+
+      <div class="did-you-know" id="didYouKnow">
+        💡 The reflection principle used here is the same physics that makes mirrors work — the lake surface acts like a perfect horizontal mirror for the sky above.
+      </div>
+    </div>
+
+    <!-- SOLUTION PANEL -->
+    <div class="solution-panel">
+      <div class="panel-header">
+        <h2>☁️ The Cloud & The Lake</h2>
+        <div class="meta">Mathematics · Applications of Trigonometry · Class 10</div>
+      </div>
+
+      <div class="progress-track">
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="step-label" id="stepLabel">Step 1 of 7</div>
+      </div>
+
+      <div class="step-content" id="stepContent">
+
+        <!-- STEP 1: HOOK -->
+        <div class="step-card active" data-step="1">
+          <div class="step-number">Phase 1 · The Hook</div>
+          <div class="step-title">A Cloud, A Lake, and Two Mysterious Angles</div>
+          <div class="step-body">
+            <p>Imagine standing on a platform <strong>60 metres above</strong> a perfectly still lake. You look up at a cloud — the angle of elevation is <strong>30°</strong>.</p>
+            <p>Then you look down at the lake. The cloud's reflection shimmers on the water. The angle of depression to that reflection is <strong>60°</strong>.</p>
+            <p><strong>The puzzle:</strong> How high is that cloud above the lake surface?</p>
+
+            <div class="watch-canvas" onclick="sim.highlightScene()">
+              👁 Explore the scene on canvas →
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 2: EXPLORE -->
+        <div class="step-card" data-step="2">
+          <div class="step-number">Phase 2 · Explore</div>
+          <div class="step-title">Play with the Angles</div>
+          <div class="step-body">
+            <p>Toggle between the two viewing modes. Notice how the observer, the cloud, and its reflection form two right triangles.</p>
+            <p>The lake surface acts as a <strong>mirror</strong> — the reflection is as far below the lake as the cloud is above it.</p>
+
+            <div style="margin: 16px 0; padding: 12px; background: var(--bg); border-radius: 8px;">
+              <div style="font-size: 12px; color: var(--ink-light); margin-bottom: 8px;">Current Mode:</div>
+              <div id="modeDisplay" style="font-weight: bold; color: var(--accent);">Showing Elevation 30°</div>
+            </div>
+
+            <p style="margin-top: 16px;"><em>Click "Both" to see both triangles at once. Notice they share the same horizontal distance!</em></p>
+
+            <button class="btn" onclick="advanceToStep(3)">I'm Ready →</button>
+          </div>
+        </div>
+
+        <!-- STEP 3: CHALLENGE -->
+        <div class="step-card" data-step="3">
+          <div class="step-number">Phase 3 · Challenge</div>
+          <div class="step-title">The Exam Problem</div>
+          <div class="step-body">
+            <div class="challenge-card">
+              <h3>🏆 Challenge</h3>
+              <p>"The angle of elevation of a cloud from a point <strong>60 metres above</strong> a lake is <strong>30°</strong> and the angle of depression of the reflection of the cloud in the lake is <strong>60°</strong>. Find the height of the cloud."</p>
+              <div class="difficulty">Difficulty: ●●●●○ · Class 10 · CBSE/NCERT</div>
+            </div>
+
+            <div class="prediction-widget">
+              <h4>🔮 Make Your Prediction</h4>
+              <p style="font-size:13px;margin-bottom:8px;">Before solving — how high is the cloud above the lake?</p>
+              <div class="slider-container">
+                <input type="range" id="predictionSlider" min="60" max="200" value="100" oninput="updatePrediction(this.value)">
+                <div class="slider-value"><span id="predictionValue">100</span> m</div>
+              </div>
+              <button class="btn" onclick="submitPrediction()">Lock Prediction & Solve</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 4: THE SCENE -->
+        <div class="step-card" data-step="4">
+          <div class="step-number">Step 1 · The Scene</div>
+          <div class="step-title">Setting Up the Geometry</div>
+          <div class="step-body">
+            <p>Let <strong>P</strong> be the observer, <strong>60 m</strong> above the lake surface.</p>
+            <p>Let <strong>C</strong> be the cloud at height <span class="inline-formula">h</span> metres above the lake.</p>
+            <p>Let <strong>C'</strong> be the reflection of the cloud in the lake.</p>
+            <p>Because the lake is a mirror: <strong>depth of reflection = height of cloud</strong></p>
+            <p>So C' is <span class="inline-formula">h</span> metres <strong>below</strong> the lake surface.</p>
+
+            <div class="formula-box">
+              <div class="formula-label">Key Distances from Observer P</div>
+              Vertical distance to cloud: <strong>h − 60</strong> m<br>
+              Vertical distance to reflection: <strong>h + 60</strong> m<br>
+              <span style="font-size:13px;color:var(--ink-light);">Both share the same horizontal distance d</span>
+            </div>
+
+            <div class="watch-canvas" onclick="sim.showBothTriangles()">
+              👁 Show both triangles on canvas →
+            </div>
+
+            <button class="btn" onclick="advanceToStep(5)">Continue →</button>
+          </div>
+        </div>
+
+        <!-- STEP 5: THE KEY INSIGHT -->
+        <div class="step-card" data-step="5">
+          <div class="step-number">Step 2 · The Key Insight</div>
+          <div class="step-title">Two Right Triangles, One Unknown</div>
+          <div class="step-body">
+            <p>From observer <strong>P</strong>, draw a horizontal line. Two right triangles are formed:</p>
+
+            <div class="formula-box">
+              <div class="formula-label">Triangle 1: Elevation to Cloud (30°)</div>
+              tan 30° = (h − 60) / d<br>
+              1/√3 = (h − 60) / d<br>
+              <strong>d = (h − 60)√3</strong> ......(1)
+            </div>
+
+            <div class="formula-box">
+              <div class="formula-label">Triangle 2: Depression to Reflection (60°)</div>
+              tan 60° = (h + 60) / d<br>
+              √3 = (h + 60) / d<br>
+              <strong>d = (h + 60) / √3</strong> ......(2)
+            </div>
+
+            <div class="hint-box" onclick="this.classList.toggle('expanded')">
+              💡 Why is the reflection distance h + 60? Click to see.
+              <div class="hint-content">
+                The reflection is h metres BELOW the lake (same as cloud height). The observer is 60m ABOVE the lake. So total vertical separation = h + 60.
+              </div>
+            </div>
+
+            <button class="btn" onclick="advanceToStep(6)">Continue →</button>
+          </div>
+        </div>
+
+        <!-- STEP 6: THE CALCULATION -->
+        <div class="step-card" data-step="6">
+          <div class="step-number">Step 3 · The Calculation</div>
+          <div class="step-title">Solving for Cloud Height</div>
+          <div class="step-body">
+            <p>From equations (1) and (2), both equal <span class="inline-formula">d</span>:</p>
+
+            <div class="formula-box">
+              <div class="formula-label">Set the two expressions for d equal</div>
+              (h − 60)√3 = (h + 60) / √3
+            </div>
+
+            <p>Multiply both sides by √3:</p>
+            <div class="formula-box">
+              (h − 60) × 3 = h + 60<br>
+              3h − 180 = h + 60<br>
+              3h − h = 60 + 180<br>
+              2h = 240
+            </div>
+
+            <p>Therefore:</p>
+            <div class="formula-box" style="border-color:var(--success);">
+              <div class="formula-label" style="color:var(--success);">Final Answer</div>
+              <strong>h = 120 metres</strong><br>
+              <span style="font-size:14px;opacity:0.8;">The cloud is 120 m above the lake surface</span>
+            </div>
+
+            <div class="warning-box">
+              Do NOT add the angles (30° + 60° = 90°). These are two separate measurements from the same observer position!
+            </div>
+
+            <button class="btn" onclick="advanceToStep(7)">Verify Answer →</button>
+          </div>
+        </div>
+
+        <!-- STEP 7: VERIFICATION -->
+        <div class="step-card" data-step="7">
+          <div class="step-number">Step 4 · Verification</div>
+          <div class="step-title">Does 120 Metres Make Sense?</div>
+          <div class="step-body">
+            <div class="answer-reveal">
+              <div style="font-size:13px;opacity:0.9;">Height of Cloud Above Lake</div>
+              <div class="big-answer">120 m</div>
+              <div class="prediction-compare" id="predictionCompare">
+                You guessed: -- · Actual: 120 m
+              </div>
+            </div>
+
+            <p><strong>Check with h = 120 m:</strong></p>
+            <ul style="margin-left:20px;line-height:2;">
+              <li>Distance to cloud: <span class="inline-formula">120 − 60 = 60 m</span> (vertical)</li>
+              <li>Distance to reflection: <span class="inline-formula">120 + 60 = 180 m</span> (vertical)</li>
+              <li>Horizontal distance d: <span class="inline-formula">d = 60√3 ≈ 103.9 m</span></li>
+              <li>Verify tan 30°: <span class="inline-formula">60 / (60√3) = 1/√3</span> ✓</li>
+              <li>Verify tan 60°: <span class="inline-formula">180 / (60√3) = 3/√3 = √3</span> ✓</li>
+            </ul>
+
+            <div class="watch-canvas" onclick="sim.animateVerification()">
+              👁 Watch the verification animation →
+            </div>
+
+            <button class="btn" onclick="advanceToStep(8)">Master Phase →</button>
+          </div>
+        </div>
+
+        <!-- STEP 8: MASTER -->
+        <div class="step-card" data-step="8">
+          <div class="step-number">Phase 5 · Master</div>
+          <div class="step-title">Three Variants to Test Yourself</div>
+          <div class="step-body">
+
+            <div style="background:var(--bg);border:1px solid var(--panel-border);border-radius:8px;padding:16px;margin-bottom:12px;">
+              <div style="font-size:12px;color:var(--accent);font-weight:bold;margin-bottom:8px;">Variant 1 · Different Numbers</div>
+              <p style="font-size:14px;">Observer is 30m above lake. Elevation = 45°, Depression to reflection = 60°. Find cloud height.</p>
+              <div class="hint-box" onclick="this.classList.toggle('expanded')">
+                💡 Show solution
+                <div class="hint-content">
+                  d = (h−30)tan45° = (h+30)/tan60° → h−30 = (h+30)/√3 → h√3 − 30√3 = h + 30 → h(√3−1) = 30(√3+1) → h = 30(√3+1)/(√3−1) = 30(2+√3) ≈ 111.96 m
+                </div>
+              </div>
+            </div>
+
+            <div style="background:var(--bg);border:1px solid var(--panel-border);border-radius:8px;padding:16px;margin-bottom:12px;">
+              <div style="font-size:12px;color:var(--accent);font-weight:bold;margin-bottom:8px;">Variant 2 · General Formula</div>
+              <p style="font-size:14px;">Prove that for observer height h, elevation angle α, depression angle β: cloud height H = h(tan β + tan α)/(tan β − tan α)</p>
+              <div class="hint-box" onclick="this.classList.toggle('expanded')">
+                💡 Show derivation
+                <div class="hint-content">
+                  d = (H−h)/tanα = (H+h)/tanβ → (H−h)tanβ = (H+h)tanα → H(tanβ−tanα) = h(tanβ+tanα) → H = h(tanβ+tanα)/(tanβ−tanα)
+                </div>
+              </div>
+            </div>
+
+            <div style="background:var(--bg);border:1px solid var(--panel-border);border-radius:8px;padding:16px;margin-bottom:12px;">
+              <div style="font-size:12px;color:var(--accent);font-weight:bold;margin-bottom:8px;">Variant 3 · Real World</div>
+              <p style="font-size:14px;">A drone at 100m altitude spots a mountain peak at 30° elevation and its reflection in a lake at 45° depression. How high is the peak?</p>
+              <div class="hint-box" onclick="this.classList.toggle('expanded')">
+                💡 Show answer
+                <div class="hint-content">
+                  H = 100(tan45°+tan30°)/(tan45°−tan30°) = 100(1+1/√3)/(1−1/√3) = 100(√3+1)/(√3−1) = 100(2+√3) ≈ 373.2 m
+                </div>
+              </div>
+            </div>
+
+            <button class="btn" onclick="sim.reset();advanceToStep(1)">↺ Start Over</button>
+            <button class="btn btn-secondary" onclick="window.print()">🖨 Print Summary</button>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="panel-nav">
+        <button class="nav-btn" id="btnPrev" onclick="prevStep()">← Back</button>
+        <button class="nav-btn" id="btnNext" onclick="nextStep()">Next →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Achievement Toast -->
+<div class="achievement-toast" id="achievementToast">
+  <span id="achievementIcon">🏅</span>
+  <span id="achievementText">Achievement Unlocked!</span>
+</div>
+
+<!-- Teacher Dashboard -->
+<button class="teacher-toggle" onclick="toggleTeacher()" title="Teacher & Parent Dashboard">📋</button>
+<div class="teacher-dashboard" id="teacherDashboard">
+  <h3>📋 For Teachers & Parents</h3>
+  <p style="font-size:12px;color:var(--ink-light);margin-bottom:12px;">Topic: Height & Distance — Cloud Reflection Problem (Class 10 Mathematics)<br>Curriculum: NCERT Ch.8, CBSE, ICSE</p>
+
+  <h3>Learning Objectives</h3>
+  <ul>
+    <li>Understand mirror reflection geometry (depth = height)</li>
+    <li>Apply angle of elevation and depression correctly</li>
+    <li>Set up two equations with shared horizontal distance</li>
+    <li>Solve simultaneous trigonometric equations</li>
+    <li>Derive and use the general formula H = h(tanβ+tanα)/(tanβ−tanα)</li>
+  </ul>
+
+  <h3>Common Errors</h3>
+  <ul style="margin-bottom:12px;">
+    <li style="color:var(--accent-warm);"><span style="color:var(--accent-warm);">✗</span> Forgetting reflection depth equals cloud height</li>
+    <li style="color:var(--accent-warm);"><span style="color:var(--accent-warm);">✗</span> Using h−60 for both triangles (reflection needs h+60)</li>
+    <li style="color:var(--accent-warm);"><span style="color:var(--accent-warm);">✗</span> Confusing elevation and depression angles</li>
+    <li style="color:var(--accent-warm);"><span style="color:var(--accent-warm);">✗</span> Adding angles instead of setting up separate triangles</li>
+  </ul>
+
+  <h3>Extension Activities</h3>
+  <ul>
+    <li>Verify with a real mirror: place object at distance h, image appears at depth h</li>
+    <li>Photograph a building reflected in water — measure angles</li>
+    <li>Research: How do surveyors use reflection principles?</li>
+  </ul>
+</div>
+
+<script>
+// ╔══════════════════════════════════════════╗
+// ║  SIMULATION ENGINE                       ║
+// ╚══════════════════════════════════════════╝
+
+class CloudLakeSimulation {
+  constructor() {
+    this.canvas = document.getElementById('simCanvas');
+    this.ctx = this.canvas.getContext('2d');
+    this.mode = 'elevation'; // 'elevation', 'depression', 'both'
+    this.isPlaying = true;
+    this.animationId = null;
+    this.time = 0;
+    this.showBoth = false;
+    this.verificationMode = false;
+    this.cloudParticles = [];
+    this.waterRipples = [];
+    this.birds = [];
+
+    // Problem constants
+    this.observerHeight = 60; // metres above lake
+    this.cloudHeight = 120; // metres above lake (answer)
+    this.horizontalDist = 60 * Math.sqrt(3); // ≈ 103.9 m
+
+    this.resize();
+    window.addEventListener('resize', () => this.resize());
+
+    this.initCloudParticles();
+    this.initBirds();
+    this.gameLoop();
+  }
+
+  resize() {
+    const rect = this.canvas.parentElement.getBoundingClientRect();
+    this.canvas.width = rect.width;
+    this.canvas.height = rect.height;
+    this.lakeY = this.canvas.height * 0.72;
+    this.observerX = this.canvas.width * 0.25;
+    this.scale = Math.min(this.canvas.width, this.canvas.height) / 300; // pixels per metre
+  }
+
+  initCloudParticles() {
+    for (let i = 0; i < 15; i++) {
+      this.cloudParticles.push({
+        x: Math.random() * 0.6 + 0.2,
+        y: Math.random() * 0.15 + 0.08,
+        size: Math.random() * 20 + 15,
+        speed: Math.random() * 0.0003 + 0.0001,
+        opacity: Math.random() * 0.3 + 0.4
+      });
+    }
+  }
+
+  initBirds() {
+    for (let i = 0; i < 3; i++) {
+      this.birds.push({
+        x: Math.random(),
+        y: Math.random() * 0.3 + 0.1,
+        speed: Math.random() * 0.0005 + 0.0002,
+        wingPhase: Math.random() * Math.PI * 2
+      });
+    }
+  }
+
+  setMode(mode) {
+    this.mode = mode;
+    document.getElementById('modeDisplay').textContent = 
+      mode === 'elevation' ? 'Showing Elevation 30°' :
+      mode === 'depression' ? 'Showing Depression 60°' : 'Showing Both Triangles';
+  }
+
+  togglePlay() {
+    this.isPlaying = !this.isPlaying;
+  }
+
+  reset() {
+    this.mode = 'elevation';
+    this.showBoth = false;
+    this.verificationMode = false;
+  }
+
+  highlightScene() {
+    this.highlightTimer = 90;
+  }
+
+  showBothTriangles() {
+    this.setMode('both');
+  }
+
+  animateVerification() {
+    this.verificationMode = true;
+    this.verificationTimer = 0;
+  }
+
+  gameLoop() {
+    if (this.isPlaying) {
+      this.time += 0.016;
+      if (this.highlightTimer > 0) this.highlightTimer--;
+      if (this.verificationMode) this.verificationTimer++;
+      this.draw();
+    }
+    this.animationId = requestAnimationFrame(() => this.gameLoop());
+  }
+
+  draw() {
+    const ctx = this.ctx;
+    const w = this.canvas.width;
+    const h = this.canvas.height;
+    const s = this.scale;
+
+    // Sky gradient
+    const skyGrad = ctx.createLinearGradient(0, 0, 0, this.lakeY);
+    skyGrad.addColorStop(0, '#87CEEB');
+    skyGrad.addColorStop(0.4, '#B8D4E3');
+    skyGrad.addColorStop(1, '#D4E8F0');
+    ctx.fillStyle = skyGrad;
+    ctx.fillRect(0, 0, w, this.lakeY);
+
+    // Sun
+    const sunX = w * 0.85;
+    const sunY = h * 0.12;
+    const sunGlow = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, 50);
+    sunGlow.addColorStop(0, 'rgba(244,208,63,0.5)');
+    sunGlow.addColorStop(1, 'rgba(244,208,63,0)');
+    ctx.fillStyle = sunGlow;
+    ctx.beginPath();
+    ctx.arc(sunX, sunY, 50, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#F4D03F';
+    ctx.beginPath();
+    ctx.arc(sunX, sunY, 22, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Birds
+    ctx.strokeStyle = 'rgba(60,60,60,0.6)';
+    ctx.lineWidth = 1.5;
+    this.birds.forEach(bird => {
+      const bx = (bird.x + this.time * bird.speed) % 1.2 - 0.1;
+      const by = bird.y;
+      const wingY = Math.sin(this.time * 3 + bird.wingPhase) * 3;
+      ctx.beginPath();
+      ctx.moveTo(bx * w - 8, by * h + wingY);
+      ctx.quadraticCurveTo(bx * w, by * h - 3, bx * w + 8, by * h + wingY);
+      ctx.stroke();
+    });
+
+    // Cloud
+    const cloudBaseY = this.lakeY - this.cloudHeight * s;
+    const cloudX = this.observerX + this.horizontalDist * s;
+
+    // Cloud body (puffy)
+    ctx.fillStyle = 'rgba(255,255,255,0.95)';
+    this.cloudParticles.forEach(p => {
+      const px = cloudX + (p.x - 0.5) * 80;
+      const py = cloudBaseY + (p.y - 0.15) * 30;
+      ctx.globalAlpha = p.opacity;
+      ctx.beginPath();
+      ctx.arc(px, py, p.size, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+
+    // Cloud label
+    ctx.fillStyle = '#3B5B8C';
+    ctx.font = 'bold 13px Georgia';
+    ctx.textAlign = 'center';
+    ctx.fillText('Cloud (h = ?)', cloudX, cloudBaseY - 25);
+
+    // LAKE SURFACE
+    // Water gradient
+    const waterGrad = ctx.createLinearGradient(0, this.lakeY, 0, h);
+    waterGrad.addColorStop(0, '#5B9BD5');
+    waterGrad.addColorStop(0.3, '#4A8BC2');
+    waterGrad.addColorStop(1, '#3A7AAF');
+    ctx.fillStyle = waterGrad;
+    ctx.fillRect(0, this.lakeY, w, h - this.lakeY);
+
+    // Water ripples
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 5; i++) {
+      const rippleX = (this.time * 20 + i * 80) % (w + 100) - 50;
+      const rippleY = this.lakeY + 15 + i * 12;
+      ctx.beginPath();
+      ctx.moveTo(rippleX, rippleY);
+      ctx.quadraticCurveTo(rippleX + 40, rippleY - 3, rippleX + 80, rippleY);
+      ctx.stroke();
+    }
+
+    // Lake surface line
+    ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, this.lakeY);
+    ctx.lineTo(w, this.lakeY);
+    ctx.stroke();
+
+    // Lake label
+    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+    ctx.font = '12px Verdana';
+    ctx.textAlign = 'right';
+    ctx.fillText('Lake surface', w - 20, this.lakeY - 8);
+
+    // REFLECTION of cloud in lake
+    const reflectY = this.lakeY + this.cloudHeight * s;
+    ctx.fillStyle = 'rgba(255,255,255,0.25)';
+    this.cloudParticles.forEach(p => {
+      const px = cloudX + (p.x - 0.5) * 80;
+      const py = reflectY - (p.y - 0.15) * 30; // inverted
+      ctx.globalAlpha = p.opacity * 0.4;
+      ctx.beginPath();
+      ctx.arc(px, py, p.size * 0.9, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+
+    // Reflection label
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.font = '12px Georgia';
+    ctx.textAlign = 'center';
+    ctx.fillText('Reflection (depth = h)', cloudX, reflectY + 35);
+
+    // Vertical dashed line from cloud to reflection
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([6, 6]);
+    ctx.beginPath();
+    ctx.moveTo(cloudX, cloudBaseY);
+    ctx.lineTo(cloudX, reflectY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Double-arrow showing h above and h below
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.font = '11px Georgia';
+    ctx.textAlign = 'left';
+    ctx.fillText('↑ h', cloudX + 15, this.lakeY - this.cloudHeight * s / 2);
+    ctx.fillText('↓ h', cloudX + 15, this.lakeY + this.cloudHeight * s / 2);
+
+    // OBSERVER PLATFORM
+    const obsY = this.lakeY - this.observerHeight * s;
+    const platformWidth = 40;
+    const platformHeight = 8;
+
+    // Platform pole
+    ctx.fillStyle = '#6B6560';
+    ctx.fillRect(this.observerX - 3, obsY, 6, this.lakeY - obsY);
+
+    // Platform base
+    ctx.fillStyle = '#8B7355';
+    ctx.fillRect(this.observerX - platformWidth/2, this.lakeY - 4, platformWidth, 4);
+
+    // Platform top
+    ctx.fillStyle = '#5A4E45';
+    ctx.fillRect(this.observerX - platformWidth/2 - 2, obsY, platformWidth + 4, platformHeight);
+
+    // Observer (simple figure)
+    ctx.fillStyle = '#3B5B8C';
+    // Head
+    ctx.beginPath();
+    ctx.arc(this.observerX, obsY - 12, 6, 0, Math.PI * 2);
+    ctx.fill();
+    // Body
+    ctx.fillRect(this.observerX - 4, obsY - 6, 8, 10);
+
+    // Observer label
+    ctx.fillStyle = '#1C1917';
+    ctx.font = 'bold 12px Georgia';
+    ctx.textAlign = 'center';
+    ctx.fillText('Observer', this.observerX, obsY - 22);
+    ctx.font = '11px Georgia';
+    ctx.fillText('60m above lake', this.observerX, obsY + 22);
+
+    // Height measurement line for observer
+    ctx.strokeStyle = 'rgba(28,25,23,0.5)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(this.observerX - 35, this.lakeY);
+    ctx.lineTo(this.observerX - 35, obsY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#1C1917';
+    ctx.font = '10px Georgia';
+    ctx.textAlign = 'right';
+    ctx.fillText('60m', this.observerX - 40, (this.lakeY + obsY) / 2);
+
+    // HORIZONTAL distance line
+    ctx.strokeStyle = 'rgba(59,91,140,0.6)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    ctx.moveTo(this.observerX, obsY);
+    ctx.lineTo(cloudX, obsY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = '#3B5B8C';
+    ctx.font = '11px Georgia';
+    ctx.textAlign = 'center';
+    ctx.fillText('d = horizontal distance', (this.observerX + cloudX) / 2, obsY - 8);
+
+    // TRIANGLES AND ANGLES
+    if (this.mode === 'elevation' || this.mode === 'both') {
+      this.drawElevationTriangle(ctx, w, h, s, obsY, cloudX, cloudBaseY);
+    }
+
+    if (this.mode === 'depression' || this.mode === 'both') {
+      this.drawDepressionTriangle(ctx, w, h, s, obsY, cloudX, reflectY);
+    }
+
+    // Verification overlay
+    if (this.verificationMode && this.verificationTimer < 300) {
+      this.drawVerification(ctx, w, h);
+    }
+
+    // Highlight effect
+    if (this.highlightTimer > 0) {
+      ctx.strokeStyle = `rgba(212,168,67,${this.highlightTimer/90})`;
+      ctx.lineWidth = 3;
+      ctx.strokeRect(this.observerX - 30, obsY - 30, 60, 50);
+      ctx.strokeRect(cloudX - 50, cloudBaseY - 40, 100, 80);
+    }
+  }
+
+  drawElevationTriangle(ctx, w, h, s, obsY, cloudX, cloudBaseY) {
+    // Line of sight to cloud
+    ctx.strokeStyle = 'rgba(59,91,140,0.9)';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(this.observerX, obsY);
+    ctx.lineTo(cloudX, cloudBaseY);
+    ctx.stroke();
+
+    // Fill triangle
+    ctx.fillStyle = 'rgba(59,91,140,0.08)';
+    ctx.beginPath();
+    ctx.moveTo(this.observerX, obsY);
+    ctx.lineTo(cloudX, cloudBaseY);
+    ctx.lineTo(cloudX, obsY);
+    ctx.closePath();
+    ctx.fill();
+
+    // Angle arc (30° elevation)
+    const arcRadius = 40;
+    ctx.strokeStyle = '#3B5B8C';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(this.observerX, obsY, arcRadius, -Math.PI/6, 0, false);
+    ctx.stroke();
+
+    // Angle label
+    ctx.fillStyle = '#3B5B8C';
+    ctx.font = 'bold 14px Georgia';
+    ctx.textAlign = 'left';
+    ctx.fillText('30°', this.observerX + 12, obsY - 18);
+
+    // Vertical side label
+    ctx.fillStyle = '#3B5B8C';
+    ctx.font = '12px Georgia';
+    ctx.textAlign = 'right';
+    ctx.fillText('h − 60', cloudX + 5, (obsY + cloudBaseY) / 2);
+
+    // Triangle label
+    ctx.fillStyle = '#3B5B8C';
+    ctx.font = 'bold 11px Verdana';
+    ctx.textAlign = 'center';
+    ctx.fillText('Δ Elevation', (this.observerX + cloudX) / 2, (obsY + cloudBaseY) / 2 - 15);
+  }
+
+  drawDepressionTriangle(ctx, w, h, s, obsY, cloudX, reflectY) {
+    // Line of sight to reflection
+    ctx.strokeStyle = 'rgba(196,98,45,0.9)';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(this.observerX, obsY);
+    ctx.lineTo(cloudX, reflectY);
+    ctx.stroke();
+
+    // Fill triangle
+    ctx.fillStyle = 'rgba(196,98,45,0.06)';
+    ctx.beginPath();
+    ctx.moveTo(this.observerX, obsY);
+    ctx.lineTo(cloudX, reflectY);
+    ctx.lineTo(cloudX, obsY);
+    ctx.closePath();
+    ctx.fill();
+
+    // Angle arc (60° depression)
+    const arcRadius = 40;
+    ctx.strokeStyle = '#C4622D';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(this.observerX, obsY, arcRadius, 0, Math.PI/3, false);
+    ctx.stroke();
+
+    // Angle label
+    ctx.fillStyle = '#C4622D';
+    ctx.font = 'bold 14px Georgia';
+    ctx.textAlign = 'left';
+    ctx.fillText('60°', this.observerX + 12, obsY + 22);
+
+    // Vertical side label
+    ctx.fillStyle = '#C4622D';
+    ctx.font = '12px Georgia';
+    ctx.textAlign = 'right';
+    ctx.fillText('h + 60', cloudX + 5, (obsY + reflectY) / 2);
+
+    // Triangle label
+    ctx.fillStyle = '#C4622D';
+    ctx.font = 'bold 11px Verdana';
+    ctx.textAlign = 'center';
+    ctx.fillText('Δ Depression', (this.observerX + cloudX) / 2, (obsY + reflectY) / 2 + 20);
+  }
+
+  drawVerification(ctx, w, h) {
+    const progress = Math.min(this.verificationTimer / 200, 1);
+
+    ctx.fillStyle = 'rgba(42,124,111,0.9)';
+    ctx.font = 'bold 15px Georgia';
+    ctx.textAlign = 'center';
+
+    const yStart = h * 0.08;
+    const panelWidth = 320;
+    const panelX = (w - panelWidth) / 2;
+
+    // Background panel
+    ctx.fillStyle = 'rgba(250,250,245,0.95)';
+    ctx.strokeStyle = 'rgba(42,124,111,0.5)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(panelX, yStart - 10, panelWidth, 130, 10);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#2A7C6F';
+    if (progress > 0.2) {
+      ctx.fillText('✓ h − 60 = 120 − 60 = 60 m', w/2, yStart + 20);
+    }
+    if (progress > 0.5) {
+      ctx.fillText('✓ h + 60 = 120 + 60 = 180 m', w/2, yStart + 48);
+    }
+    if (progress > 0.8) {
+      ctx.fillText('✓ d = 60√3 ≈ 103.9 m', w/2, yStart + 76);
+    }
+    if (progress > 0.95) {
+      ctx.font = 'bold 17px Georgia';
+      ctx.fillText('Answer: h = 120 metres', w/2, yStart + 108);
+    }
+  }
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  STEP MANAGEMENT                         ║
+// ╚══════════════════════════════════════════╝
+
+let currentStep = 1;
+const totalSteps = 8;
+let studentPrediction = null;
+let correctCount = 0;
+let streakCount = 0;
+
+function updateProgress() {
+  const pct = (currentStep / totalSteps) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('stepLabel').textContent = `Step ${Math.min(currentStep, 7)} of 7`;
+
+  document.getElementById('btnPrev').disabled = currentStep === 1;
+  document.getElementById('btnNext').disabled = currentStep === totalSteps;
+
+  document.querySelectorAll('.step-card').forEach(card => {
+    card.classList.remove('active');
+    if (parseInt(card.dataset.step) === currentStep) {
+      card.classList.add('active');
+    }
+  });
+}
+
+function advanceToStep(n) {
+  currentStep = n;
+  updateProgress();
+
+  if (n === 2) sim.setMode('elevation');
+  if (n === 4) sim.showBothTriangles();
+  if (n === 7) sim.animateVerification();
+}
+
+function nextStep() {
+  if (currentStep < totalSteps) {
+    advanceToStep(currentStep + 1);
+  }
+}
+
+function prevStep() {
+  if (currentStep > 1) {
+    advanceToStep(currentStep - 1);
+  }
+}
+
+function updatePrediction(val) {
+  document.getElementById('predictionValue').textContent = val;
+}
+
+function submitPrediction() {
+  studentPrediction = parseFloat(document.getElementById('predictionSlider').value);
+  const actual = 120;
+  const diff = Math.abs(studentPrediction - actual);
+  const pctOff = (diff / actual) * 100;
+
+  let message = '';
+  let icon = '🏅';
+
+  if (pctOff < 10) {
+    message = 'Sharp Eye! Within 10%!';
+    icon = '👁';
+    correctCount++;
+    streakCount++;
+    showAchievement(icon, message);
+  } else if (pctOff < 25) {
+    message = 'Good intuition! Close guess.';
+    icon = '⭐';
+    streakCount++;
+    showAchievement(icon, message);
+  } else {
+    message = 'Interesting guess — the geometry is tricky!';
+    streakCount = 0;
+  }
+
+  document.getElementById('correctCount').textContent = correctCount;
+  document.getElementById('streakCount').textContent = streakCount;
+
+  document.getElementById('predictionCompare').innerHTML = 
+    `You guessed: ${studentPrediction}m · Actual: 120m · Off by ${pctOff.toFixed(1)}%`;
+
+  advanceToStep(4);
+}
+
+function showAchievement(icon, text) {
+  const toast = document.getElementById('achievementToast');
+  document.getElementById('achievementIcon').textContent = icon;
+  document.getElementById('achievementText').textContent = text;
+  toast.style.display = 'flex';
+  setTimeout(() => {
+    toast.style.display = 'none';
+  }, 3000);
+}
+
+function toggleTeacher() {
+  document.getElementById('teacherDashboard').classList.toggle('visible');
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  KEYBOARD SHORTCUTS                      ║
+// ╚══════════════════════════════════════════╝
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === ' ') { e.preventDefault(); sim.togglePlay(); }
+  if (e.key === 'r' || e.key === 'R') sim.reset();
+  if (e.key === 'n' || e.key === 'N') nextStep();
+  if (e.key === 'p' || e.key === 'P') prevStep();
+  if (e.key === 't' || e.key === 'T') toggleTeacher();
+});
+
+// ╔══════════════════════════════════════════╗
+// ║  INITIALIZATION                          ║
+// ╚══════════════════════════════════════════╝
+
+const sim = new CloudLakeSimulation();
+updateProgress();
+</script>
+
+</body>
+</html>

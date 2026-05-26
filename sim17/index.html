@@ -1,0 +1,1405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APEX-EDU v3 — Angle of Elevation: The Tower Problem</title>
+<style>
+:root {
+  --bg: #FAFAF5;
+  --ink: #1C1917;
+  --ink-light: #6B6560;
+  --accent: #3B5B8C;
+  --accent-warm: #C4622D;
+  --highlight: #D4A843;
+  --panel-bg: #F2EDE5;
+  --panel-border: #DDD5C8;
+  --success: #2A7C6F;
+  --font-body: Georgia, 'Times New Roman', serif;
+  --font-mono: 'Courier New', Courier, monospace;
+  --font-label: Verdana, Geneva, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  overflow: hidden;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+#app {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+}
+
+/* Canvas area */
+#canvas-container {
+  flex: 1;
+  position: relative;
+  background: var(--bg);
+  overflow: hidden;
+}
+
+canvas { display: block; }
+
+/* Challenge card overlay */
+.challenge-card {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(250, 250, 245, 0.95);
+  border: 2px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 20px 28px;
+  max-width: 600px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  z-index: 10;
+  transition: opacity 0.3s;
+}
+
+.challenge-card h2 {
+  font-family: var(--font-label);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+
+.challenge-card .problem-text {
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.challenge-card .difficulty {
+  font-family: var(--font-label);
+  font-size: 11px;
+  color: var(--ink-light);
+  margin-top: 10px;
+}
+
+/* Prediction widget */
+.prediction-widget {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(250, 250, 245, 0.98);
+  border: 2px solid var(--accent);
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 420px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.15);
+  z-index: 20;
+  text-align: center;
+}
+
+.prediction-widget h3 {
+  font-family: var(--font-label);
+  font-size: 18px;
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+
+.prediction-widget p {
+  font-size: 15px;
+  line-height: 1.5;
+  margin-bottom: 20px;
+  color: var(--ink);
+}
+
+.prediction-input {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.prediction-input input {
+  width: 100px;
+  padding: 10px;
+  border: 2px solid var(--panel-border);
+  border-radius: 8px;
+  font-family: var(--font-mono);
+  font-size: 18px;
+  text-align: center;
+  color: var(--ink);
+}
+
+.prediction-input span {
+  font-family: var(--font-label);
+  font-size: 14px;
+  color: var(--ink-light);
+}
+
+.btn {
+  display: inline-block;
+  padding: 12px 28px;
+  border: none;
+  border-radius: 8px;
+  font-family: var(--font-label);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin: 4px;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: white;
+}
+
+.btn-primary:hover { background: #2d4a73; }
+
+.btn-secondary {
+  background: var(--panel-bg);
+  color: var(--ink);
+  border: 1px solid var(--panel-border);
+}
+
+.btn-secondary:hover { background: var(--panel-border); }
+
+/* Right panel */
+#panel {
+  width: 360px;
+  background: var(--panel-bg);
+  border-left: 2px solid var(--panel-border);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  position: relative;
+}
+
+.panel-header {
+  padding: 20px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.panel-header h1 {
+  font-family: var(--font-label);
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+
+.panel-header .subtitle {
+  font-size: 12px;
+  color: var(--ink-light);
+}
+
+.progress-bar {
+  height: 4px;
+  background: var(--panel-border);
+  margin: 12px 0 0;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.4s;
+}
+
+/* Step cards */
+.step-card {
+  padding: 20px;
+  border-bottom: 1px solid var(--panel-border);
+  display: none;
+}
+
+.step-card.active { display: block; }
+
+.step-card h3 {
+  font-family: var(--font-label);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+
+.step-card p, .step-card li {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink);
+  margin-bottom: 10px;
+}
+
+.step-card ul {
+  margin-left: 20px;
+  margin-bottom: 12px;
+}
+
+.formula-box {
+  background: rgba(59, 91, 140, 0.08);
+  border-left: 3px solid var(--accent);
+  padding: 14px 16px;
+  margin: 14px 0;
+  border-radius: 0 8px 8px 0;
+  font-family: var(--font-mono);
+  font-size: 15px;
+  color: var(--ink);
+}
+
+.formula-box .fraction {
+  display: inline-block;
+  text-align: center;
+  vertical-align: middle;
+  margin: 0 4px;
+}
+
+.formula-box .fraction .num {
+  display: block;
+  border-bottom: 1px solid var(--ink);
+  padding: 0 4px;
+}
+
+.formula-box .fraction .den {
+  display: block;
+  padding: 0 4px;
+}
+
+.why-toggle {
+  font-family: var(--font-label);
+  font-size: 12px;
+  color: var(--accent);
+  cursor: pointer;
+  margin: 8px 0;
+  display: inline-block;
+}
+
+.why-toggle:hover { text-decoration: underline; }
+
+.why-content {
+  display: none;
+  background: rgba(212, 168, 67, 0.08);
+  border-left: 2px solid var(--highlight);
+  padding: 10px 14px;
+  margin: 8px 0;
+  border-radius: 0 6px 6px 0;
+  font-size: 13px;
+  color: var(--ink-light);
+  line-height: 1.5;
+}
+
+.why-content.open { display: block; }
+
+/* Fill-in blanks */
+.fill-blank {
+  display: inline-block;
+  min-width: 40px;
+  border-bottom: 2px solid var(--accent);
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 16px;
+  padding: 2px 6px;
+  margin: 0 2px;
+  background: transparent;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  color: var(--ink);
+}
+
+.fill-blank:focus {
+  outline: none;
+  border-bottom-color: var(--highlight);
+  background: rgba(212, 168, 67, 0.1);
+}
+
+.fill-blank.correct {
+  border-bottom-color: var(--success);
+  color: var(--success);
+}
+
+.fill-blank.wrong {
+  border-bottom-color: var(--accent-warm);
+  color: var(--accent-warm);
+}
+
+.check-btn {
+  margin-top: 12px;
+}
+
+.feedback {
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  display: none;
+}
+
+.feedback.show { display: block; }
+
+.feedback.correct {
+  background: rgba(42, 124, 111, 0.1);
+  color: var(--success);
+}
+
+.feedback.wrong {
+  background: rgba(196, 98, 45, 0.1);
+  color: var(--accent-warm);
+}
+
+/* Prediction result */
+.prediction-result {
+  background: rgba(59, 91, 140, 0.06);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 12px 0;
+  font-size: 13px;
+}
+
+.prediction-result .pred-val {
+  font-family: var(--font-mono);
+  font-weight: bold;
+  color: var(--accent);
+}
+
+/* Controls */
+.controls {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.control-group {
+  margin-bottom: 14px;
+}
+
+.control-group label {
+  display: block;
+  font-family: var(--font-label);
+  font-size: 12px;
+  color: var(--ink-light);
+  margin-bottom: 6px;
+}
+
+.slider-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.slider-container input[type="range"] {
+  flex: 1;
+  -webkit-appearance: none;
+  height: 6px;
+  background: var(--panel-border);
+  border-radius: 3px;
+  outline: none;
+}
+
+.slider-container input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  background: var(--accent);
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+
+.slider-value {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--accent);
+  min-width: 50px;
+  text-align: right;
+}
+
+/* Navigation */
+.nav-buttons {
+  padding: 16px 20px;
+  display: flex;
+  gap: 8px;
+  border-top: 1px solid var(--panel-border);
+  margin-top: auto;
+}
+
+/* Did You Know */
+.did-you-know {
+  padding: 16px 20px;
+  font-size: 13px;
+  font-style: italic;
+  color: var(--ink-light);
+  border-top: 1px solid var(--panel-border);
+  line-height: 1.5;
+}
+
+/* Teacher dashboard */
+.teacher-btn {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  z-index: 15;
+}
+
+.teacher-dashboard {
+  display: none;
+  position: absolute;
+  bottom: 50px;
+  right: 10px;
+  width: 320px;
+  background: rgba(250, 250, 245, 0.98);
+  border: 2px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  z-index: 15;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.teacher-dashboard.open { display: block; }
+
+.teacher-dashboard h4 {
+  font-family: var(--font-label);
+  font-size: 12px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  #app { flex-direction: column; }
+  #panel {
+    width: 100%;
+    height: 40%;
+    border-left: none;
+    border-top: 2px solid var(--panel-border);
+  }
+  #canvas-container { height: 60%; }
+  .challenge-card {
+    max-width: 90%;
+    padding: 14px;
+    font-size: 14px;
+  }
+  .prediction-widget {
+    max-width: 90%;
+    padding: 20px;
+  }
+}
+
+/* Hide/show utilities */
+.hidden { display: none !important; }
+.fade-in { animation: fadeIn 0.4s ease; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* Achievement */
+.achievement {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(250, 250, 245, 0.95);
+  border: 1px solid var(--highlight);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-family: var(--font-label);
+  font-size: 12px;
+  color: var(--highlight);
+  display: none;
+  z-index: 15;
+}
+
+.achievement.show { display: block; }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div id="canvas-container">
+    <canvas id="simCanvas"></canvas>
+    
+    <!-- Challenge Card -->
+    <div class="challenge-card" id="challengeCard">
+      <h2>🏆 Challenge — Class 10 Trigonometry</h2>
+      <div class="problem-text">
+        The angle of elevation of the top of a tower from point A on the ground is <strong>30°</strong>. 
+        On moving <strong>30 metres</strong> towards the foot of the tower to point B, the angle of elevation 
+        increases to <strong>60°</strong>. Find the <strong>height of the tower</strong> and the 
+        <strong>distance from A to the tower</strong>.
+      </div>
+      <div class="difficulty">Difficulty: ●●●○○ · Geometry & Trigonometry · Angle of Elevation</div>
+    </div>
+
+    <!-- Prediction Widget -->
+    <div class="prediction-widget" id="predictionWidget">
+      <h3>🔮 Make Your Prediction</h3>
+      <p>Before we solve this — how tall do you think the tower is?</p>
+      <div class="prediction-input">
+        <input type="number" id="predHeight" placeholder="?" min="1" max="100" step="0.1">
+        <span>metres</span>
+      </div>
+      <p style="font-size:13px;color:var(--ink-light);margin-top:8px;">
+        And how far is point A from the tower?
+      </p>
+      <div class="prediction-input">
+        <input type="number" id="predDist" placeholder="?" min="1" max="200" step="0.1">
+        <span>metres</span>
+      </div>
+      <button class="btn btn-primary" onclick="submitPrediction()">Submit Prediction & Begin</button>
+    </div>
+
+    <!-- Achievement -->
+    <div class="achievement" id="achievement"></div>
+
+    <!-- Teacher Button -->
+    <div class="teacher-btn" onclick="toggleTeacher()" title="Teacher Dashboard">📋</div>
+    <div class="teacher-dashboard" id="teacherDashboard">
+      <h4>For Teachers & Parents</h4>
+      <p><strong>Topic:</strong> Angle of Elevation (Class 10 Mathematics)</p>
+      <p><strong>Curriculum:</strong> NCERT Ch.9, CBSE, ICSE</p>
+      <p><strong>Concepts:</strong></p>
+      <ul style="margin-left:16px;margin-bottom:10px;">
+        <li>tan θ = opposite/adjacent</li>
+        <li>Setting up equations from two right triangles</li>
+        <li>Special angles: 30°, 60°</li>
+        <li>Algebraic elimination</li>
+      </ul>
+      <p><strong>Common Errors:</strong></p>
+      <ul style="margin-left:16px;margin-bottom:10px;">
+        <li>Using sin instead of tan for elevation</li>
+        <li>Forgetting that AB = 30m is the difference of distances</li>
+        <li>Not recognizing the 30-60-90 triangle properties</li>
+      </ul>
+      <p><strong>Extension:</strong> What if the angle at B was 45° instead of 60°?</p>
+    </div>
+  </div>
+
+  <!-- Right Panel -->
+  <div id="panel">
+    <div class="panel-header">
+      <h1>Angle of Elevation</h1>
+      <div class="subtitle">The Tower Problem · Step <span id="stepNum">1</span> of 7</div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:14%"></div></div>
+    </div>
+
+    <!-- Controls (visible during exploration) -->
+    <div class="controls hidden" id="controlsPanel">
+      <div class="control-group">
+        <label>Angle from Point A (θ₁)</label>
+        <div class="slider-container">
+          <input type="range" id="sliderTheta1" min="10" max="80" value="30" step="1">
+          <span class="slider-value" id="valTheta1">30°</span>
+        </div>
+      </div>
+      <div class="control-group">
+        <label>Angle from Point B (θ₂)</label>
+        <div class="slider-container">
+          <input type="range" id="sliderTheta2" min="10" max="80" value="60" step="1">
+          <span class="slider-value" id="valTheta2">60°</span>
+        </div>
+      </div>
+      <div class="control-group">
+        <label>Distance AB</label>
+        <div class="slider-container">
+          <input type="range" id="sliderAB" min="10" max="80" value="30" step="1">
+          <span class="slider-value" id="valAB">30m</span>
+        </div>
+      </div>
+      <div class="control-group">
+        <label>Tower Height (h)</label>
+        <div class="slider-container">
+          <input type="range" id="sliderH" min="5" max="80" value="25.98" step="0.1">
+          <span class="slider-value" id="valH">25.98m</span>
+        </div>
+      </div>
+      <button class="btn btn-secondary" style="width:100%;margin-top:8px;" onclick="resetToProblem()">Reset to Problem Values</button>
+    </div>
+
+    <!-- Step Cards -->
+    <div class="step-card active" id="step1">
+      <h3>Step 1 · The Scene</h3>
+      <p>Imagine standing on flat ground, looking up at a tall tower. From where you stand (point A), you tilt your head up <strong>30°</strong> to see the top.</p>
+      <p>Now walk <strong>30 metres closer</strong> to the tower (to point B). You must tilt your head up even more — <strong>60°</strong> — to see the same top.</p>
+      <p>The tower hasn't changed. Only <em>your position</em> changed. This creates two right triangles sharing the same height.</p>
+      <div class="why-toggle" onclick="toggleWhy(this)">Why two triangles? ▼</div>
+      <div class="why-content">
+        Every angle of elevation forms a right triangle: the tower is vertical (opposite side), the ground is horizontal (adjacent side), and your line of sight is the hypotenuse. Two observation points = two triangles.
+      </div>
+    </div>
+
+    <div class="step-card" id="step2">
+      <h3>Step 2 · The Question</h3>
+      <p>We need to find:</p>
+      <ul>
+        <li><strong>h</strong> = height of the tower (vertical side, shared by both triangles)</li>
+        <li><strong>d</strong> = distance from A to the tower foot (the longer horizontal side)</li>
+      </ul>
+      <p>We know: AB = 30m, θ₁ = 30°, θ₂ = 60°</p>
+      <p>Let <strong>x</strong> = distance from B to the tower foot. Then d = x + 30.</p>
+    </div>
+
+    <div class="step-card" id="step3">
+      <h3>Step 3 · The Key Insight</h3>
+      <p>In a right triangle, <strong>tan θ = opposite/adjacent</strong>.</p>
+      <p>For the <strong>smaller triangle</strong> (from point B):</p>
+      <div class="formula-box">
+        tan 60° = <span class="fraction"><span class="num">h</span><span class="den">x</span></span>
+        → h = x · tan 60° = x√3
+      </div>
+      <p>For the <strong>larger triangle</strong> (from point A):</p>
+      <div class="formula-box">
+        tan 30° = <span class="fraction"><span class="num">h</span><span class="den">x + 30</span></span>
+        → h = (x + 30) · tan 30° = <span class="fraction"><span class="num">x + 30</span><span class="den">√3</span></span>
+      </div>
+      <div class="why-toggle" onclick="toggleWhy(this)">Why tan and not sin? ▼</div>
+      <div class="why-content">
+        We know the horizontal distances (ground) and want the vertical height. Tan relates opposite (height) to adjacent (ground distance). Sin would need the hypotenuse (line of sight), which we don't know.
+      </div>
+    </div>
+
+    <div class="step-card" id="step4">
+      <h3>Step 4 · Setting Up the Equation</h3>
+      <p>Both expressions equal <strong>h</strong>, so set them equal:</p>
+      <div class="formula-box">
+        x√3 = <span class="fraction"><span class="num">x + 30</span><span class="den">√3</span></span>
+      </div>
+      <p>Multiply both sides by √3:</p>
+      <div class="formula-box">
+        3x = x + 30
+      </div>
+      <p>Fill in the blanks to solve for x:</p>
+      <p>3x − x = <input class="fill-blank" id="blank1" data-answer="30"> → 2x = <input class="fill-blank" id="blank2" data-answer="30"> → x = <input class="fill-blank" id="blank3" data-answer="15"> m</p>
+      <button class="btn btn-primary check-btn" onclick="checkBlanks(['blank1','blank2','blank3'], ['30','30','15'])">Check</button>
+      <div class="feedback" id="feedback4"></div>
+    </div>
+
+    <div class="step-card" id="step5">
+      <h3>Step 5 · Finding the Height</h3>
+      <p>Now that x = 15m, use h = x√3:</p>
+      <div class="formula-box">
+        h = 15 × √3 = 15 × 1.732 = <strong>25.98 metres</strong>
+      </div>
+      <p>Or exactly: <strong>h = 15√3 m</strong></p>
+      <div class="why-toggle" onclick="toggleWhy(this)">Why is √3 ≈ 1.732? ▼</div>
+      <div class="why-content">
+        √3 is an irrational number. For exact answers in exams, leave it as 15√3. For decimal approximations, use 1.732. The unit circle shows: at 60°, the vertical coordinate is √3/2.
+      </div>
+    </div>
+
+    <div class="step-card" id="step6">
+      <h3>Step 6 · Finding Distance from A</h3>
+      <p>Distance from A to tower = x + 30:</p>
+      <div class="formula-box">
+        d = 15 + 30 = <strong>45 metres</strong>
+      </div>
+      <p>Verification: tan 30° = <span class="fraction"><span class="num">15√3</span><span class="den">45</span></span> = <span class="fraction"><span class="num">√3</span><span class="den">3</span></span> = <span class="fraction"><span class="num">1</span><span class="den">√3</span></span> ✓</p>
+      <div class="prediction-result" id="predResult"></div>
+    </div>
+
+    <div class="step-card" id="step7">
+      <h3>Step 7 · The Bigger Picture</h3>
+      <p><strong>Final Answers:</strong></p>
+      <ul>
+        <li>Height of tower = <strong>15√3 ≈ 25.98 m</strong></li>
+        <li>Distance from A = <strong>45 m</strong></li>
+      </ul>
+      <p>This same math is used by:</p>
+      <ul>
+        <li><strong>Surveyors</strong> measuring building heights without climbing</li>
+        <li><strong>Pilots</strong> calculating descent angles to runways</li>
+        <li><strong>Astronomers</strong> determining distances to stars (parallax method)</li>
+      </ul>
+      <p style="margin-top:14px;"><em>Did you know? Ancient Indian mathematicians used this exact method to estimate the height of Mount Everest centuries before modern surveying equipment existed.</em></p>
+    </div>
+
+    <!-- Self-test -->
+    <div class="step-card" id="stepTest">
+      <h3>Master — Self Test</h3>
+      <p><strong>Variant 1:</strong> From A, elevation is 45°. From B (20m closer), it's 60°. Find h and distance from A.</p>
+      <p style="margin-top:10px;"><strong>Variant 2:</strong> A tower is 30m high. From A, elevation is 30°. How far must you walk toward it for elevation to become 60°?</p>
+      <p style="margin-top:10px;"><strong>Variant 3:</strong> A lighthouse 50m high. From a boat, elevation is 15°. The boat sails directly toward it. After how many metres will elevation be 30°?</p>
+    </div>
+
+    <div class="nav-buttons">
+      <button class="btn btn-secondary" onclick="prevStep()" id="btnPrev">← Back</button>
+      <button class="btn btn-primary" onclick="nextStep()" id="btnNext">Continue →</button>
+    </div>
+
+    <div class="did-you-know">
+      Did you know? The ancient Egyptians used angle-of-elevation mathematics (called "seked") to ensure the Great Pyramid's sides slope at exactly 51.8° — a method nearly identical to what you just learned.
+    </div>
+  </div>
+</div>
+
+<script>
+// ╔══════════════════════════════════════════╗
+// ║  STATE & CONFIGURATION                   ║
+// ╚══════════════════════════════════════════╝
+
+const state = {
+  phase: 'hook',
+  step: 1,
+  maxStep: 7,
+  theta1: 30,
+  theta2: 60,
+  ab: 30,
+  h: 15 * Math.sqrt(3),
+  x: 15,
+  d: 45,
+  predHeight: null,
+  predDist: null,
+  dragging: null,
+  animating: true,
+  showConstruction: true,
+  showUnitCircle: true,
+  time: 0
+};
+
+// ╔══════════════════════════════════════════╗
+// ║  CANVAS SETUP                            ║
+// ╚══════════════════════════════════════════╝
+
+const canvas = document.getElementById('simCanvas');
+const ctx = canvas.getContext('2d');
+let canvasW, canvasH;
+
+function resizeCanvas() {
+  const container = document.getElementById('canvas-container');
+  canvasW = container.clientWidth;
+  canvasH = container.clientHeight;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = canvasW * dpr;
+  canvas.height = canvasH * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  canvas.style.width = canvasW + 'px';
+  canvas.style.height = canvasH + 'px';
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+// ╔══════════════════════════════════════════╗
+// ║  MATH UTILITIES                          ║
+// ╚══════════════════════════════════════════╝
+
+const toRad = d => d * Math.PI / 180;
+const toDeg = r => r * 180 / Math.PI;
+
+// ╔══════════════════════════════════════════╗
+// ║  DRAWING PRIMITIVES                      ║
+// ╚══════════════════════════════════════════╝
+
+function drawLine(x1, y1, x2, y2, color, width, dash) {
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  if (dash && dash.length > 0) {
+    ctx.setLineDash(dash);
+  } else {
+    ctx.setLineDash([]);
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function drawArrow(x1, y1, x2, y2, color, width) {
+  const angle = Math.atan2(y2 - y1, x2 - x1);
+  const headLen = 10;
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - headLen * Math.cos(angle - Math.PI/6), y2 - headLen * Math.sin(angle - Math.PI/6));
+  ctx.lineTo(x2 - headLen * Math.cos(angle + Math.PI/6), y2 - headLen * Math.sin(angle + Math.PI/6));
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.fill();
+}
+
+function drawArc(x, y, r, start, end, color, width) {
+  ctx.beginPath();
+  ctx.arc(x, y, r, start, end);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  ctx.stroke();
+}
+
+function drawText(text, x, y, color, size, font, align, baseline) {
+  ctx.fillStyle = color;
+  ctx.font = size + 'px ' + (font || 'Georgia');
+  ctx.textAlign = align || 'left';
+  ctx.textBaseline = baseline || 'alphabetic';
+  ctx.fillText(text, x, y);
+}
+
+function drawRect(x, y, w, h, color, strokeColor, strokeWidth) {
+  ctx.fillStyle = color;
+  ctx.fillRect(x, y, w, h);
+  if (strokeColor) {
+    ctx.strokeStyle = strokeColor;
+    ctx.lineWidth = strokeWidth || 1;
+    ctx.strokeRect(x, y, w, h);
+  }
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  SCENE RENDERING                         ║
+// ╚══════════════════════════════════════════╝
+
+function drawCoordinateSystem(originX, originY, scale) {
+  ctx.strokeStyle = 'rgba(28, 25, 23, 0.06)';
+  ctx.lineWidth = 1;
+  for (let x = originX % scale; x < canvasW; x += scale) {
+    if (Math.abs(x - originX) < 2) continue;
+    drawLine(x, 0, x, canvasH, 'rgba(28, 25, 23, 0.06)', 1);
+  }
+  for (let y = originY % scale; y < canvasH; y += scale) {
+    if (Math.abs(y - originY) < 2) continue;
+    drawLine(0, y, canvasW, y, 'rgba(28, 25, 23, 0.06)', 1);
+  }
+  drawArrow(originX, originY, canvasW - 20, originY, 'rgba(28, 25, 23, 0.25)', 2);
+  drawArrow(originX, originY, originX, 20, 'rgba(28, 25, 23, 0.25)', 2);
+  drawText('x', canvasW - 30, originY - 8, '#6B6560', 14, 'Georgia');
+  drawText('y', originX + 8, 30, '#6B6560', 14, 'Georgia');
+}
+
+function drawGround(y) {
+  ctx.fillStyle = '#D4CFC7';
+  ctx.fillRect(0, y, canvasW, canvasH - y);
+  drawLine(0, y, canvasW, y, '#1C1917', 2);
+  ctx.strokeStyle = 'rgba(28, 25, 23, 0.1)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < canvasW; i += 40) {
+    ctx.beginPath();
+    ctx.moveTo(i, y);
+    ctx.lineTo(i + 20, y + 8);
+    ctx.stroke();
+  }
+}
+
+function drawTower(baseX, baseY, height, width) {
+  const brickW = 12, brickH = 6;
+  ctx.fillStyle = '#C4B5A0';
+  ctx.fillRect(baseX - width/2, baseY - height, width, height);
+  
+  ctx.strokeStyle = 'rgba(28, 25, 23, 0.15)';
+  ctx.lineWidth = 1;
+  for (let y = baseY; y > baseY - height; y -= brickH) {
+    ctx.beginPath();
+    ctx.moveTo(baseX - width/2, y);
+    ctx.lineTo(baseX + width/2, y);
+    ctx.stroke();
+  }
+  for (let x = baseX - width/2; x < baseX + width/2; x += brickW) {
+    const offset = (Math.floor((baseY - (baseY - height)) / brickH) % 2) * brickW/2;
+    ctx.beginPath();
+    ctx.moveTo(x + offset, baseY);
+    ctx.lineTo(x + offset, baseY - height);
+    ctx.stroke();
+  }
+  
+  ctx.strokeStyle = '#1C1917';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(baseX - width/2, baseY - height, width, height);
+  
+  ctx.fillStyle = '#8B7355';
+  ctx.beginPath();
+  ctx.moveTo(baseX - width/2 - 4, baseY - height);
+  ctx.lineTo(baseX, baseY - height - 20);
+  ctx.lineTo(baseX + width/2 + 4, baseY - height);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = '#1C1917';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  
+  drawText('h = ' + state.h.toFixed(1) + 'm', baseX + width/2 + 10, baseY - height/2, '#3B5B8C', 15, 'Georgia');
+}
+
+function drawObserver(x, y, label, color) {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(x, y - 25, 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(x, y - 19);
+  ctx.lineTo(x - 5, y);
+  ctx.lineTo(x + 5, y);
+  ctx.closePath();
+  ctx.fill();
+  drawText(label, x - 8, y + 15, '#1C1917', 14, 'Verdana');
+}
+
+function drawLineOfSight(fromX, fromY, toX, toY, angleDeg, color, label) {
+  const eyeY = fromY - 25;
+  drawLine(fromX, eyeY, toX, toY, color, 2, [8, 4]);
+  
+  const angleRad = Math.atan2(toY - eyeY, toX - fromX);
+  const arcStart = 0;
+  const arcEnd = angleRad;
+  drawArc(fromX, eyeY, 35, Math.min(arcStart, arcEnd), Math.max(arcStart, arcEnd), '#3B5B8C', 2);
+  
+  const midAngle = angleRad / 2;
+  const labelDist = 50;
+  const labelX = fromX + labelDist * Math.cos(midAngle);
+  const labelY = eyeY + labelDist * Math.sin(midAngle);
+  drawText(angleDeg.toFixed(0) + '°', labelX, labelY, '#3B5B8C', 14, 'Georgia');
+}
+
+function drawRightAngleMarker(x, y, size) {
+  ctx.strokeStyle = '#3B5B8C';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(x, y - size);
+  ctx.lineTo(x, y);
+  ctx.lineTo(x + size, y);
+  ctx.stroke();
+}
+
+function drawDimensionLine(x1, y1, x2, y2, label, offsetX, offsetY) {
+  const mx = (x1 + x2) / 2 + offsetX;
+  const my = (y1 + y2) / 2 + offsetY;
+  drawLine(x1, y1, x2, y2, '#1C1917', 1);
+  drawLine(x1, y1 - 4, x1, y1 + 4, '#1C1917', 1);
+  drawLine(x2, y2 - 4, x2, y2 + 4, '#1C1917', 1);
+  drawText(label, mx, my, '#1C1917', 13, 'Verdana');
+}
+
+function drawUnitCircle(cx, cy, r, angle) {
+  ctx.strokeStyle = 'rgba(28, 25, 23, 0.2)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.stroke();
+  
+  drawLine(cx - r - 10, cy, cx + r + 10, cy, 'rgba(28, 25, 23, 0.2)', 1);
+  drawLine(cx, cy - r - 10, cx, cy + r + 10, 'rgba(28, 25, 23, 0.2)', 1);
+  
+  const endX = cx + r * Math.cos(angle);
+  const endY = cy - r * Math.sin(angle);
+  drawLine(cx, cy, endX, endY, '#3B5B8C', 2.5);
+  
+  ctx.setLineDash([5, 3]);
+  drawLine(endX, endY, endX, cy, '#C4622D', 1.5);
+  drawLine(cx, cy, endX, cy, '#2A7C6F', 1.5);
+  ctx.setLineDash([]);
+  
+  drawText('θ', cx + 15, cy - 10, '#3B5B8C', 12, 'Georgia');
+  drawText('sin', endX + 5, cy - r * Math.sin(angle)/2, '#C4622D', 11, 'Verdana');
+  drawText('cos', cx + r * Math.cos(angle)/2, cy + 15, '#2A7C6F', 11, 'Verdana');
+  
+  ctx.fillStyle = '#D4A843';
+  ctx.beginPath();
+  ctx.arc(endX, endY, 4, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  MAIN SCENE                              ║
+// ╚══════════════════════════════════════════╝
+
+function drawScene() {
+  ctx.clearRect(0, 0, canvasW, canvasH);
+  
+  const originX = 80;
+  const originY = canvasH - 100;
+  const scale = Math.min(40, (canvasW - 200) / (state.d + 10)); // Auto-scale to fit
+  
+  drawCoordinateSystem(originX, originY, scale);
+  drawGround(originY);
+  
+  const towerBaseX = originX + state.d * scale * 0.6 + 100;
+  const towerBaseY = originY;
+  const towerH = state.h * scale * 0.6;
+  const towerW = 30;
+  
+  const pointAX = originX + 20;
+  const pointBX = towerBaseX - state.x * scale * 0.6;
+  
+  drawTower(towerBaseX, towerBaseY, towerH, towerW);
+  
+  drawObserver(pointAX, originY, 'A', '#3B5B8C');
+  drawObserver(pointBX, originY, 'B', '#2A7C6F');
+  
+  // Construction lines
+  drawLine(pointAX, originY, towerBaseX, originY, 'rgba(59, 91, 140, 0.3)', 1.5, [6, 3]);
+  drawLine(pointBX, originY, towerBaseX, originY, 'rgba(59, 91, 140, 0.3)', 1.5, [6, 3]);
+  drawLine(towerBaseX, originY, towerBaseX, originY - towerH, 'rgba(59, 91, 140, 0.3)', 1.5, [6, 3]);
+  
+  drawRightAngleMarker(towerBaseX, originY, 15);
+  
+  const topY = originY - towerH;
+  drawLineOfSight(pointAX, originY, towerBaseX, topY, state.theta1, 'rgba(59, 91, 140, 0.5)', '30°');
+  drawLineOfSight(pointBX, originY, towerBaseX, topY, state.theta2, 'rgba(42, 124, 111, 0.5)', '60°');
+  
+  // Dimension labels
+  drawDimensionLine(pointAX, originY + 25, pointBX, originY + 25, 'AB = ' + state.ab + 'm', 0, 0);
+  drawDimensionLine(pointBX, originY + 25, towerBaseX, originY + 25, 'x = ' + state.x.toFixed(1) + 'm', 0, 0);
+  drawDimensionLine(towerBaseX + 40, originY, towerBaseX + 40, originY - towerH, 'h = ' + state.h.toFixed(1) + 'm', 5, 0);
+  
+  drawText('d = ' + state.d.toFixed(1) + 'm', (pointAX + towerBaseX)/2, originY - 10, '#1C1917', 13, 'Verdana');
+  
+  // Unit circle inset
+  const ucX = canvasW - 100;
+  const ucY = 100;
+  const ucR = 50;
+  drawUnitCircle(ucX, ucY, ucR, toRad(state.theta2));
+  drawText('Unit Circle', ucX - 35, ucY - ucR - 15, '#6B6560', 12, 'Verdana');
+  
+  // Animated sight lines
+  const pulse = Math.sin(state.time * 2) * 0.3 + 0.7;
+  ctx.strokeStyle = 'rgba(59, 91, 140, ' + (pulse * 0.3) + ')';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(pointAX, originY - 25);
+  ctx.lineTo(towerBaseX, topY);
+  ctx.stroke();
+  
+  ctx.strokeStyle = 'rgba(42, 124, 111, ' + (pulse * 0.3) + ')';
+  ctx.beginPath();
+  ctx.moveTo(pointBX, originY - 25);
+  ctx.lineTo(towerBaseX, topY);
+  ctx.stroke();
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  ANIMATION LOOP                          ║
+// ╚══════════════════════════════════════════╝
+
+function animate() {
+  state.time += 0.016;
+  drawScene();
+  requestAnimationFrame(animate);
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  UI CONTROLS & INTERACTION               ║
+// ╚══════════════════════════════════════════╝
+
+function setupSlider(id, valId, suffix, stateKey, callback) {
+  const slider = document.getElementById(id);
+  const display = document.getElementById(valId);
+  if (!slider || !display) return;
+  
+  slider.addEventListener('input', (e) => {
+    const val = parseFloat(e.target.value);
+    state[stateKey] = val;
+    display.textContent = val + suffix;
+    if (callback) callback();
+  });
+}
+
+setupSlider('sliderTheta1', 'valTheta1', '°', 'theta1', () => {
+  recalculateFromAngles();
+});
+
+setupSlider('sliderTheta2', 'valTheta2', '°', 'theta2', () => {
+  recalculateFromAngles();
+});
+
+setupSlider('sliderAB', 'valAB', 'm', 'ab', () => {
+  recalculateFromAngles();
+});
+
+setupSlider('sliderH', 'valH', 'm', 'h', () => {
+  recalculateFromHeight();
+});
+
+function recalculateFromAngles() {
+  const t1 = toRad(state.theta1);
+  const t2 = toRad(state.theta2);
+  
+  // Validate: theta2 must be > theta1 for the geometry to work
+  if (state.theta2 <= state.theta1) {
+    state.theta2 = state.theta1 + 5;
+    document.getElementById('sliderTheta2').value = state.theta2;
+    document.getElementById('valTheta2').textContent = state.theta2 + '°';
+  }
+  
+  const denom = Math.tan(t2) - Math.tan(t1);
+  if (Math.abs(denom) < 0.001) return; // Prevent division by zero
+  
+  const x = (state.ab * Math.tan(t1)) / denom;
+  const h = x * Math.tan(t2);
+  
+  state.x = x;
+  state.h = h;
+  state.d = x + state.ab;
+  
+  const hSlider = document.getElementById('sliderH');
+  const hVal = document.getElementById('valH');
+  if (hSlider) hSlider.value = h.toFixed(2);
+  if (hVal) hVal.textContent = h.toFixed(2) + 'm';
+}
+
+function recalculateFromHeight() {
+  const t2 = toRad(state.theta2);
+  const x = state.h / Math.tan(t2);
+  const d = x + state.ab;
+  
+  state.x = x;
+  state.d = d;
+  
+  const t1 = Math.atan(state.h / d);
+  state.theta1 = toDeg(t1);
+  
+  const t1Slider = document.getElementById('sliderTheta1');
+  const t1Val = document.getElementById('valTheta1');
+  if (t1Slider) t1Slider.value = state.theta1.toFixed(1);
+  if (t1Val) t1Val.textContent = state.theta1.toFixed(1) + '°';
+}
+
+function resetToProblem() {
+  state.theta1 = 30;
+  state.theta2 = 60;
+  state.ab = 30;
+  recalculateFromAngles();
+  
+  const s1 = document.getElementById('sliderTheta1');
+  const s2 = document.getElementById('sliderTheta2');
+  const s3 = document.getElementById('sliderAB');
+  const v1 = document.getElementById('valTheta1');
+  const v2 = document.getElementById('valTheta2');
+  const v3 = document.getElementById('valAB');
+  
+  if (s1) s1.value = 30;
+  if (v1) v1.textContent = '30°';
+  if (s2) s2.value = 60;
+  if (v2) v2.textContent = '60°';
+  if (s3) s3.value = 30;
+  if (v3) v3.textContent = '30m';
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  PHASE MANAGEMENT                        ║
+// ╚══════════════════════════════════════════╝
+
+function submitPrediction() {
+  const hInput = document.getElementById('predHeight');
+  const dInput = document.getElementById('predDist');
+  const h = parseFloat(hInput.value);
+  const d = parseFloat(dInput.value);
+  
+  if (isNaN(h) || isNaN(d)) {
+    alert('Please enter both predictions!');
+    return;
+  }
+  
+  state.predHeight = h;
+  state.predDist = d;
+  
+  const widget = document.getElementById('predictionWidget');
+  if (widget) widget.classList.add('hidden');
+  
+  state.phase = 'explore';
+  
+  const controls = document.getElementById('controlsPanel');
+  if (controls) controls.classList.remove('hidden');
+}
+
+function nextStep() {
+  if (state.step < state.maxStep) {
+    const currentCard = document.getElementById('step' + state.step);
+    if (currentCard) currentCard.classList.remove('active');
+    
+    state.step++;
+    
+    const nextCard = document.getElementById('step' + state.step);
+    if (nextCard) nextCard.classList.add('active');
+    
+    const stepNum = document.getElementById('stepNum');
+    if (stepNum) stepNum.textContent = state.step;
+    
+    const progress = document.getElementById('progressFill');
+    if (progress) progress.style.width = (state.step / state.maxStep * 100) + '%';
+    
+    const btnNext = document.getElementById('btnNext');
+    if (state.step === state.maxStep) {
+      if (btnNext) btnNext.textContent = 'Finish →';
+    }
+    
+    // Show prediction result when reaching step 6
+    if (state.step === 6) {
+      showPredictionResult();
+    }
+  } else {
+    const currentCard = document.getElementById('step' + state.step);
+    if (currentCard) currentCard.classList.remove('active');
+    
+    const testCard = document.getElementById('stepTest');
+    if (testCard) testCard.classList.add('active');
+    
+    const btnNext = document.getElementById('btnNext');
+    if (btnNext) btnNext.classList.add('hidden');
+    
+    showAchievement('Deep Diver');
+  }
+}
+
+function prevStep() {
+  if (state.step > 1) {
+    const currentCard = document.getElementById('step' + state.step);
+    if (currentCard) currentCard.classList.remove('active');
+    
+    // Hide test card if going back from it
+    const testCard = document.getElementById('stepTest');
+    if (testCard) testCard.classList.remove('active');
+    
+    state.step--;
+    
+    const prevCard = document.getElementById('step' + state.step);
+    if (prevCard) prevCard.classList.add('active');
+    
+    const stepNum = document.getElementById('stepNum');
+    if (stepNum) stepNum.textContent = state.step;
+    
+    const progress = document.getElementById('progressFill');
+    if (progress) progress.style.width = (state.step / state.maxStep * 100) + '%';
+    
+    const btnNext = document.getElementById('btnNext');
+    if (btnNext) {
+      btnNext.textContent = 'Continue →';
+      btnNext.classList.remove('hidden');
+    }
+  }
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  FILL-IN-THE-BLANK SYSTEM                ║
+// ╚══════════════════════════════════════════╝
+
+function checkBlanks(ids, answers) {
+  let allCorrect = true;
+  
+  ids.forEach((id, i) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    
+    const val = el.value.trim();
+    if (val === answers[i]) {
+      el.classList.add('correct');
+      el.classList.remove('wrong');
+    } else {
+      el.classList.add('wrong');
+      el.classList.remove('correct');
+      allCorrect = false;
+    }
+  });
+  
+  const feedback = document.getElementById('feedback4');
+  if (!feedback) return;
+  
+  feedback.classList.add('show');
+  if (allCorrect) {
+    feedback.classList.add('correct');
+    feedback.classList.remove('wrong');
+    feedback.textContent = '✓ Correct! x = 15m. Now we can find the height.';
+    showAchievement('First Try');
+  } else {
+    feedback.classList.add('wrong');
+    feedback.classList.remove('correct');
+    feedback.textContent = 'Not quite. Remember: multiply both sides by √3 first, then collect x terms.';
+  }
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  UTILITY FUNCTIONS                       ║
+// ╚══════════════════════════════════════════╝
+
+function toggleWhy(el) {
+  const content = el.nextElementSibling;
+  if (!content) return;
+  content.classList.toggle('open');
+  const isOpen = content.classList.contains('open');
+  el.textContent = el.textContent.replace(/[▼▶]/, isOpen ? '▶' : '▼');
+}
+
+function toggleTeacher() {
+  const dash = document.getElementById('teacherDashboard');
+  if (dash) dash.classList.toggle('open');
+}
+
+function showAchievement(name) {
+  const el = document.getElementById('achievement');
+  if (!el) return;
+  el.textContent = '🏆 ' + name;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+function showPredictionResult() {
+  if (state.predHeight === null) return;
+  
+  const actualH = 15 * Math.sqrt(3);
+  const actualD = 45;
+  const diffH = Math.abs(state.predHeight - actualH);
+  const diffD = Math.abs(state.predDist - actualD);
+  
+  let message = '';
+  if (diffH < 3 && diffD < 5) {
+    message = '🎯 Excellent intuition! Spot on!';
+  } else if (diffH < 8) {
+    message = '👍 Good guess! Very close.';
+  } else if (diffH < 15) {
+    message = '💡 Getting there! The tower is taller than you thought.';
+  } else {
+    message = '📐 Interesting guess! The math reveals the true height.';
+  }
+  
+  const resultDiv = document.getElementById('predResult');
+  if (resultDiv) {
+    resultDiv.innerHTML = 
+      '<p>Your prediction: height = <span class=\"pred-val\">' + state.predHeight + 'm</span>, distance = <span class=\"pred-val\">' + state.predDist + 'm</span></p>' +
+      '<p>Actual: height = <strong>' + actualH.toFixed(2) + 'm</strong>, distance = <strong>' + actualD + 'm</strong></p>' +
+      '<p>' + message + '</p>';
+  }
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  KEYBOARD SHORTCUTS                      ║
+// ╚══════════════════════════════════════════╝
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'n' || e.key === 'N') nextStep();
+  if (e.key === 'p' || e.key === 'P') prevStep();
+  if (e.key === 'r' || e.key === 'R') resetToProblem();
+  if (e.key === 't' || e.key === 'T') toggleTeacher();
+});
+
+// ╔══════════════════════════════════════════╗
+// ║  INITIALIZATION                          ║
+// ╚══════════════════════════════════════════╝
+
+// Ensure step 1 is active
+const step1 = document.getElementById('step1');
+if (step1) step1.classList.add('active');
+
+// Initialize with problem values
+recalculateFromAngles();
+
+// Start animation
+animate();
+</script>
+
+</body>
+</html>

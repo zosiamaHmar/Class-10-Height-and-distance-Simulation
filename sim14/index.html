@@ -1,0 +1,1681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APEX-EDU · Complementary Angles · Tower Proof</title>
+<style>
+:root {
+  --bg: #FAFAF5;
+  --ink: #1C1917;
+  --ink-light: #6B6560;
+  --accent: #3B5B8C;
+  --accent-warm: #C4622D;
+  --highlight: #D4A843;
+  --panel-bg: #F2EDE5;
+  --panel-border: #DDD5C8;
+  --success: #2A7C6F;
+  --font-body: Georgia, 'Times New Roman', serif;
+  --font-mono: 'Courier New', Courier, monospace;
+  --font-label: Verdana, Geneva, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  overflow: hidden;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.top-bar {
+  height: 48px;
+  background: var(--panel-bg);
+  border-bottom: 1px solid var(--panel-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  flex-shrink: 0;
+}
+
+.top-bar h1 {
+  font-size: 15px;
+  font-weight: normal;
+  letter-spacing: 0.5px;
+}
+
+.top-bar .meta {
+  font-family: var(--font-label);
+  font-size: 11px;
+  color: var(--ink-light);
+}
+
+.top-bar .badge {
+  background: var(--accent);
+  color: white;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-family: var(--font-label);
+  margin-left: 10px;
+}
+
+.main {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  position: relative;
+}
+
+.canvas-wrap {
+  flex: 1;
+  position: relative;
+  background: var(--bg);
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.unit-circle-inset {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 150px;
+  height: 150px;
+  background: rgba(250,250,245,0.95);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+.panel {
+  width: 360px;
+  background: var(--panel-bg);
+  border-left: 1px solid var(--panel-border);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
+}
+
+.panel-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.panel-header h2 {
+  font-size: 16px;
+  font-weight: normal;
+  margin-bottom: 4px;
+}
+
+.progress-bar {
+  height: 3px;
+  background: var(--panel-border);
+  border-radius: 2px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+.phase-indicator {
+  display: flex;
+  padding: 8px 20px;
+  gap: 4px;
+}
+
+.phase-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--panel-border);
+  transition: background 0.3s;
+}
+
+.phase-dot.active { background: var(--accent); }
+.phase-dot.completed { background: var(--success); }
+
+.step-card {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--panel-border);
+  display: none;
+}
+
+.step-card.active {
+  display: block;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.step-number {
+  font-family: var(--font-label);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--ink-light);
+  margin-bottom: 8px;
+}
+
+.step-title {
+  font-size: 15px;
+  margin-bottom: 12px;
+}
+
+.step-body {
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.step-body p { margin-bottom: 10px; }
+
+.formula-box {
+  background: white;
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  padding: 14px 16px;
+  margin: 12px 0;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.formula-box .frac {
+  display: inline-block;
+  text-align: center;
+  vertical-align: middle;
+  margin: 0 2px;
+}
+
+.formula-box .frac .num {
+  display: block;
+  border-bottom: 1px solid var(--ink);
+  padding: 0 4px;
+}
+
+.formula-box .frac .den {
+  display: block;
+  padding: 0 4px;
+}
+
+.highlight-text { color: var(--accent); font-weight: bold; }
+.highlight-warm { color: var(--accent-warm); font-weight: bold; }
+
+.controls-section {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.controls-section h3 {
+  font-family: var(--font-label);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--ink-light);
+  margin-bottom: 14px;
+}
+
+.slider-group { margin-bottom: 16px; }
+
+.slider-label {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-label);
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.slider-label .value { color: var(--accent); font-weight: bold; }
+
+.slider-track {
+  position: relative;
+  height: 24px;
+  cursor: pointer;
+}
+
+.slider-track-line {
+  position: absolute;
+  top: 10px;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--panel-border);
+  border-radius: 2px;
+}
+
+.slider-track-fill {
+  position: absolute;
+  top: 10px;
+  left: 0;
+  height: 4px;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 0.1s;
+}
+
+.slider-thumb {
+  position: absolute;
+  top: 4px;
+  width: 16px;
+  height: 16px;
+  background: var(--bg);
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  cursor: grab;
+  transition: left 0.1s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+
+.slider-thumb:hover { transform: scale(1.15); }
+.slider-thumb:active { cursor: grabbing; }
+
+.prediction-widget {
+  padding: 16px 20px;
+  background: white;
+  border: 2px solid var(--highlight);
+  border-radius: 8px;
+  margin: 12px 20px;
+}
+
+.prediction-widget h3 {
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.prediction-input {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.prediction-input input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.prediction-input button {
+  padding: 8px 16px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-family: var(--font-label);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.prediction-input button:hover { background: #2d4568; }
+
+.challenge-card {
+  background: white;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin: 12px 20px;
+}
+
+.challenge-card .challenge-label {
+  font-family: var(--font-label);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+
+.challenge-card p {
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.btn-row {
+  display: flex;
+  gap: 8px;
+  padding: 12px 20px;
+}
+
+.btn {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid var(--panel-border);
+  background: white;
+  border-radius: 6px;
+  font-family: var(--font-label);
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--ink);
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.btn:hover {
+  background: var(--bg);
+  border-color: var(--accent);
+}
+
+.btn.primary {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.btn.primary:hover { background: #2d4568; }
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.nav-row {
+  display: flex;
+  gap: 8px;
+  padding: 12px 20px 16px;
+  border-top: 1px solid var(--panel-border);
+  margin-top: auto;
+}
+
+.hook-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(250,250,245,0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 30;
+  flex-direction: column;
+  padding: 40px;
+  text-align: center;
+}
+
+.hook-overlay h2 {
+  font-size: 26px;
+  margin-bottom: 20px;
+  color: var(--ink);
+  max-width: 600px;
+  line-height: 1.4;
+}
+
+.hook-overlay p {
+  font-size: 16px;
+  color: var(--ink-light);
+  max-width: 500px;
+  line-height: 1.6;
+  margin-bottom: 30px;
+}
+
+.hook-overlay .hook-btn {
+  padding: 14px 32px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-family: var(--font-label);
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.hook-overlay .hook-btn:hover { background: #2d4568; }
+
+.teacher-toggle {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-family: var(--font-label);
+  font-size: 11px;
+  cursor: pointer;
+  color: var(--ink-light);
+  z-index: 40;
+}
+
+.teacher-dashboard {
+  display: none;
+  position: absolute;
+  bottom: 50px;
+  left: 16px;
+  width: 320px;
+  background: white;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  z-index: 41;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.teacher-dashboard.show { display: block; }
+
+.teacher-dashboard h4 {
+  font-size: 13px;
+  margin-bottom: 10px;
+  color: var(--ink);
+}
+
+.teacher-dashboard p, .teacher-dashboard li {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--ink-light);
+  margin-bottom: 6px;
+}
+
+.teacher-dashboard ul {
+  margin-left: 16px;
+  margin-bottom: 12px;
+}
+
+.did-you-know {
+  padding: 12px 20px;
+  font-style: italic;
+  font-size: 12px;
+  color: var(--ink-light);
+  border-top: 1px solid var(--panel-border);
+}
+
+.self-test-option {
+  background: white;
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin: 6px 0;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.self-test-option:hover {
+  border-color: var(--accent);
+  background: var(--bg);
+}
+
+.self-test-option.correct {
+  border-color: var(--success);
+  background: rgba(42,124,111,0.08);
+}
+
+.self-test-option.wrong {
+  border-color: var(--accent-warm);
+  background: rgba(196,98,45,0.08);
+}
+
+.hint-box {
+  background: rgba(212,168,67,0.1);
+  border-left: 3px solid var(--highlight);
+  padding: 10px 14px;
+  margin: 10px 0;
+  font-size: 12px;
+  color: var(--ink-light);
+  border-radius: 0 4px 4px 0;
+}
+
+.answer-reveal {
+  background: white;
+  border: 2px solid var(--success);
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin: 12px 20px;
+  text-align: center;
+}
+
+.answer-reveal .big-answer {
+  font-size: 24px;
+  font-weight: bold;
+  color: var(--success);
+  margin: 8px 0;
+}
+
+.answer-reveal .prediction-compare {
+  font-size: 12px;
+  color: var(--ink-light);
+  margin-top: 8px;
+}
+
+.panel-toggle {
+  display: none;
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  width: 48px;
+  height: 48px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  font-size: 20px;
+  cursor: pointer;
+  z-index: 50;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+@media (max-width: 768px) {
+  .panel {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 100%;
+    transform: translateX(100%);
+    z-index: 100;
+  }
+  .panel.open { transform: translateX(0); }
+  .panel-toggle { display: block; }
+}
+</style>
+<base target="_blank">
+</head>
+<body>
+
+<div class="top-bar">
+  <div style="display:flex;align-items:center;">
+    <h1>APEX-EDU <span style="color:var(--ink-light);font-size:12px;">v3</span></h1>
+    <span class="badge">Trigonometry</span>
+    <span class="badge" style="background:var(--accent-warm);">Class 10</span>
+  </div>
+  <div class="meta">Complementary Angles · Geometric Mean · Tower Proof</div>
+</div>
+
+<div class="main">
+  <div class="canvas-wrap" id="canvasWrap">
+    <canvas id="mainCanvas"></canvas>
+    <canvas id="unitCircleCanvas" class="unit-circle-inset" width="150" height="150"></canvas>
+    
+    <div class="hook-overlay" id="hookOverlay">
+      <h2>Two observers stand in a straight line from a tower — one 4m away, one 9m away. Their elevation angles are complementary.</h2>
+      <p>The closer observer looks up at angle α. The farther one looks up at angle β. And α + β = 90°. Can you prove the tower is exactly 6m tall?</p>
+      <button class="hook-btn" onclick="startExplore()">Explore the Geometry →</button>
+    </div>
+    
+    <button class="teacher-toggle" onclick="toggleTeacher()" id="teacherBtn">📋 Teacher</button>
+    <div class="teacher-dashboard" id="teacherDash">
+      <h4>Teacher & Parent Notes</h4>
+      <p><strong>Topic:</strong> Complementary Angles in Trigonometry (Class 10)</p>
+      <p><strong>Curriculum:</strong> NCERT Ch. 9 · ICSE · CBSE</p>
+      <p><strong>Key Concept:</strong> If α + β = 90°, then tan β = cot α = 1/tan α</p>
+      <p><strong>Proof Method:</strong> Algebraic elimination using two tan equations</p>
+      <p><strong>Prerequisites:</strong></p>
+      <ul>
+        <li>tan θ = opposite/adjacent</li>
+        <li>cot θ = 1/tan θ</li>
+        <li>Complementary angle identities</li>
+      </ul>
+      <p><strong>Common Errors:</strong></p>
+      <ul>
+        <li>Assuming angles are 30° and 60° specifically</li>
+        <li>Not recognizing the geometric mean relationship</li>
+        <li>Forgetting that complementary means α + β = 90°, not α = β</li>
+      </ul>
+      <p><strong>Extension:</strong> Generalize to h = √(d₁ × d₂) for any complementary pair</p>
+    </div>
+  </div>
+
+  <div class="panel" id="panel">
+    <div class="panel-header">
+      <h2>Learning Path</h2>
+      <div class="phase-indicator" id="phaseIndicator">
+        <div class="phase-dot active" data-phase="1"></div>
+        <div class="phase-dot" data-phase="2"></div>
+        <div class="phase-dot" data-phase="3"></div>
+        <div class="phase-dot" data-phase="4"></div>
+        <div class="phase-dot" data-phase="5"></div>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill" style="width: 10%"></div>
+      </div>
+    </div>
+
+    <!-- PHASE 1: HOOK -->
+    <div class="step-card active" id="step-hook">
+      <div class="step-number">Phase 1 · Hook</div>
+      <div class="step-title">The Complementary Tower</div>
+      <div class="step-body">
+        <p>Two friends stand in a straight line from a stone tower. One is <strong>4 metres</strong> from the base. The other is <strong>9 metres</strong> away.</p>
+        <p>They both measure the angle to the top. Miraculously, their angles add to exactly <strong>90°</strong>.</p>
+        <div class="hint-box">💡 Complementary angles sum to 90°. This creates a hidden relationship between the distances and the height.</div>
+        <p>Your mission: Prove the tower is exactly <strong>6 metres</strong> tall — without knowing either angle!</p>
+      </div>
+    </div>
+
+    <!-- PHASE 2: EXPLORE -->
+    <div class="step-card" id="step-explore">
+      <div class="step-number">Phase 2 · Explore</div>
+      <div class="step-title">Play with the Geometry</div>
+      <div class="step-body">
+        <p>Drag the sliders to change the distances and the height. Watch how the angles change. Can you make them complementary?</p>
+        <p>Notice: when h = 6, the angles are exactly complementary for d₁=4 and d₂=9.</p>
+      </div>
+      
+      <div class="controls-section">
+        <h3>Controls</h3>
+        <div class="slider-group">
+          <div class="slider-label">
+            <span>Near Distance (d₁)</span>
+            <span class="value" id="valD1">4.0 m</span>
+          </div>
+          <div class="slider-track" id="trackD1">
+            <div class="slider-track-line"></div>
+            <div class="slider-track-fill" id="fillD1" style="width:20%"></div>
+            <div class="slider-thumb" id="thumbD1" style="left:20%"></div>
+          </div>
+        </div>
+        <div class="slider-group">
+          <div class="slider-label">
+            <span>Far Distance (d₂)</span>
+            <span class="value" id="valD2">9.0 m</span>
+          </div>
+          <div class="slider-track" id="trackD2">
+            <div class="slider-track-line"></div>
+            <div class="slider-track-fill" id="fillD2" style="width:45%"></div>
+            <div class="slider-thumb" id="thumbD2" style="left:45%"></div>
+          </div>
+        </div>
+        <div class="slider-group">
+          <div class="slider-label">
+            <span>Tower Height (h)</span>
+            <span class="value" id="valH">6.0 m</span>
+          </div>
+          <div class="slider-track" id="trackH">
+            <div class="slider-track-line"></div>
+            <div class="slider-track-fill" id="fillH" style="width:30%"></div>
+            <div class="slider-thumb" id="thumbH" style="left:30%"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hint-box">
+        Current angle sum: <span id="angleSumDisplay" class="highlight-text">90.0°</span>
+        <br>Target: exactly 90° for complementary proof
+      </div>
+
+      <div class="btn-row">
+        <button class="btn primary" onclick="startChallenge()">I'm Ready → Challenge</button>
+      </div>
+    </div>
+
+    <!-- PHASE 3: CHALLENGE -->
+    <div class="step-card" id="step-challenge">
+      <div class="step-number">Phase 3 · Challenge</div>
+      <div class="step-title">The Proof Challenge</div>
+      
+      <div class="challenge-card">
+        <div class="challenge-label">🏆 The Problem</div>
+        <p>The angles of elevation of the top of a tower from two points in the same straight line with it are <strong>complementary</strong>. The distances from the base of the tower are <strong>4 m</strong> and <strong>9 m</strong>. Prove that the height of the tower is <strong>6 m</strong>.</p>
+      </div>
+
+      <div class="prediction-widget" id="predictionWidget">
+        <h3>🔮 Make Your Prediction</h3>
+        <p style="font-size:12px;color:var(--ink-light);margin-bottom:10px;">Before proving — if d₁=4 and d₂=9, and angles are complementary, what do you think the height is?</p>
+        <div class="prediction-input">
+          <input type="number" id="predictionInput" placeholder="Height in metres" min="1" max="20" step="0.1">
+          <button onclick="submitPrediction()">Guess</button>
+        </div>
+        <div class="prediction-result" id="predictionResult"></div>
+      </div>
+
+      <div class="btn-row" id="challengeBtns" style="display:none;">
+        <button class="btn primary" onclick="startReveal()">Start Proof →</button>
+      </div>
+    </div>
+
+    <!-- PHASE 4: REVEAL (Proof Steps) -->
+    <div class="step-card" id="step-reveal">
+      <div class="step-number">Phase 4 · Reveal</div>
+      <div class="step-title">Building the Proof</div>
+      
+      <div id="reveal-step-1" class="reveal-substep">
+        <div class="step-number">Step 1 · The Scene</div>
+        <div class="step-body">
+          <p>Imagine a tower of height <em>h</em>. Two observers A and B stand on the same straight line from the base, at distances <strong>d₁ = 4m</strong> and <strong>d₂ = 9m</strong>.</p>
+          <p>Observer A (closer) sees the top at angle <strong>α</strong>. Observer B (farther) sees it at angle <strong>β</strong>.</p>
+          <p>The key given: <span class="highlight-text">α + β = 90°</span> (complementary).</p>
+          <p>On the canvas, both triangles share the same height <em>h</em> but have different bases.</p>
+        </div>
+        <div class="btn-row">
+          <button class="btn primary" onclick="nextRevealStep(2)">Next Step →</button>
+        </div>
+      </div>
+
+      <div id="reveal-step-2" class="reveal-substep" style="display:none;">
+        <div class="step-number">Step 2 · Two Tangent Equations</div>
+        <div class="step-body">
+          <p>From the two right triangles, we write tan for each angle:</p>
+          <div class="formula-box">
+            From observer A (near):<<br>
+            tan α = <span class="frac"><span class="num">h</span><span class="den">d₁</span></span> = <span class="frac"><span class="num">h</span><span class="den">4</span></span><br><br>
+            From observer B (far):<<br>
+            tan β = <span class="frac"><span class="num">h</span><span class="den">d₂</span></span> = <span class="frac"><span class="num">h</span><span class="den">9</span></span>
+          </div>
+          <p>Two equations. Three unknowns (h, α, β). But we have one more crucial piece of information...</p>
+        </div>
+        <div class="btn-row">
+          <button class="btn" onclick="prevRevealStep(1)">← Back</button>
+          <button class="btn primary" onclick="nextRevealStep(3)">Next Step →</button>
+        </div>
+      </div>
+
+      <div id="reveal-step-3" class="reveal-substep" style="display:none;">
+        <div class="step-number">Step 3 · The Complementary Identity</div>
+        <div class="step-body">
+          <p>Since α + β = 90°, we know that <strong>β = 90° − α</strong>.</p>
+          <p>Using the co-function identity:</p>
+          <div class="formula-box">
+            tan(90° − α) = cot α = <span class="frac"><span class="num">1</span><span class="den">tan α</span></span>
+          </div>
+          <p>So: <span class="highlight-text">tan β = 1 / tan α</span></p>
+          <p>This is the bridge! The tangent of the far angle is the RECIPROCAL of the tangent of the near angle.</p>
+          <div class="hint-box">The unit circle inset shows this: as one angle grows, its complement shrinks, and their tangents become reciprocals.</div>
+        </div>
+        <div class="btn-row">
+          <button class="btn" onclick="prevRevealStep(2)">← Back</button>
+          <button class="btn primary" onclick="nextRevealStep(4)">Next Step →</button>
+        </div>
+      </div>
+
+      <div id="reveal-step-4" class="reveal-substep" style="display:none;">
+        <div class="step-number">Step 4 · The Key Substitution</div>
+        <div class="step-body">
+          <p>Substitute our tan expressions into the reciprocal relationship:</p>
+          <div class="formula-box">
+            tan β = <span class="frac"><span class="num">h</span><span class="den">9</span></span> = <span class="frac"><span class="num">1</span><span class="den">tan α</span></span> = <span class="frac"><span class="num">1</span><span class="den"><span class="frac"><span class="num">h</span><span class="den">4</span></span></span></span> = <span class="frac"><span class="num">4</span><span class="den">h</span></span>
+          </div>
+          <p>Now we have:</p>
+          <div class="formula-box">
+            <span class="frac"><span class="num">h</span><span class="den">9</span></span> = <span class="frac"><span class="num">4</span><span class="den">h</span></span>
+          </div>
+          <p>Cross-multiply:</p>
+          <div class="formula-box">
+            h² = 4 × 9 = 36
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn" onclick="prevRevealStep(3)">← Back</button>
+          <button class="btn primary" onclick="nextRevealStep(5)">Next Step →</button>
+        </div>
+      </div>
+
+      <div id="reveal-step-5" class="reveal-substep" style="display:none;">
+        <div class="step-number">Step 5 · The Beautiful Result</div>
+        <div class="step-body">
+          <p>From h² = 36:</p>
+          <div class="formula-box">
+            h = √36 = <span class="highlight-text" style="font-size:18px;">6 metres</span>
+          </div>
+          <p>Notice the elegance: <strong>h = √(d₁ × d₂) = √(4 × 9) = √36 = 6</strong></p>
+          <p>The tower height is the <span class="highlight-warm">geometric mean</span> of the two distances!</p>
+          <p>This always works when elevation angles are complementary: <strong>h = √(d₁ × d₂)</strong></p>
+        </div>
+        <div class="btn-row">
+          <button class="btn" onclick="prevRevealStep(4)">← Back</button>
+          <button class="btn primary" onclick="nextRevealStep(6)">Verify →</button>
+        </div>
+      </div>
+
+      <div id="reveal-step-6" class="reveal-substep" style="display:none;">
+        <div class="step-number">Step 6 · Verification</div>
+        <div class="step-body">
+          <p>Let's verify with h = 6m:</p>
+          <p>• tan α = 6/4 = 1.5 → α = arctan(1.5) ≈ 56.31°</p>
+          <p>• tan β = 6/9 = 0.667 → β = arctan(0.667) ≈ 33.69°</p>
+          <p>• α + β = 56.31° + 33.69° = <strong>90.00°</strong> ✓</p>
+          <p>• Also: tan β = 0.667 = 1/1.5 = 1/tan α ✓</p>
+          
+          <div class="answer-reveal" id="finalAnswerBox">
+            <div style="font-size:12px;color:var(--ink-light);">The height of the tower is</div>
+            <div class="big-answer">6 metres</div>
+            <div class="prediction-compare" id="predictionCompare"></div>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn" onclick="prevRevealStep(5)">← Back</button>
+          <button class="btn primary" onclick="startMaster()">Master It →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHASE 5: MASTER -->
+    <div class="step-card" id="step-master">
+      <div class="step-number">Phase 5 · Master</div>
+      <div class="step-title">Test Yourself</div>
+      <div class="step-body">
+        <p>Same geometric mean concept, different situations.</p>
+        
+        <div style="margin-top:14px;">
+          <p style="font-size:12px;color:var(--ink-light);margin-bottom:8px;">Problem 1: Different Distances</p>
+          <p style="font-size:13px;margin-bottom:8px;">Two observers stand 3m and 12m from a tower. Their elevation angles are complementary. What is the tower height?</p>
+          <div class="self-test-option" onclick="checkVariant(1, this, false)">7.5 metres</div>
+          <div class="self-test-option" onclick="checkVariant(1, this, true)">6 metres</div>
+          <div class="self-test-option" onclick="checkVariant(1, this, false)">15 metres</div>
+        </div>
+
+        <div style="margin-top:14px;">
+          <p style="font-size:12px;color:var(--ink-light);margin-bottom:8px;">Problem 2: Find Distance</p>
+          <p style="font-size:13px;margin-bottom:8px;">A tower is 8m tall. From one point, the elevation angle is 45°. From another point in the same line, the angle is 45° (complementary pair). How far is the second point?</p>
+          <div class="self-test-option" onclick="checkVariant(2, this, false)">4 metres</div>
+          <div class="self-test-option" onclick="checkVariant(2, this, true)">8 metres</div>
+          <div class="self-test-option" onclick="checkVariant(2, this, false)">16 metres</div>
+        </div>
+
+        <div style="margin-top:14px;">
+          <p style="font-size:12px;color:var(--ink-light);margin-bottom:8px;">Problem 3: Real World</p>
+          <p style="font-size:13px;margin-bottom:8px;">A surveyor measures a tree. From 5m away, angle = 60°. From another point, angle = 30° (complementary). How tall is the tree?</p>
+          <div class="self-test-option" onclick="checkVariant(3, this, false)">5√3 ≈ 8.66m</div>
+          <div class="self-test-option" onclick="checkVariant(3, this, true)">5√3 ≈ 8.66m (and second point at 15m)</div>
+          <div class="self-test-option" onclick="checkVariant(3, this, false)">10 metres</div>
+        </div>
+      </div>
+      
+      <div class="did-you-know">
+        Did you know? The geometric mean appears in camera lenses (f-stops), finance (CAGR), and even in the design of the Parthenon's proportions — all based on the same h = √(ab) relationship.
+      </div>
+      
+      <div class="btn-row">
+        <button class="btn" onclick="resetAll()">↺ Start Over</button>
+        <button class="btn" onclick="toggleTeacher()">📋 Teacher Notes</button>
+      </div>
+    </div>
+
+    <div class="nav-row" id="navRow">
+      <button class="btn" id="btnBack" onclick="goBack()" disabled>← Back</button>
+      <button class="btn primary" id="btnNext" onclick="goNext()">Continue →</button>
+    </div>
+  </div>
+</div>
+
+<button class="panel-toggle" id="panelToggle" onclick="togglePanel()">☰</button>
+
+<script>
+// ╔══════════════════════════════════════════╗
+// ║  STATE & CONFIGURATION                   ║
+// ╚══════════════════════════════════════════╝
+
+const state = {
+  phase: 1,
+  revealStep: 1,
+  d1: 4,
+  d2: 9,
+  h: 6,
+  dragging: null,
+  time: 0,
+  showConstruction: true,
+  showUnitCircle: true,
+  showCoords: true,
+  animating: true,
+  prediction: null
+};
+
+const canvas = document.getElementById('mainCanvas');
+const ctx = canvas.getContext('2d');
+const ucCanvas = document.getElementById('unitCircleCanvas');
+const ucCtx = ucCanvas.getContext('2d');
+
+let dpr = window.devicePixelRatio || 1;
+
+// ╔══════════════════════════════════════════╗
+// ║  RESIZE HANDLER                          ║
+// ╚══════════════════════════════════════════╝
+
+function resize() {
+  const wrap = document.getElementById('canvasWrap');
+  canvas.width = wrap.clientWidth * dpr;
+  canvas.height = wrap.clientHeight * dpr;
+  canvas.style.width = wrap.clientWidth + 'px';
+  canvas.style.height = wrap.clientHeight + 'px';
+  ctx.scale(dpr, dpr);
+}
+window.addEventListener('resize', () => {
+  resize();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.scale(dpr, dpr);
+});
+resize();
+
+// ╔══════════════════════════════════════════╗
+// ║  SLIDER SYSTEM                           ║
+// ╚══════════════════════════════════════════╝
+
+const sliders = {
+  d1: { min: 1, max: 20, value: 4, el: 'trackD1', fill: 'fillD1', thumb: 'thumbD1', label: 'valD1', unit: ' m' },
+  d2: { min: 1, max: 20, value: 9, el: 'trackD2', fill: 'fillD2', thumb: 'thumbD2', label: 'valD2', unit: ' m' },
+  h: { min: 1, max: 20, value: 6, el: 'trackH', fill: 'fillH', thumb: 'thumbH', label: 'valH', unit: ' m' }
+};
+
+function updateSlider(key, ratio) {
+  const s = sliders[key];
+  s.value = s.min + ratio * (s.max - s.min);
+  if (key === 'd1') state.d1 = s.value;
+  if (key === 'd2') state.d2 = s.value;
+  if (key === 'h') state.h = s.value;
+  
+  document.getElementById(s.label).textContent = s.value.toFixed(1) + s.unit;
+  document.getElementById(s.fill).style.width = (ratio * 100) + '%';
+  document.getElementById(s.thumb).style.left = (ratio * 100) + '%';
+  
+  updateAngleSum();
+}
+
+function updateAngleSum() {
+  const alpha = Math.atan(state.h / state.d1) * 180 / Math.PI;
+  const beta = Math.atan(state.h / state.d2) * 180 / Math.PI;
+  const sum = alpha + beta;
+  const el = document.getElementById('angleSumDisplay');
+  if (el) {
+    el.textContent = sum.toFixed(1) + '°';
+    if (Math.abs(sum - 90) < 0.5) {
+      el.style.color = 'var(--success)';
+      el.textContent += ' ✓ Complementary!';
+    } else {
+      el.style.color = 'var(--accent)';
+    }
+  }
+}
+
+function initSliders() {
+  Object.keys(sliders).forEach(key => {
+    const s = sliders[key];
+    const track = document.getElementById(s.el);
+    
+    const getRatio = (e) => {
+      const rect = track.getBoundingClientRect();
+      let x = (e.clientX || e.touches[0].clientX) - rect.left;
+      return Math.max(0, Math.min(1, x / rect.width));
+    };
+    
+    const startDrag = (e) => {
+      state.dragging = key;
+      updateSlider(key, getRatio(e));
+      e.preventDefault();
+    };
+    
+    track.addEventListener('mousedown', startDrag);
+    track.addEventListener('touchstart', startDrag);
+  });
+  
+  window.addEventListener('mousemove', (e) => {
+    if (state.dragging) {
+      const s = sliders[state.dragging];
+      const track = document.getElementById(s.el);
+      const rect = track.getBoundingClientRect();
+      let ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+      updateSlider(state.dragging, ratio);
+    }
+  });
+  
+  window.addEventListener('touchmove', (e) => {
+    if (state.dragging) {
+      const s = sliders[state.dragging];
+      const track = document.getElementById(s.el);
+      const rect = track.getBoundingClientRect();
+      let ratio = Math.max(0, Math.min(1, (e.touches[0].clientX - rect.left) / rect.width));
+      updateSlider(state.dragging, ratio);
+    }
+  });
+  
+  const endDrag = () => { state.dragging = null; };
+  window.addEventListener('mouseup', endDrag);
+  window.addEventListener('touchend', endDrag);
+}
+
+initSliders();
+
+// ╔══════════════════════════════════════════╗
+// ║  DRAWING PRIMITIVES                      ║
+// ╚══════════════════════════════════════════╝
+
+function drawGrid(ctx, w, h, originX, originY, scale) {
+  ctx.strokeStyle = 'rgba(28, 25, 23, 0.06)';
+  ctx.lineWidth = 1;
+  
+  for (let x = originX % scale; x < w; x += scale) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+  }
+  for (let y = originY % scale; y < h; y += scale) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+  }
+  
+  ctx.strokeStyle = 'rgba(28, 25, 23, 0.2)';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(0, originY); ctx.lineTo(w, originY); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(originX, 0); ctx.lineTo(originX, h); ctx.stroke();
+  
+  ctx.fillStyle = 'rgba(28, 25, 23, 0.3)';
+  ctx.beginPath();
+  ctx.moveTo(w - 10, originY - 4); ctx.lineTo(w, originY); ctx.lineTo(w - 10, originY + 4);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(originX - 4, 10); ctx.lineTo(originX, 0); ctx.lineTo(originX + 4, 10);
+  ctx.fill();
+  
+  ctx.fillStyle = '#6B6560';
+  ctx.font = '13px Georgia';
+  ctx.fillText('x', w - 20, originY - 12);
+  ctx.fillText('y', originX + 10, 18);
+}
+
+function drawDashedLine(ctx, x1, y1, x2, y2, color = 'rgba(59, 91, 140, 0.4)') {
+  ctx.save();
+  ctx.setLineDash([8, 4]);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawRightAngle(ctx, x, y, size = 16, color = 'rgba(59, 91, 140, 0.5)') {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x + size, y);
+  ctx.lineTo(x + size, y - size);
+  ctx.stroke();
+}
+
+function drawAngleArc(ctx, cx, cy, radius, startAngle, endAngle, color, label, labelOffset = 22) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, startAngle, endAngle);
+  ctx.stroke();
+  
+  const midAngle = (startAngle + endAngle) / 2;
+  const lx = cx + (radius + labelOffset) * Math.cos(midAngle);
+  const ly = cy + (radius + labelOffset) * Math.sin(midAngle);
+  
+  ctx.fillStyle = color;
+  ctx.font = 'bold 13px Georgia';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(label, lx, ly);
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+}
+
+function drawDimensionLabel(ctx, x, y, text, align = 'center', color = '#1C1917') {
+  ctx.fillStyle = color;
+  ctx.font = '12px Georgia';
+  const metrics = ctx.measureText(text);
+  let dx = x;
+  if (align === 'center') dx -= metrics.width / 2;
+  else if (align === 'right') dx -= metrics.width;
+  
+  ctx.fillStyle = 'rgba(250,250,245,0.85)';
+  ctx.fillRect(dx - 3, y - 10, metrics.width + 6, 16);
+  
+  ctx.fillStyle = color;
+  ctx.fillText(text, dx, y + 3);
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  SCENE DRAWING                           ║
+// ╚══════════════════════════════════════════╝
+
+function drawScene() {
+  const w = canvas.width / dpr;
+  const h = canvas.height / dpr;
+  const t = state.time;
+  
+  ctx.clearRect(0, 0, w, h);
+  
+  const originX = 80;
+  const originY = h - 100;
+  const scale = 40;
+  
+  if (state.showCoords) {
+    drawGrid(ctx, w, h, originX, originY, scale);
+  }
+  
+  const d1 = state.d1;
+  const d2 = state.d2;
+  const ht = state.h;
+  
+  // Calculate angles
+  const alpha = Math.atan(ht / d1);
+  const beta = Math.atan(ht / d2);
+  const alphaDeg = alpha * 180 / Math.PI;
+  const betaDeg = beta * 180 / Math.PI;
+  const sumDeg = alphaDeg + betaDeg;
+  const isComplementary = Math.abs(sumDeg - 90) < 0.5;
+  
+  // Pixel scale
+  const maxDist = Math.max(d1, d2) + 2;
+  const maxH = ht + 2;
+  const sceneScale = Math.min((w - originX - 220) / maxDist, (h - 200) / maxH);
+  
+  const groundY = originY;
+  const towerX = originX + 100;
+  
+  // ── GROUND ──
+  ctx.fillStyle = '#E8E2D8';
+  ctx.fillRect(originX, groundY, w - originX, 4);
+  
+  ctx.strokeStyle = 'rgba(28,25,23,0.08)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < (w - originX); i += 20) {
+    ctx.beginPath();
+    ctx.moveTo(originX + i, groundY + 2);
+    ctx.lineTo(originX + i + 10, groundY + 6);
+    ctx.stroke();
+  }
+  
+  // ── TOWER ──
+  const towerW = 50 * sceneScale / 10;
+  const tTopY = groundY - ht * sceneScale;
+  
+  // Tower body (stone texture effect)
+  ctx.fillStyle = '#C4BFB6';
+  ctx.fillRect(towerX - towerW/2, tTopY, towerW, ht * sceneScale);
+  
+  // Tower outline
+  ctx.strokeStyle = '#1C1917';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(towerX - towerW/2, tTopY, towerW, ht * sceneScale);
+  
+  // Tower stone lines
+  ctx.strokeStyle = 'rgba(28,25,23,0.15)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 6; i++) {
+    const ly = tTopY + (ht * sceneScale) * (i / 6);
+    ctx.beginPath();
+    ctx.moveTo(towerX - towerW/2 + 3, ly);
+    ctx.lineTo(towerX + towerW/2 - 3, ly);
+    ctx.stroke();
+  }
+  
+  // Tower top (battlement)
+  ctx.fillStyle = '#B5B0A7';
+  const battleH = 8 * sceneScale / 10;
+  for (let i = -2; i <= 2; i++) {
+    ctx.fillRect(towerX + i * towerW/5 - towerW/12, tTopY - battleH, towerW/6, battleH);
+  }
+  
+  // Tower label
+  drawDimensionLabel(ctx, towerX, tTopY - battleH - 12, `Tower h = ${ht.toFixed(1)}m`, 'center', '#3B5B8C');
+  
+  // ── OBSERVER A (Near, distance d1) ──
+  const obsAX = towerX - d1 * sceneScale;
+  
+  // Observer A figure
+  ctx.fillStyle = '#3B5B8C';
+  ctx.beginPath();
+  ctx.arc(obsAX, groundY - 12, 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#1C1917';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  // Body
+  ctx.beginPath();
+  ctx.moveTo(obsAX, groundY - 7);
+  ctx.lineTo(obsAX, groundY + 2);
+  ctx.stroke();
+  
+  // Observer A label
+  ctx.fillStyle = '#3B5B8C';
+  ctx.font = 'bold 11px Verdana';
+  ctx.fillText('A', obsAX - 3, groundY + 16);
+  ctx.font = '10px Verdana';
+  ctx.fillText(`d₁ = ${d1.toFixed(1)}m`, obsAX - 20, groundY + 28);
+  
+  // ── OBSERVER B (Far, distance d2) ──
+  const obsBX = towerX + d2 * sceneScale;
+  
+  // Observer B figure
+  ctx.fillStyle = '#C4622D';
+  ctx.beginPath();
+  ctx.arc(obsBX, groundY - 12, 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#1C1917';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(obsBX, groundY - 7);
+  ctx.lineTo(obsBX, groundY + 2);
+  ctx.stroke();
+  
+  // Observer B label
+  ctx.fillStyle = '#C4622D';
+  ctx.font = 'bold 11px Verdana';
+  ctx.fillText('B', obsBX - 3, groundY + 16);
+  ctx.font = '10px Verdana';
+  ctx.fillText(`d₂ = ${d2.toFixed(1)}m`, obsBX - 20, groundY + 28);
+  
+  // ── CONSTRUCTION LINES ──
+  if (state.showConstruction) {
+    // Horizontal from A to tower base
+    drawDashedLine(ctx, obsAX, groundY, towerX - towerW/2, groundY, 'rgba(59, 91, 140, 0.3)');
+    // Horizontal from tower base to B
+    drawDashedLine(ctx, towerX + towerW/2, groundY, obsBX, groundY, 'rgba(196, 98, 45, 0.3)');
+    // Vertical height line inside tower
+    drawDashedLine(ctx, towerX, groundY, towerX, tTopY, 'rgba(42, 124, 111, 0.3)');
+    
+    // Right angles at base
+    drawRightAngle(ctx, towerX - towerW/2, groundY, 14, 'rgba(59, 91, 140, 0.4)');
+    drawRightAngle(ctx, towerX + towerW/2 - 14, groundY, 14, 'rgba(196, 98, 45, 0.4)');
+  }
+  
+  // ── LINE OF SIGHT A (to top) ──
+  ctx.strokeStyle = '#3B5B8C';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([5, 3]);
+  ctx.beginPath();
+  ctx.moveTo(obsAX, groundY);
+  ctx.lineTo(towerX, tTopY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  
+  // Angle arc for alpha (at observer A)
+  const alphaStart = 0;
+  const alphaEnd = -alpha; // negative because up in canvas
+  drawAngleArc(ctx, obsAX, groundY, 45, alphaEnd, alphaStart, '#3B5B8C', `α = ${alphaDeg.toFixed(1)}°`, 26);
+  
+  // ── LINE OF SIGHT B (to top) ──
+  ctx.strokeStyle = '#C4622D';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([5, 3]);
+  ctx.beginPath();
+  ctx.moveTo(obsBX, groundY);
+  ctx.lineTo(towerX, tTopY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  
+  // Angle arc for beta (at observer B)
+  const betaStart = -Math.PI;
+  const betaEnd = -Math.PI + beta;
+  drawAngleArc(ctx, obsBX, groundY, 45, betaStart, betaEnd, '#C4622D', `β = ${betaDeg.toFixed(1)}°`, 26);
+  
+  // ── ANGLE SUM INDICATOR ──
+  const sumX = (obsAX + obsBX) / 2;
+  ctx.fillStyle = isComplementary ? '#2A7C6F' : '#6B6560';
+  ctx.font = 'bold 13px Georgia';
+  ctx.textAlign = 'center';
+  ctx.fillText(`α + β = ${sumDeg.toFixed(1)}°`, sumX, groundY + 55);
+  
+  if (isComplementary) {
+    ctx.fillStyle = '#2A7C6F';
+    ctx.font = '11px Georgia';
+    ctx.fillText('✓ Complementary!', sumX, groundY + 70);
+  }
+  ctx.textAlign = 'left';
+  
+  // ── GEOMETRIC MEAN VISUAL ──
+  if (isComplementary) {
+    ctx.fillStyle = 'rgba(42, 124, 111, 0.08)';
+    ctx.fillRect(towerX - 60, tTopY - 40, 120, 30);
+    ctx.strokeStyle = '#2A7C6F';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(towerX - 60, tTopY - 40, 120, 30);
+    ctx.fillStyle = '#2A7C6F';
+    ctx.font = 'bold 11px Georgia';
+    ctx.textAlign = 'center';
+    ctx.fillText(`h = √(d₁×d₂) = √(${d1.toFixed(1)}×${d2.toFixed(1)})`, towerX, tTopY - 22);
+    ctx.fillText(`= ${Math.sqrt(d1 * d2).toFixed(2)}m`, towerX, tTopY - 8);
+    ctx.textAlign = 'left';
+  }
+  
+  // ── DID YOU KNOW (bottom subtle) ──
+  ctx.fillStyle = 'rgba(107, 101, 96, 0.5)';
+  ctx.font = 'italic 11px Georgia';
+  ctx.fillText(`tan α = ${(ht/d1).toFixed(3)}    |    tan β = ${(ht/d2).toFixed(3)}    |    tan α × tan β = ${((ht/d1)*(ht/d2)).toFixed(3)}`, originX, h - 20);
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  UNIT CIRCLE DRAWING                     ║
+// ╚══════════════════════════════════════════╝
+
+function drawUnitCircle() {
+  const w = 150, h = 150;
+  const cx = w / 2, cy = h / 2;
+  const r = 50;
+  const t = state.time;
+  
+  ucCtx.clearRect(0, 0, w, h);
+  
+  ucCtx.fillStyle = 'rgba(250,250,245,0.95)';
+  ucCtx.fillRect(0, 0, w, h);
+  
+  // Circle
+  ucCtx.strokeStyle = 'rgba(28, 25, 23, 0.25)';
+  ucCtx.lineWidth = 2;
+  ucCtx.beginPath();
+  ucCtx.arc(cx, cy, r, 0, Math.PI * 2);
+  ucCtx.stroke();
+  
+  // Axes
+  ucCtx.strokeStyle = 'rgba(28, 25, 23, 0.2)';
+  ucCtx.lineWidth = 1.5;
+  ucCtx.beginPath(); ucCtx.moveTo(cx - r - 10, cy); ucCtx.lineTo(cx + r + 10, cy); ucCtx.stroke();
+  ucCtx.beginPath(); ucCtx.moveTo(cx, cy - r - 10); ucCtx.lineTo(cx, cy + r + 10); ucCtx.stroke();
+  
+  // Calculate angles from current scene
+  const alpha = Math.atan(state.h / state.d1);
+  const beta = Math.atan(state.h / state.d2);
+  
+  // Show alpha and its complement
+  const showAlpha = alpha + Math.sin(t * 0.3) * 0.02;
+  const showBeta = beta + Math.sin(t * 0.3 + 1) * 0.02;
+  
+  // Alpha radius
+  const ax = cx + r * Math.cos(showAlpha);
+  const ay = cy - r * Math.sin(showAlpha);
+  
+  ucCtx.strokeStyle = '#3B5B8C';
+  ucCtx.lineWidth = 2.5;
+  ucCtx.beginPath();
+  ucCtx.moveTo(cx, cy);
+  ucCtx.lineTo(ax, ay);
+  ucCtx.stroke();
+  
+  // Beta radius (complement, shown in different quadrant for clarity)
+  const bx = cx + r * Math.cos(showBeta);
+  const by = cy - r * Math.sin(showBeta);
+  
+  ucCtx.strokeStyle = '#C4622D';
+  ucCtx.lineWidth = 2.5;
+  ucCtx.beginPath();
+  ucCtx.moveTo(cx, cy);
+  ucCtx.lineTo(bx, by);
+  ucCtx.stroke();
+  
+  // Sin/cos drops for alpha
+  ucCtx.setLineDash([4, 2]);
+  ucCtx.strokeStyle = '#C4622D';
+  ucCtx.lineWidth = 1.5;
+  ucCtx.beginPath();
+  ucCtx.moveTo(ax, ay);
+  ucCtx.lineTo(ax, cy);
+  ucCtx.stroke();
+  
+  ucCtx.strokeStyle = '#2A7C6F';
+  ucCtx.beginPath();
+  ucCtx.moveTo(cx, cy);
+  ucCtx.lineTo(ax, cy);
+  ucCtx.stroke();
+  ucCtx.setLineDash([]);
+  
+  // Point
+  ucCtx.fillStyle = '#D4A843';
+  ucCtx.beginPath();
+  ucCtx.arc(ax, ay, 4, 0, Math.PI * 2);
+  ucCtx.fill();
+  
+  // Labels
+  ucCtx.fillStyle = '#3B5B8C';
+  ucCtx.font = 'bold 10px Georgia';
+  ucCtx.textAlign = 'center';
+  ucCtx.fillText(`α = ${(alpha * 180 / Math.PI).toFixed(1)}°`, cx, cy - r - 14);
+  
+  ucCtx.fillStyle = '#2A7C6F';
+  ucCtx.font = '9px Georgia';
+  ucCtx.fillText(`cos α = ${Math.cos(alpha).toFixed(2)}`, cx + r/2, cy + 14);
+  
+  ucCtx.fillStyle = '#C4622D';
+  ucCtx.fillText(`sin α = ${Math.sin(alpha).toFixed(2)}`, ax + 6, cy - r * Math.sin(alpha) / 2 + 4);
+  
+  // Complementary note
+  const sum = (alpha + beta) * 180 / Math.PI;
+  ucCtx.fillStyle = Math.abs(sum - 90) < 0.5 ? '#2A7C6F' : '#6B6560';
+  ucCtx.font = '9px Georgia';
+  ucCtx.fillText(`α + β = ${sum.toFixed(1)}°`, cx, cy + r + 14);
+  
+  ucCtx.textAlign = 'left';
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  ANIMATION LOOP                          ║
+// ╚══════════════════════════════════════════╝
+
+function loop() {
+  state.time += 0.016;
+  drawScene();
+  drawUnitCircle();
+  requestAnimationFrame(loop);
+}
+loop();
+
+// ╔══════════════════════════════════════════╗
+// ║  PHASE NAVIGATION                        ║
+// ╚══════════════════════════════════════════╝
+
+function showPhase(p) {
+  state.phase = p;
+  
+  document.querySelectorAll('.phase-dot').forEach((dot, i) => {
+    dot.classList.remove('active', 'completed');
+    if (i + 1 < p) dot.classList.add('completed');
+    else if (i + 1 === p) dot.classList.add('active');
+  });
+  
+  const progress = [10, 30, 50, 75, 100][p - 1];
+  document.getElementById('progressFill').style.width = progress + '%';
+  
+  document.querySelectorAll('.step-card').forEach(s => s.classList.remove('active'));
+  
+  const stepIds = ['step-hook', 'step-explore', 'step-challenge', 'step-reveal', 'step-master'];
+  document.getElementById(stepIds[p - 1]).classList.add('active');
+  
+  const btnBack = document.getElementById('btnBack');
+  const btnNext = document.getElementById('btnNext');
+  
+  if (p === 1) {
+    btnBack.disabled = true;
+    btnNext.textContent = 'Explore →';
+    btnNext.onclick = startExplore;
+  } else if (p === 2) {
+    btnBack.disabled = false;
+    btnBack.onclick = () => showPhase(1);
+    btnNext.textContent = 'Challenge →';
+    btnNext.onclick = startChallenge;
+  } else if (p === 3) {
+    btnBack.onclick = () => showPhase(2);
+    btnNext.textContent = 'Solve It →';
+    btnNext.onclick = startReveal;
+  } else if (p === 4) {
+    btnBack.onclick = () => showPhase(3);
+    btnNext.textContent = 'Master →';
+    btnNext.onclick = startMaster;
+  } else {
+    btnBack.onclick = () => showPhase(4);
+    btnNext.textContent = 'Done';
+    btnNext.onclick = () => alert('Excellent work! You have mastered complementary angles in trigonometry.');
+  }
+}
+
+function startExplore() {
+  document.getElementById('hookOverlay').style.display = 'none';
+  showPhase(2);
+}
+
+function startChallenge() {
+  showPhase(3);
+  // Reset to problem values
+  updateSlider('d1', (4 - 1) / (20 - 1));
+  updateSlider('d2', (9 - 1) / (20 - 1));
+  updateSlider('h', (6 - 1) / (20 - 1));
+}
+
+function startReveal() {
+  showPhase(4);
+  state.revealStep = 1;
+  showRevealStep(1);
+}
+
+function showRevealStep(n) {
+  state.revealStep = n;
+  for (let i = 1; i <= 6; i++) {
+    document.getElementById(`reveal-step-${i}`).style.display = i === n ? 'block' : 'none';
+  }
+}
+
+function nextRevealStep(n) {
+  showRevealStep(n);
+  if (n === 6) showFinalAnswer();
+}
+
+function prevRevealStep(n) {
+  showRevealStep(n);
+}
+
+function startMaster() {
+  showPhase(5);
+}
+
+function goBack() {
+  if (state.phase > 1) showPhase(state.phase - 1);
+}
+
+function goNext() {
+  if (state.phase < 5) {
+    if (state.phase === 1) startExplore();
+    else if (state.phase === 2) startChallenge();
+    else if (state.phase === 3) startReveal();
+    else if (state.phase === 4) startMaster();
+  }
+}
+
+function resetAll() {
+  state.prediction = null;
+  document.getElementById('predictionInput').value = '';
+  document.getElementById('predictionResult').textContent = '';
+  document.getElementById('predictionWidget').style.display = 'block';
+  document.getElementById('challengeBtns').style.display = 'none';
+  document.getElementById('predictionCompare').textContent = '';
+  
+  document.querySelectorAll('.self-test-option').forEach(el => {
+    el.classList.remove('correct', 'wrong');
+    el.innerHTML = el.innerHTML.replace(' ✓', '').replace(' ✗', '');
+    el.style.pointerEvents = 'auto';
+  });
+  
+  showPhase(1);
+  document.getElementById('hookOverlay').style.display = 'flex';
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  PREDICTION SYSTEM                       ║
+// ╚══════════════════════════════════════════╝
+
+function submitPrediction() {
+  const val = parseFloat(document.getElementById('predictionInput').value);
+  if (isNaN(val) || val <= 0) {
+    document.getElementById('predictionResult').textContent = 'Please enter a valid number.';
+    return;
+  }
+  
+  state.prediction = val;
+  document.getElementById('predictionResult').innerHTML = 
+    `You guessed <strong>${val} metres</strong>. Let's prove it!`;
+  document.getElementById('predictionWidget').style.display = 'none';
+  document.getElementById('challengeBtns').style.display = 'flex';
+}
+
+function showFinalAnswer() {
+  const compare = document.getElementById('predictionCompare');
+  if (state.prediction !== null) {
+    const diff = Math.abs(state.prediction - 6);
+    const pct = ((diff / 6) * 100).toFixed(0);
+    if (diff < 0.5) {
+      compare.textContent = `🎯 Incredible! You guessed ${state.prediction}m — spot on!`;
+    } else if (diff < 2) {
+      compare.textContent = `👍 Good intuition! You said ${state.prediction}m. Off by ${diff.toFixed(1)}m.`;
+    } else {
+      compare.textContent = `You guessed ${state.prediction}m. The geometric mean relationship is elegant!`;
+    }
+  } else {
+    compare.textContent = 'No prediction made — but you now understand the proof!';
+  }
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  SELF-TEST CHECKER                       ║
+// ╚══════════════════════════════════════════╝
+
+function checkVariant(num, el, isCorrect) {
+  el.parentElement.querySelectorAll('.self-test-option').forEach(sib => {
+    sib.classList.remove('correct', 'wrong');
+    sib.style.pointerEvents = 'none';
+  });
+  
+  if (isCorrect) {
+    el.classList.add('correct');
+    el.innerHTML += ' ✓';
+  } else {
+    el.classList.add('wrong');
+    el.innerHTML += ' ✗';
+  }
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  TEACHER DASHBOARD                       ║
+// ╚══════════════════════════════════════════╝
+
+function toggleTeacher() {
+  document.getElementById('teacherDash').classList.toggle('show');
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  MOBILE PANEL TOGGLE                     ║
+// ╚══════════════════════════════════════════╝
+
+function togglePanel() {
+  document.getElementById('panel').classList.toggle('open');
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  KEYBOARD SHORTCUTS                      ║
+// ╚══════════════════════════════════════════╝
+
+window.addEventListener('keydown', (e) => {
+  if (e.key === ' ') {
+    state.animating = !state.animating;
+  } else if (e.key === 'r' || e.key === 'R') {
+    resetAll();
+  } else if (e.key === 'n' || e.key === 'N') {
+    goNext();
+  } else if (e.key === 'p' || e.key === 'P') {
+    goBack();
+  } else if (e.key === '?') {
+    alert('Keyboard Shortcuts:\nSpace: Pause/Play\nR: Reset\nN: Next\nP: Previous\n?: Help');
+  }
+});
+
+// ╔══════════════════════════════════════════╗
+// ║  INIT                                     ║
+// ╚══════════════════════════════════════════╝
+
+showPhase(1);
+updateAngleSum();
+</script>
+</body>
+</html>

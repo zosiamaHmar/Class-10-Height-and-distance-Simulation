@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APEX-EDU v3 — Flagpole on Post: Angle of Elevation</title>
+<style>
+:root {
+  --bg: #FAFAF5;
+  --ink: #1C1917;
+  --ink-light: #6B6560;
+  --accent: #3B5B8C;
+  --accent-warm: #C4622D;
+  --highlight: #D4A843;
+  --panel-bg: #F2EDE5;
+  --panel-border: #DDD5C8;
+  --success: #2A7C6F;
+  --font-body: Georgia, 'Times New Roman', serif;
+  --font-mono: 'Courier New', Courier, monospace;
+  --font-label: Verdana, Geneva, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  overflow: hidden;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+#app {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+}
+
+#canvas-container {
+  flex: 1;
+  position: relative;
+  background: var(--bg);
+  overflow: hidden;
+}
+
+canvas { display: block; }
+
+.challenge-card {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(250, 250, 245, 0.95);
+  border: 2px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 20px 28px;
+  max-width: 620px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  z-index: 10;
+  transition: opacity 0.3s;
+}
+
+.challenge-card h2 {
+  font-family: var(--font-label);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+
+.challenge-card .problem-text {
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.challenge-card .difficulty {
+  font-family: var(--font-label);
+  font-size: 11px;
+  color: var(--ink-light);
+  margin-top: 10px;
+}
+
+.prediction-widget {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(250, 250, 245, 0.98);
+  border: 2px solid var(--accent);
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 440px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.15);
+  z-index: 20;
+  text-align: center;
+}
+
+.prediction-widget h3 {
+  font-family: var(--font-label);
+  font-size: 18px;
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+
+.prediction-widget p {
+  font-size: 15px;
+  line-height: 1.5;
+  margin-bottom: 16px;
+  color: var(--ink);
+}
+
+.prediction-input {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 14px 0;
+}
+
+.prediction-input input {
+  width: 100px;
+  padding: 10px;
+  border: 2px solid var(--panel-border);
+  border-radius: 8px;
+  font-family: var(--font-mono);
+  font-size: 18px;
+  text-align: center;
+  color: var(--ink);
+}
+
+.prediction-input span {
+  font-family: var(--font-label);
+  font-size: 14px;
+  color: var(--ink-light);
+}
+
+.btn {
+  display: inline-block;
+  padding: 12px 28px;
+  border: none;
+  border-radius: 8px;
+  font-family: var(--font-label);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin: 4px;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: white;
+}
+
+.btn-primary:hover { background: #2d4a73; }
+
+.btn-secondary {
+  background: var(--panel-bg);
+  color: var(--ink);
+  border: 1px solid var(--panel-border);
+}
+
+.btn-secondary:hover { background: var(--panel-border); }
+
+#panel {
+  width: 380px;
+  background: var(--panel-bg);
+  border-left: 2px solid var(--panel-border);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  position: relative;
+}
+
+.panel-header {
+  padding: 20px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.panel-header h1 {
+  font-family: var(--font-label);
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+
+.panel-header .subtitle {
+  font-size: 12px;
+  color: var(--ink-light);
+}
+
+.progress-bar {
+  height: 4px;
+  background: var(--panel-border);
+  margin: 12px 0 0;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.4s;
+}
+
+.step-card {
+  padding: 20px;
+  border-bottom: 1px solid var(--panel-border);
+  display: none;
+}
+
+.step-card.active { display: block; }
+
+.step-card h3 {
+  font-family: var(--font-label);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+
+.step-card p, .step-card li {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink);
+  margin-bottom: 10px;
+}
+
+.step-card ul {
+  margin-left: 20px;
+  margin-bottom: 12px;
+}
+
+.formula-box {
+  background: rgba(59, 91, 140, 0.08);
+  border-left: 3px solid var(--accent);
+  padding: 14px 16px;
+  margin: 14px 0;
+  border-radius: 0 8px 8px 0;
+  font-family: var(--font-mono);
+  font-size: 15px;
+  color: var(--ink);
+}
+
+.formula-box .fraction {
+  display: inline-block;
+  text-align: center;
+  vertical-align: middle;
+  margin: 0 4px;
+}
+
+.formula-box .fraction .num {
+  display: block;
+  border-bottom: 1px solid var(--ink);
+  padding: 0 4px;
+}
+
+.formula-box .fraction .den {
+  display: block;
+  padding: 0 4px;
+}
+
+.why-toggle {
+  font-family: var(--font-label);
+  font-size: 12px;
+  color: var(--accent);
+  cursor: pointer;
+  margin: 8px 0;
+  display: inline-block;
+}
+
+.why-toggle:hover { text-decoration: underline; }
+
+.why-content {
+  display: none;
+  background: rgba(212, 168, 67, 0.08);
+  border-left: 2px solid var(--highlight);
+  padding: 10px 14px;
+  margin: 8px 0;
+  border-radius: 0 6px 6px 0;
+  font-size: 13px;
+  color: var(--ink-light);
+  line-height: 1.5;
+}
+
+.why-content.open { display: block; }
+
+.fill-blank {
+  display: inline-block;
+  min-width: 40px;
+  border-bottom: 2px solid var(--accent);
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 16px;
+  padding: 2px 6px;
+  margin: 0 2px;
+  background: transparent;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  color: var(--ink);
+}
+
+.fill-blank:focus {
+  outline: none;
+  border-bottom-color: var(--highlight);
+  background: rgba(212, 168, 67, 0.1);
+}
+
+.fill-blank.correct {
+  border-bottom-color: var(--success);
+  color: var(--success);
+}
+
+.fill-blank.wrong {
+  border-bottom-color: var(--accent-warm);
+  color: var(--accent-warm);
+}
+
+.check-btn { margin-top: 12px; }
+
+.feedback {
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  display: none;
+}
+
+.feedback.show { display: block; }
+
+.feedback.correct {
+  background: rgba(42, 124, 111, 0.1);
+  color: var(--success);
+}
+
+.feedback.wrong {
+  background: rgba(196, 98, 45, 0.1);
+  color: var(--accent-warm);
+}
+
+.prediction-result {
+  background: rgba(59, 91, 140, 0.06);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 12px 0;
+  font-size: 13px;
+}
+
+.prediction-result .pred-val {
+  font-family: var(--font-mono);
+  font-weight: bold;
+  color: var(--accent);
+}
+
+.controls {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.control-group { margin-bottom: 14px; }
+
+.control-group label {
+  display: block;
+  font-family: var(--font-label);
+  font-size: 12px;
+  color: var(--ink-light);
+  margin-bottom: 6px;
+}
+
+.slider-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.slider-container input[type="range"] {
+  flex: 1;
+  -webkit-appearance: none;
+  height: 6px;
+  background: var(--panel-border);
+  border-radius: 3px;
+  outline: none;
+}
+
+.slider-container input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  background: var(--accent);
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+
+.slider-value {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--accent);
+  min-width: 55px;
+  text-align: right;
+}
+
+.nav-buttons {
+  padding: 16px 20px;
+  display: flex;
+  gap: 8px;
+  border-top: 1px solid var(--panel-border);
+  margin-top: auto;
+}
+
+.did-you-know {
+  padding: 16px 20px;
+  font-size: 13px;
+  font-style: italic;
+  color: var(--ink-light);
+  border-top: 1px solid var(--panel-border);
+  line-height: 1.5;
+}
+
+.teacher-btn {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  z-index: 15;
+}
+
+.teacher-dashboard {
+  display: none;
+  position: absolute;
+  bottom: 50px;
+  right: 10px;
+  width: 320px;
+  background: rgba(250, 250, 245, 0.98);
+  border: 2px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  z-index: 15;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.teacher-dashboard.open { display: block; }
+
+.teacher-dashboard h4 {
+  font-family: var(--font-label);
+  font-size: 12px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+
+.achievement {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(250, 250, 245, 0.95);
+  border: 1px solid var(--highlight);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-family: var(--font-label);
+  font-size: 12px;
+  color: var(--highlight);
+  display: none;
+  z-index: 15;
+}
+
+.achievement.show { display: block; }
+
+@media (max-width: 768px) {
+  #app { flex-direction: column; }
+  #panel {
+    width: 100%;
+    height: 40%;
+    border-left: none;
+    border-top: 2px solid var(--panel-border);
+  }
+  #canvas-container { height: 60%; }
+  .challenge-card {
+    max-width: 90%;
+    padding: 14px;
+    font-size: 14px;
+  }
+  .prediction-widget {
+    max-width: 90%;
+    padding: 20px;
+  }
+}
+
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div id="canvas-container">
+    <canvas id="simCanvas"></canvas>
+    
+    <div class="challenge-card" id="challengeCard">
+      <h2>🏆 Challenge — Class 10 Trigonometry</h2>
+      <div class="problem-text">
+        On a horizontal plane there is a <strong>vertical post</strong> with a <strong>flagpole</strong> on the top of the post. 
+        At a point <strong>9 metres</strong> away from the foot of the post, the angle of elevation of the 
+        <strong>top</strong> of the flagpole is <strong>60°</strong> and the angle of elevation of the 
+        <strong>bottom</strong> of the flagpole is <strong>30°</strong>. Find the height of the 
+        <strong>post</strong> and the <strong>flagpole</strong> mounted on it.
+      </div>
+      <div class="difficulty">Difficulty: ●●●○○ · Geometry & Trigonometry · Angle of Elevation</div>
+    </div>
+
+    <div class="prediction-widget" id="predictionWidget">
+      <h3>🔮 Make Your Prediction</h3>
+      <p>One observer, two angles. How tall is the post alone?</p>
+      <div class="prediction-input">
+        <input type="number" id="predPost" placeholder="?" min="1" max="30" step="0.1">
+        <span>metres</span>
+      </div>
+      <p style="font-size:13px;color:var(--ink-light);">And how tall is the flagpole?</p>
+      <div class="prediction-input">
+        <input type="number" id="predFlag" placeholder="?" min="1" max="30" step="0.1">
+        <span>metres</span>
+      </div>
+      <button class="btn btn-primary" onclick="submitPrediction()">Submit & Begin Exploring</button>
+    </div>
+
+    <div class="achievement" id="achievement"></div>
+
+    <div class="teacher-btn" onclick="toggleTeacher()" title="Teacher Dashboard">📋</div>
+    <div class="teacher-dashboard" id="teacherDashboard">
+      <h4>For Teachers & Parents</h4>
+      <p><strong>Topic:</strong> Angle of Elevation — Two Heights, One Distance</p>
+      <p><strong>Curriculum:</strong> NCERT Ch.9, CBSE, ICSE Class 10</p>
+      <p><strong>Concepts:</strong></p>
+      <ul style="margin-left:16px;margin-bottom:10px;">
+        <li>tan θ = opposite/adjacent for right triangles</li>
+        <li>Two angles from one point → two equations</li>
+        <li>Special angles: 30°, 60° and their exact values</li>
+        <li>Subtracting heights to find flagpole length</li>
+      </ul>
+      <p><strong>Common Errors:</strong></p>
+      <ul style="margin-left:16px;margin-bottom:10px;">
+        <li>Adding the two angles (30° + 60° = 90°) instead of using tan separately</li>
+        <li>Using sin or cos instead of tan</li>
+        <li>Forgetting that flagpole height = total − post, not total itself</li>
+        <li>Not simplifying 9/√3 to 3√3</li>
+      </ul>
+      <p><strong>Extension:</strong> What if the distance was 12m and angles were 45° and 60°?</p>
+    </div>
+  </div>
+
+  <div id="panel">
+    <div class="panel-header">
+      <h1>Flagpole on Post</h1>
+      <div class="subtitle">Angle of Elevation · Step <span id="stepNum">1</span> of 7</div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:14%"></div></div>
+    </div>
+
+    <div class="controls hidden" id="controlsPanel">
+      <div class="control-group">
+        <label>Distance from Observer (d)</label>
+        <div class="slider-container">
+          <input type="range" id="sliderD" min="3" max="20" value="9" step="0.5">
+          <span class="slider-value" id="valD">9m</span>
+        </div>
+      </div>
+      <div class="control-group">
+        <label>Angle to Bottom of Flagpole (α)</label>
+        <div class="slider-container">
+          <input type="range" id="sliderAlpha" min="5" max="85" value="30" step="1">
+          <span class="slider-value" id="valAlpha">30°</span>
+        </div>
+      </div>
+      <div class="control-group">
+        <label>Angle to Top of Flagpole (β)</label>
+        <div class="slider-container">
+          <input type="range" id="sliderBeta" min="5" max="85" value="60" step="1">
+          <span class="slider-value" id="valBeta">60°</span>
+        </div>
+      </div>
+      <button class="btn btn-secondary" style="width:100%;margin-top:8px;" onclick="resetToProblem()">Reset to Problem Values</button>
+    </div>
+
+    <div class="step-card active" id="step1">
+      <h3>Step 1 · The Scene</h3>
+      <p>Imagine a tall vertical post standing on flat ground. On top of it, a flagpole rises even higher. You stand 9 metres away and look up.</p>
+      <p>To see the <strong>bottom</strong> of the flagpole (where it sits on the post), you tilt your head up <strong>30°</strong>.</p>
+      <p>To see the <strong>top</strong> of the flagpole, you must tilt even more — <strong>60°</strong>.</p>
+      <p>Two angles. One distance. Two unknown heights. This is a classic double-elevation problem.</p>
+      <div class="why-toggle" onclick="toggleWhy(this)">Why two angles from one point? ▼</div>
+      <div class="why-content">
+        The observer doesn't move. They look at two different heights on the same vertical line. Each height creates its own right triangle with the same base (9m) but different angles. This gives us two equations with two unknowns.
+      </div>
+    </div>
+
+    <div class="step-card" id="step2">
+      <h3>Step 2 · The Question</h3>
+      <p>We need to find:</p>
+      <ul>
+        <li><strong>h</strong> = height of the post (from ground to bottom of flagpole)</li>
+        <li><strong>f</strong> = height of the flagpole (from post top to flag top)</li>
+      </ul>
+      <p>We know: distance d = 9m, angle to post top α = 30°, angle to flag top β = 60°</p>
+      <p>The total height (post + flagpole) = h + f.</p>
+    </div>
+
+    <div class="step-card" id="step3">
+      <h3>Step 3 · The Key Insight</h3>
+      <p>In each right triangle, <strong>tan θ = opposite/adjacent = height/distance</strong>.</p>
+      <p>For the <strong>post alone</strong> (angle α = 30°):</p>
+      <div class="formula-box">
+        tan 30° = <span class="fraction"><span class="num">h</span><span class="den">9</span></span>
+        → h = 9 × tan 30° = 9 × <span class="fraction"><span class="num">1</span><span class="den">√3</span></span> = <span class="fraction"><span class="num">9</span><span class="den">√3</span></span> = 3√3
+      </div>
+      <p>For the <strong>total height</strong> (angle β = 60°):</p>
+      <div class="formula-box">
+        tan 60° = <span class="fraction"><span class="num">h + f</span><span class="den">9</span></span>
+        → h + f = 9 × tan 60° = 9 × √3 = 9√3
+      </div>
+      <div class="why-toggle" onclick="toggleWhy(this)">Why tan and not sin or cos? ▼</div>
+      <div class="why-content">
+        We know the horizontal ground distance (9m) and need the vertical heights. Tan is the only trig function that relates opposite (vertical) to adjacent (horizontal). Sin needs the hypotenuse (line of sight), which we don't know.
+      </div>
+    </div>
+
+    <div class="step-card" id="step4">
+      <h3>Step 4 · Finding the Post Height</h3>
+      <p>From tan 30° = h/9:</p>
+      <div class="formula-box">
+        h = 9 × <span class="fraction"><span class="num">1</span><span class="den">√3</span></span> = <span class="fraction"><span class="num">9√3</span><span class="den">3</span></span> = 3√3 ≈ <strong>5.20 m</strong>
+      </div>
+      <p>Rationalizing the denominator: multiply top and bottom by √3.</p>
+      <p>Fill in the blanks:</p>
+      <p>h = 9 × tan 30° = 9 × <input class="fill-blank" id="blank1" data-answer="0.577"> ≈ <input class="fill-blank" id="blank2" data-answer="5.2"> m (or exactly <input class="fill-blank" id="blank3" data-answer="3√3">)</p>
+      <button class="btn btn-primary check-btn" onclick="checkBlanks(['blank1','blank2','blank3'], ['0.577','5.2','3√3'])">Check</button>
+      <div class="feedback" id="feedback4"></div>
+    </div>
+
+    <div class="step-card" id="step5">
+      <h3>Step 5 · Finding Total Height</h3>
+      <p>From tan 60° = (h + f)/9:</p>
+      <div class="formula-box">
+        h + f = 9 × √3 = 9√3 ≈ <strong>15.59 m</strong>
+      </div>
+      <p>Now subtract to get the flagpole height:</p>
+      <div class="formula-box">
+        f = (h + f) − h = 9√3 − 3√3 = <strong>6√3 ≈ 10.39 m</strong>
+      </div>
+      <div class="why-toggle" onclick="toggleWhy(this)">Why subtract? Why not just use another formula? ▼</div>
+      <div class="why-content">
+        We have one equation for total height and one for post height. The flagpole is the difference. We don't need a third formula — subtraction is cleaner and shows the relationship between the two triangles.
+      </div>
+    </div>
+
+    <div class="step-card" id="step6">
+      <h3>Step 6 · The Answers</h3>
+      <div class="formula-box" style="background:rgba(42,124,111,0.1);border-left-color:var(--success);">
+        Post height h = <strong>3√3 ≈ 5.20 m</strong><br>
+        Flagpole height f = <strong>6√3 ≈ 10.39 m</strong>
+      </div>
+      <p>Verification:</p>
+      <ul>
+        <li>tan 30° = 5.20/9 = 0.577 ✓</li>
+        <li>tan 60° = 15.59/9 = 1.732 ✓</li>
+        <li>Flagpole is exactly <strong>twice</strong> the post height (6√3 vs 3√3)</li>
+      </ul>
+      <div class="prediction-result" id="predResult"></div>
+    </div>
+
+    <div class="step-card" id="step7">
+      <h3>Step 7 · The Bigger Picture</h3>
+      <p><strong>Final Answers:</strong></p>
+      <ul>
+        <li>Height of the post = <strong>3√3 ≈ 5.20 m</strong></li>
+        <li>Height of the flagpole = <strong>6√3 ≈ 10.39 m</strong></li>
+      </ul>
+      <p>This same math is used by:</p>
+      <ul>
+        <li><strong>Surveyors</strong> measuring tree height + branch height separately</li>
+        <li><strong>Architects</strong> calculating building + antenna/spire heights</li>
+        <li><strong>Astronomers</strong> measuring mountain peak + snow cap heights</li>
+      </ul>
+      <p style="margin-top:14px;"><em>Did you know? The ratio of flagpole to post is exactly 2:1 because tan 60° = 3 × tan 30°. This elegant relationship appears only with these special angles.</em></p>
+    </div>
+
+    <div class="step-card" id="stepTest">
+      <h3>Master — Self Test</h3>
+      <p><strong>Variant 1:</strong> From 12m away, angle to bottom of flagpole is 30°, to top is 45°. Find post and flagpole heights.</p>
+      <p style="margin-top:10px;"><strong>Variant 2:</strong> A post is 4√3 m tall. From 12m away, the angle to its top is 30°. A flagpole on top makes the total angle 60°. How tall is the flagpole?</p>
+      <p style="margin-top:10px;"><strong>Variant 3:</strong> A building has a water tank on its roof. From 20m away, angle to roof is 45°, to tank top is 60°. Find both heights.</p>
+    </div>
+
+    <div class="nav-buttons">
+      <button class="btn btn-secondary" onclick="prevStep()" id="btnPrev">← Back</button>
+      <button class="btn btn-primary" onclick="nextStep()" id="btnNext">Continue →</button>
+    </div>
+
+    <div class="did-you-know">
+      Did you know? The Great Trigonometric Survey of India (1800–1900) used exactly this method — measuring angles to the tops and bottoms of distant peaks from known distances — to first determine that Mount Everest was the world's highest mountain.
+    </div>
+  </div>
+</div>
+
+<script>
+// ╔══════════════════════════════════════════╗
+// ║  STATE & CONFIGURATION                   ║
+// ╚══════════════════════════════════════════╝
+
+const state = {
+  phase: 'hook',
+  step: 1,
+  maxStep: 7,
+  d: 9,
+  alpha: 30,
+  beta: 60,
+  h: 3 * Math.sqrt(3),
+  f: 6 * Math.sqrt(3),
+  total: 9 * Math.sqrt(3),
+  predPost: null,
+  predFlag: null,
+  time: 0
+};
+
+// ╔══════════════════════════════════════════╗
+// ║  CANVAS SETUP                            ║
+// ╚══════════════════════════════════════════╝
+
+const canvas = document.getElementById('simCanvas');
+const ctx = canvas.getContext('2d');
+let canvasW, canvasH;
+
+function resizeCanvas() {
+  const container = document.getElementById('canvas-container');
+  canvasW = container.clientWidth;
+  canvasH = container.clientHeight;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = canvasW * dpr;
+  canvas.height = canvasH * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  canvas.style.width = canvasW + 'px';
+  canvas.style.height = canvasH + 'px';
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+// ╔══════════════════════════════════════════╗
+// ║  MATH UTILITIES                          ║
+// ╚══════════════════════════════════════════╝
+
+const toRad = d => d * Math.PI / 180;
+
+function recalculate() {
+  state.h = state.d * Math.tan(toRad(state.alpha));
+  state.total = state.d * Math.tan(toRad(state.beta));
+  state.f = state.total - state.h;
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  DRAWING PRIMITIVES                      ║
+// ╚══════════════════════════════════════════╝
+
+function drawLine(x1, y1, x2, y2, color, width, dash) {
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  if (dash && dash.length > 0) ctx.setLineDash(dash);
+  else ctx.setLineDash([]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function drawArrow(x1, y1, x2, y2, color, width) {
+  const angle = Math.atan2(y2 - y1, x2 - x1);
+  const headLen = 10;
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - headLen * Math.cos(angle - Math.PI/6), y2 - headLen * Math.sin(angle - Math.PI/6));
+  ctx.lineTo(x2 - headLen * Math.cos(angle + Math.PI/6), y2 - headLen * Math.sin(angle + Math.PI/6));
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.fill();
+}
+
+function drawArc(x, y, r, start, end, color, width) {
+  ctx.beginPath();
+  ctx.arc(x, y, r, start, end);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  ctx.stroke();
+}
+
+function drawText(text, x, y, color, size, font, align, baseline) {
+  ctx.fillStyle = color;
+  ctx.font = size + 'px ' + (font || 'Georgia');
+  ctx.textAlign = align || 'left';
+  ctx.textBaseline = baseline || 'alphabetic';
+  ctx.fillText(text, x, y);
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  SCENE OBJECTS                           ║
+// ╚══════════════════════════════════════════╝
+
+function drawCoordinateSystem(ox, oy, scale) {
+  ctx.strokeStyle = 'rgba(28, 25, 23, 0.06)';
+  ctx.lineWidth = 1;
+  for (let x = ox % scale; x < canvasW; x += scale) {
+    if (Math.abs(x - ox) < 2) continue;
+    drawLine(x, 0, x, canvasH, 'rgba(28, 25, 23, 0.06)', 1);
+  }
+  for (let y = oy % scale; y < canvasH; y += scale) {
+    if (Math.abs(y - oy) < 2) continue;
+    drawLine(0, y, canvasW, y, 'rgba(28, 25, 23, 0.06)', 1);
+  }
+  drawArrow(ox, oy, canvasW - 20, oy, 'rgba(28, 25, 23, 0.25)', 2);
+  drawArrow(ox, oy, ox, 20, 'rgba(28, 25, 23, 0.25)', 2);
+  drawText('x', canvasW - 30, oy - 8, '#6B6560', 14, 'Georgia');
+  drawText('y', ox + 8, 30, '#6B6560', 14, 'Georgia');
+}
+
+function drawGround(y) {
+  ctx.fillStyle = '#D4CFC7';
+  ctx.fillRect(0, y, canvasW, canvasH - y);
+  drawLine(0, y, canvasW, y, '#1C1917', 2);
+  ctx.strokeStyle = 'rgba(28, 25, 23, 0.1)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < canvasW; i += 40) {
+    ctx.beginPath();
+    ctx.moveTo(i, y);
+    ctx.lineTo(i + 20, y + 8);
+    ctx.stroke();
+  }
+}
+
+function drawPost(baseX, baseY, postH, flagH) {
+  const postW = 28;
+  const totalH = postH + flagH;
+  
+  // Post body — concrete/wood texture
+  ctx.fillStyle = '#A09080';
+  ctx.fillRect(baseX - postW/2, baseY - postH, postW, postH);
+  
+  // Post texture lines
+  ctx.strokeStyle = 'rgba(28, 25, 23, 0.2)';
+  ctx.lineWidth = 1;
+  for (let y = baseY; y > baseY - postH; y -= 8) {
+    ctx.beginPath();
+    ctx.moveTo(baseX - postW/2, y);
+    ctx.lineTo(baseX + postW/2, y);
+    ctx.stroke();
+  }
+  
+  // Post outline
+  ctx.strokeStyle = '#1C1917';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(baseX - postW/2, baseY - postH, postW, postH);
+  
+  // Flagpole — thinner, metallic
+  const poleW = 6;
+  ctx.fillStyle = '#8B8680';
+  ctx.fillRect(baseX - poleW/2, baseY - totalH, poleW, flagH);
+  
+  // Flagpole outline
+  ctx.strokeStyle = '#1C1917';
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(baseX - poleW/2, baseY - totalH, poleW, flagH);
+  
+  // Flag at top — waving animation
+  const flagW = 40;
+  const flagH_actual = 24;
+  const wave = Math.sin(state.time * 3) * 3;
+  
+  ctx.fillStyle = '#C4622D';
+  ctx.beginPath();
+  ctx.moveTo(baseX + poleW/2, baseY - totalH);
+  ctx.lineTo(baseX + poleW/2 + flagW, baseY - totalH + wave);
+  ctx.lineTo(baseX + poleW/2 + flagW, baseY - totalH + flagH_actual + wave);
+  ctx.lineTo(baseX + poleW/2, baseY - totalH + flagH_actual);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = '#1C1917';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  
+  // Height labels
+  drawText('h = ' + state.h.toFixed(2) + 'm', baseX + postW/2 + 8, baseY - postH/2, '#3B5B8C', 14, 'Georgia');
+  drawText('f = ' + state.f.toFixed(2) + 'm', baseX + poleW/2 + flagW + 5, baseY - postH - flagH/2, '#C4622D', 14, 'Georgia');
+  drawText('H = ' + state.total.toFixed(2) + 'm', baseX + 30, baseY - totalH - 10, '#1C1917', 14, 'Georgia', 'center');
+}
+
+function drawObserver(x, y) {
+  ctx.fillStyle = '#3B5B8C';
+  ctx.beginPath();
+  ctx.arc(x, y - 25, 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(x, y - 19);
+  ctx.lineTo(x - 5, y);
+  ctx.lineTo(x + 5, y);
+  ctx.closePath();
+  ctx.fill();
+  drawText('Observer', x - 25, y + 15, '#1C1917', 13, 'Verdana');
+}
+
+function drawSightLine(fromX, fromY, toX, toY, angleDeg, color, label, isUpper) {
+  const eyeY = fromY - 25;
+  drawLine(fromX, eyeY, toX, toY, color, 2, [8, 4]);
+  
+  const angleRad = Math.atan2(toY - eyeY, toX - fromX);
+  const arcR = isUpper ? 45 : 35;
+  const arcStart = 0;
+  const arcEnd = angleRad;
+  
+  drawArc(fromX, eyeY, arcR, Math.min(arcStart, arcEnd), Math.max(arcStart, arcEnd), '#3B5B8C', 2);
+  
+  const midAngle = angleRad / 2;
+  const labelDist = arcR + 18;
+  const labelX = fromX + labelDist * Math.cos(midAngle);
+  const labelY = eyeY + labelDist * Math.sin(midAngle);
+  drawText(angleDeg.toFixed(0) + '°', labelX, labelY, '#3B5B8C', 14, 'Georgia');
+}
+
+function drawRightAngleMarker(x, y, size) {
+  ctx.strokeStyle = '#3B5B8C';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(x, y - size);
+  ctx.lineTo(x, y);
+  ctx.lineTo(x + size, y);
+  ctx.stroke();
+}
+
+function drawDimensionLine(x1, y1, x2, y2, label, offsetX, offsetY) {
+  const mx = (x1 + x2) / 2 + offsetX;
+  const my = (y1 + y2) / 2 + offsetY;
+  drawLine(x1, y1, x2, y2, '#1C1917', 1);
+  drawLine(x1, y1 - 4, x1, y1 + 4, '#1C1917', 1);
+  drawLine(x2, y2 - 4, x2, y2 + 4, '#1C1917', 1);
+  drawText(label, mx, my, '#1C1917', 13, 'Verdana');
+}
+
+function drawUnitCircle(cx, cy, r, angle) {
+  ctx.strokeStyle = 'rgba(28, 25, 23, 0.2)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.stroke();
+  
+  drawLine(cx - r - 10, cy, cx + r + 10, cy, 'rgba(28, 25, 23, 0.2)', 1);
+  drawLine(cx, cy - r - 10, cx, cy + r + 10, 'rgba(28, 25, 23, 0.2)', 1);
+  
+  const endX = cx + r * Math.cos(angle);
+  const endY = cy - r * Math.sin(angle);
+  drawLine(cx, cy, endX, endY, '#3B5B8C', 2.5);
+  
+  ctx.setLineDash([5, 3]);
+  drawLine(endX, endY, endX, cy, '#C4622D', 1.5);
+  drawLine(cx, cy, endX, cy, '#2A7C6F', 1.5);
+  ctx.setLineDash([]);
+  
+  drawText('θ', cx + 15, cy - 10, '#3B5B8C', 12, 'Georgia');
+  drawText('sin', endX + 5, cy - r * Math.sin(angle)/2, '#C4622D', 11, 'Verdana');
+  drawText('cos', cx + r * Math.cos(angle)/2, cy + 15, '#2A7C6F', 11, 'Verdana');
+  
+  ctx.fillStyle = '#D4A843';
+  ctx.beginPath();
+  ctx.arc(endX, endY, 4, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  MAIN SCENE                              ║
+// ╚══════════════════════════════════════════╝
+
+function drawScene() {
+  ctx.clearRect(0, 0, canvasW, canvasH);
+  
+  const originX = 100;
+  const originY = canvasH - 100;
+  const maxDist = Math.max(state.d * 2, 25);
+  const scale = Math.min(35, (canvasW - 300) / maxDist);
+  
+  drawCoordinateSystem(originX, originY, scale);
+  drawGround(originY);
+  
+  const postX = originX + state.d * scale + 80;
+  const postY = originY;
+  const postH = state.h * scale * 0.8;
+  const flagH = state.f * scale * 0.8;
+  
+  const obsX = originX + 20;
+  
+  drawPost(postX, postY, postH, flagH);
+  drawObserver(obsX, originY);
+  
+  // Construction lines — ALWAYS VISIBLE
+  drawLine(obsX, originY, postX, originY, 'rgba(59, 91, 140, 0.3)', 1.5, [6, 3]);
+  drawLine(postX, originY, postX, postY - postH, 'rgba(59, 91, 140, 0.3)', 1.5, [6, 3]);
+  drawLine(postX, postY - postH, postX, postY - postH - flagH, 'rgba(59, 91, 140, 0.3)', 1.5, [6, 3]);
+  
+  drawRightAngleMarker(postX, originY, 15);
+  
+  // Sight lines
+  const topY = postY - postH - flagH;
+  const midY = postY - postH;
+  
+  drawSightLine(obsX, originY, postX, midY, state.alpha, 'rgba(59, 91, 140, 0.5)', '30°', false);
+  drawSightLine(obsX, originY, postX, topY, state.beta, 'rgba(42, 124, 111, 0.5)', '60°', true);
+  
+  // Dimension labels
+  drawDimensionLine(obsX, originY + 25, postX, originY + 25, 'd = ' + state.d.toFixed(1) + 'm', 0, 0);
+  
+  // Unit circle inset
+  const ucX = canvasW - 90;
+  const ucY = 90;
+  const ucR = 45;
+  drawUnitCircle(ucX, ucY, ucR, toRad(state.beta));
+  drawText('Unit Circle', ucX - 30, ucY - ucR - 12, '#6B6560', 12, 'Verdana');
+  
+  // Animated sight line pulses
+  const pulse = Math.sin(state.time * 2) * 0.3 + 0.7;
+  ctx.strokeStyle = 'rgba(59, 91, 140, ' + (pulse * 0.3) + ')';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(obsX, originY - 25);
+  ctx.lineTo(postX, midY);
+  ctx.stroke();
+  
+  ctx.strokeStyle = 'rgba(42, 124, 111, ' + (pulse * 0.3) + ')';
+  ctx.beginPath();
+  ctx.moveTo(obsX, originY - 25);
+  ctx.lineTo(postX, topY);
+  ctx.stroke();
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  ANIMATION LOOP                          ║
+// ╚══════════════════════════════════════════╝
+
+function animate() {
+  state.time += 0.016;
+  drawScene();
+  requestAnimationFrame(animate);
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  SLIDER CONTROLS                         ║
+// ╚══════════════════════════════════════════╝
+
+function setupSlider(id, valId, suffix, stateKey) {
+  const slider = document.getElementById(id);
+  const display = document.getElementById(valId);
+  if (!slider || !display) return;
+  
+  slider.addEventListener('input', (e) => {
+    const val = parseFloat(e.target.value);
+    state[stateKey] = val;
+    display.textContent = val + suffix;
+    
+    // Validate: beta must be > alpha
+    if (stateKey === 'alpha' && state.beta <= state.alpha) {
+      state.beta = state.alpha + 5;
+      document.getElementById('sliderBeta').value = state.beta;
+      document.getElementById('valBeta').textContent = state.beta + '°';
+    }
+    if (stateKey === 'beta' && state.beta <= state.alpha) {
+      state.beta = state.alpha + 5;
+      slider.value = state.beta;
+    }
+    
+    recalculate();
+  });
+}
+
+setupSlider('sliderD', 'valD', 'm', 'd');
+setupSlider('sliderAlpha', 'valAlpha', '°', 'alpha');
+setupSlider('sliderBeta', 'valBeta', '°', 'beta');
+
+function resetToProblem() {
+  state.d = 9;
+  state.alpha = 30;
+  state.beta = 60;
+  recalculate();
+  
+  document.getElementById('sliderD').value = 9;
+  document.getElementById('valD').textContent = '9m';
+  document.getElementById('sliderAlpha').value = 30;
+  document.getElementById('valAlpha').textContent = '30°';
+  document.getElementById('sliderBeta').value = 60;
+  document.getElementById('valBeta').textContent = '60°';
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  PHASE & STEP MANAGEMENT                 ║
+// ╚══════════════════════════════════════════╝
+
+function submitPrediction() {
+  const pPost = parseFloat(document.getElementById('predPost').value);
+  const pFlag = parseFloat(document.getElementById('predFlag').value);
+  
+  if (isNaN(pPost) || isNaN(pFlag)) {
+    alert('Please enter both predictions!');
+    return;
+  }
+  
+  state.predPost = pPost;
+  state.predFlag = pFlag;
+  
+  document.getElementById('predictionWidget').classList.add('hidden');
+  state.phase = 'explore';
+  
+  document.getElementById('controlsPanel').classList.remove('hidden');
+}
+
+function nextStep() {
+  if (state.step < state.maxStep) {
+    document.getElementById('step' + state.step).classList.remove('active');
+    state.step++;
+    document.getElementById('step' + state.step).classList.add('active');
+    document.getElementById('stepNum').textContent = state.step;
+    document.getElementById('progressFill').style.width = (state.step / state.maxStep * 100) + '%';
+    
+    const btnNext = document.getElementById('btnNext');
+    if (state.step === state.maxStep) {
+      btnNext.textContent = 'Finish →';
+    }
+    
+    if (state.step === 6) showPredictionResult();
+  } else {
+    document.getElementById('step' + state.step).classList.remove('active');
+    document.getElementById('stepTest').classList.add('active');
+    document.getElementById('btnNext').classList.add('hidden');
+    showAchievement('Deep Diver');
+  }
+}
+
+function prevStep() {
+  if (state.step > 1) {
+    document.getElementById('step' + state.step).classList.remove('active');
+    document.getElementById('stepTest').classList.remove('active');
+    
+    state.step--;
+    document.getElementById('step' + state.step).classList.add('active');
+    document.getElementById('stepNum').textContent = state.step;
+    document.getElementById('progressFill').style.width = (state.step / state.maxStep * 100) + '%';
+    
+    const btnNext = document.getElementById('btnNext');
+    btnNext.textContent = 'Continue →';
+    btnNext.classList.remove('hidden');
+  }
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  FILL-IN-THE-BLANK                       ║
+// ╚══════════════════════════════════════════╝
+
+function checkBlanks(ids, answers) {
+  let allCorrect = true;
+  
+  ids.forEach((id, i) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const val = el.value.trim();
+    
+    let correct = false;
+    if (answers[i] === '5.2') {
+      correct = parseFloat(val) >= 5.1 && parseFloat(val) <= 5.3;
+    } else if (answers[i] === '0.577') {
+      correct = parseFloat(val) >= 0.57 && parseFloat(val) <= 0.58;
+    } else {
+      correct = val === answers[i];
+    }
+    
+    if (correct) {
+      el.classList.add('correct');
+      el.classList.remove('wrong');
+    } else {
+      el.classList.add('wrong');
+      el.classList.remove('correct');
+      allCorrect = false;
+    }
+  });
+  
+  const feedback = document.getElementById('feedback4');
+  if (!feedback) return;
+  
+  feedback.classList.add('show');
+  if (allCorrect) {
+    feedback.className = 'feedback show correct';
+    feedback.textContent = '✓ Correct! h = 3√3 ≈ 5.20 m';
+    showAchievement('First Try');
+  } else {
+    feedback.className = 'feedback show wrong';
+    feedback.textContent = 'Check your values. tan 30° = 1/√3 ≈ 0.577, and 9/√3 = 3√3.';
+  }
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  UTILITY FUNCTIONS                       ║
+// ╚══════════════════════════════════════════╝
+
+function toggleWhy(el) {
+  const content = el.nextElementSibling;
+  if (!content) return;
+  content.classList.toggle('open');
+  const isOpen = content.classList.contains('open');
+  el.textContent = el.textContent.replace(/[▼▶]/, isOpen ? '▶' : '▼');
+}
+
+function toggleTeacher() {
+  const dash = document.getElementById('teacherDashboard');
+  if (dash) dash.classList.toggle('open');
+}
+
+function showAchievement(name) {
+  const el = document.getElementById('achievement');
+  if (!el) return;
+  el.textContent = '🏆 ' + name;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+function showPredictionResult() {
+  if (state.predPost === null) return;
+  
+  const actualPost = 3 * Math.sqrt(3);
+  const actualFlag = 6 * Math.sqrt(3);
+  const diffPost = Math.abs(state.predPost - actualPost);
+  const diffFlag = Math.abs(state.predFlag - actualFlag);
+  
+  let message = '';
+  if (diffPost < 2 && diffFlag < 3) {
+    message = '🎯 Excellent intuition! Very close!';
+  } else if (diffPost < 4) {
+    message = '👍 Good guess! The flagpole is exactly twice the post height.';
+  } else {
+    message = '📐 The special angles 30° and 60° create elegant exact answers.';
+  }
+  
+  const resultDiv = document.getElementById('predResult');
+  if (resultDiv) {
+    resultDiv.innerHTML = 
+      '<p>Your prediction: post = <span class="pred-val">' + state.predPost.toFixed(2) + 'm</span>, flagpole = <span class="pred-val">' + state.predFlag.toFixed(2) + 'm</span></p>' +
+      '<p>Actual: post = <strong>' + actualPost.toFixed(2) + 'm</strong>, flagpole = <strong>' + actualFlag.toFixed(2) + 'm</strong></p>' +
+      '<p>' + message + '</p>';
+  }
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  KEYBOARD SHORTCUTS                      ║
+// ╚══════════════════════════════════════════╝
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'n' || e.key === 'N') nextStep();
+  if (e.key === 'p' || e.key === 'P') prevStep();
+  if (e.key === 'r' || e.key === 'R') resetToProblem();
+  if (e.key === 't' || e.key === 'T') toggleTeacher();
+});
+
+// ╔══════════════════════════════════════════╗
+// ║  INITIALIZATION                          ║
+// ╚══════════════════════════════════════════╝
+
+recalculate();
+animate();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>APEX-EDU: Statue & Pedestal | Trigonometry Simulation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none; /* Better drag feel, but text select remains for panel */
+        }
+
+        :root {
+            --bg: #FAFAF5;
+            --ink: #1C1917;
+            --ink-light: #6B6560;
+            --accent: #3B5B8C;
+            --accent-warm: #C4622D;
+            --highlight: #D4A843;
+            --panel-bg: #F2EDE5;
+            --panel-border: #DDD5C8;
+            --success: #2A7C6F;
+            --font-body: Georgia, 'Times New Roman', serif;
+            --font-mono: 'Courier New', Courier, monospace;
+            --font-label: Verdana, Geneva, sans-serif;
+        }
+
+        body {
+            background: var(--bg);
+            font-family: var(--font-body);
+            color: var(--ink);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Main layout */
+        .app {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            gap: 1rem;
+            padding: 1rem;
+        }
+
+        /* Canvas area */
+        .canvas-container {
+            flex: 2;
+            background: var(--bg);
+            border-radius: 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            background: var(--bg);
+            cursor: crosshair;
+            border-radius: 20px;
+            flex: 1;
+        }
+
+        /* Right panel */
+        .solution-panel {
+            flex: 1;
+            max-width: 380px;
+            background: var(--panel-bg);
+            border-radius: 32px;
+            border: 1px solid var(--panel-border);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            padding: 1.2rem;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.05);
+            transition: all 0.2s;
+        }
+
+        /* Step styling */
+        .step-card {
+            background: white;
+            border-radius: 28px;
+            padding: 1.4rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+        }
+        .step-header {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--accent);
+            border-left: 3px solid var(--accent);
+            padding-left: 8px;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+        .progress-bar {
+            background: #E2DCD2;
+            border-radius: 20px;
+            height: 5px;
+            width: 100%;
+            margin: 12px 0;
+        }
+        .progress-fill {
+            background: var(--accent);
+            width: 0%;
+            height: 5px;
+            border-radius: 20px;
+            transition: width 0.2s;
+        }
+        .formula {
+            background: #F4EFE9;
+            padding: 12px;
+            border-radius: 20px;
+            font-family: var(--font-mono);
+            font-size: 1.2rem;
+            text-align: center;
+            margin: 12px 0;
+            border: 1px solid #E4DBCF;
+        }
+        .prediction-area {
+            background: #FFF8F0;
+            padding: 1rem;
+            border-radius: 24px;
+            margin: 1rem 0;
+        }
+        button {
+            background: var(--accent);
+            border: none;
+            color: white;
+            padding: 10px 18px;
+            border-radius: 40px;
+            font-family: var(--font-label);
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.1s linear;
+            margin-top: 8px;
+        }
+        button.secondary {
+            background: transparent;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+        }
+        .slider-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin: 12px 0;
+            flex-wrap: wrap;
+        }
+        input[type="range"] {
+            flex: 1;
+            height: 4px;
+            border-radius: 4px;
+            background: #DDD;
+        }
+        .badge {
+            font-size: 0.7rem;
+            color: var(--ink-light);
+            margin-top: 12px;
+        }
+        .result-highlight {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--accent);
+        }
+        .inline-note {
+            font-style: italic;
+            color: var(--ink-light);
+            font-size: 0.85rem;
+            margin-top: 10px;
+        }
+        .control-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        @media (max-width: 760px) {
+            .app { flex-direction: column; }
+            .solution-panel { max-width: 100%; max-height: 45%; }
+            .canvas-container { min-height: 55%; }
+        }
+    </style>
+</head>
+<body>
+<div class="app">
+    <div class="canvas-container">
+        <canvas id="mainCanvas" width="800" height="500" style="width:100%; height:auto; background:#FAFAF5;"></canvas>
+        <div style="padding: 8px 20px; display: flex; gap: 16px; justify-content: space-between; font-size:12px; color:var(--ink-light);">
+            <span>📐 Drag ground point ↔️ | Live Trig</span>
+            <span id="liveCoords">θ₁ = 45° | θ₂ = 60°</span>
+        </div>
+    </div>
+    <div class="solution-panel" id="panel">
+        <!-- dynamic content via JS -->
+    </div>
+</div>
+
+<script>
+    // ╔══════════════════════════════════════════╗
+    // ║  SECTION: DOM ELEMENTS & GLOBAL STATE    ║
+    // ╚══════════════════════════════════════════╝
+    const canvas = document.getElementById('mainCanvas');
+    const ctx = canvas.getContext('2d');
+    let width = 800, height = 500;
+    canvas.width = width; canvas.height = height;
+
+    // Real-world parameters (meters)
+    let pedestalHeight = 1.6;      // statue height fixed 1.6m (statue on top)
+    let statueHeight = 1.6;        // given
+    let pedestalUnknown = 2.0;      // variable to find: height of pedestal (meters)
+    let groundDistance = 2.5;       // distance from observation point (dynamic slider)
+    
+    // Derived angles (based on actual geometry)
+    let anglePedestalDeg = 45;       // should match given 45°, but dynamic to show real-time
+    let angleStatueDeg = 60;         // given 60°
+    
+    // Game state & learning arc
+    let currentStep = 1;          // 1:Hook 2:Explore 3:Challenge 4:Reveal 5:Master
+    let predictionMade = null;
+    let finalAnswerPedestal = null;
+    let predictionSubmitted = false;
+    let correctAnswerRevealed = false;
+    let achievements = { sharpEye: false, firstTry: false };
+    
+    // Reference geometry (world coords)
+    let originX = 180;            // ground observation point (foot)
+    let baseGroundX = originX;
+    let groundY = height - 80;
+    let wallBaseX = width - 150;  // pedestal base position (right side)
+    
+    // Slider elements from UI (dynamic)
+    let distanceSlider = null;
+    
+    // Helper math
+    function computePedestalFromAngles(dist, pedestalH, statueTopH) {
+        // Given dist, angle to pedestal top = 45°, angle to statue top = 60°
+        // tan(45) = (pedestalHeight) / dist  => pedestalHeight = dist * tan45 = dist
+        // tan(60) = (pedestalHeight + statueHeight) / dist => pedestalHeight+1.6 = dist * tan60
+        // So consistent if pedestalHeight = dist and also dist*tan60 - 1.6 = dist
+        // Solve for correct dist that satisfies both angles for given pedestal?
+        // For problem: we know angles 45 & 60. Find pedestal height.
+        // Using tan: let h = pedestal height. from 45°: h = d. from 60°: h+1.6 = d√3 => d + 1.6 = d√3 => d(√3 - 1) = 1.6 => d = 1.6/(√3-1)
+        // Then h = d.
+        const sqrt3 = Math.sqrt(3);
+        const d_theoretical = 1.6 / (sqrt3 - 1);
+        const h_theoretical = d_theoretical;
+        return { pedestal: h_theoretical, distance: d_theoretical };
+    }
+    
+    // Theoretical correct answer
+    const correctSolution = computePedestalFromAngles(0,0,0);
+    const correctPedestalHeight = correctSolution.pedestal;
+    const correctDistance = correctSolution.distance;
+    
+    function updateGeometryFromDistance(dist) {
+        // Given distance, enforce that angle to pedestal top = 45°, angle to statue top = 60°
+        // Using tan45 = (pedestalUnknown) / dist => pedestalUnknown = dist
+        // tan60 = (pedestalUnknown + 1.6)/dist => must hold: pedestalUnknown +1.6 = dist * √3
+        // So consistency: dist = pedestalUnknown, => pedestalUnknown+1.6 = pedestalUnknown*√3 => 1.6 = pedestalUnknown(√3-1)
+        // => pedestalUnknown = 1.6/(√3-1). So for correct angles, distance must be fixed.
+        // For simulation correctness, if student changes distance, we recompute pedestal that keeps angles 45 & 60?
+        // But simulation: we show live angles based on current pedestal & distance.
+        // For exploration: pedestal is free variable (slider), and distance variable.
+        // but problem statement angles are fixed 45° and 60°.
+        // To align: we allow student to adjust distance, pedestal changes? Or adjust pedestal, distance updates.
+        // Let's implement realistic: two sliders: distance (d) and pedestal (h). The canvas shows real angles computed.
+        // Challenge: find h such that angle_pedestal = 45° and angle_statue = 60°.
+        // In explore phase, show computed angles from current h,d. 
+    }
+    
+    let currentDistance = correctDistance;
+    let currentPedestal = correctPedestalHeight;  // initial guess for reveal
+    
+    // Real-time angles
+    function computeCurrentAngles(d, hPed) {
+        let angle1Rad = Math.atan2(hPed, d);
+        let angle2Rad = Math.atan2(hPed + statueHeight, d);
+        return { ang1: angle1Rad * 180 / Math.PI, ang2: angle2Rad * 180 / Math.PI };
+    }
+    
+    // Sliders state for free exploration
+    let freeDistance = correctDistance;
+    let freePedestal = correctPedestalHeight;
+    let explorationMode = true;
+    
+    // DOM panel update
+    const panelDiv = document.getElementById('panel');
+    
+    function renderPanel() {
+        if (!panelDiv) return;
+        let html = '';
+        const totalSteps = 5;
+        const stepNames = ["HOOK", "EXPLORE", "CHALLENGE", "REVEAL", "MASTER"];
+        const stepProgress = ((currentStep-1)/4)*100;
+        
+        html += `<div class="progress-bar"><div class="progress-fill" style="width: ${stepProgress}%;"></div></div>`;
+        html += `<div style="font-size:12px; color:var(--ink-light); margin-bottom:8px;">${stepNames[currentStep-1]} · Trigonometry · Grade 9-10</div>`;
+        
+        // PHASE 1: HOOK
+        if (currentStep === 1) {
+            html += `<div class="step-card">
+                        <div class="step-header">✨ HOOK</div>
+                        <div style="font-size:1.1rem; font-weight:500;">"A statue sits on a pedestal. From the same point, the top of pedestal is 45°, the top of statue is 60°."</div>
+                        <div class="prediction-area" style="margin-top:12px;">
+                            <strong>⚡ Surprising Insight:</strong> The pedestal height equals the distance from the observer! <br/>
+                            <span style="font-size:0.9rem;">Can we find exact height without measuring?</span>
+                        </div>
+                        <button id="hookContinue">🔍 Let's Explore →</button>
+                    </div>`;
+        }
+        // PHASE 2: EXPLORE (free play)
+        else if (currentStep === 2) {
+            html += `<div class="step-card">
+                        <div class="step-header">🕹️ EXPLORE — Play with sliders</div>
+                        <div>Adjust <strong>Distance</strong> (from observer) and <strong>Pedestal Height</strong>. Watch the angles change in real time!</div>
+                        <div class="slider-row">
+                            <span>📍 Distance (m):</span>
+                            <input type="range" id="distSlider" min="0.8" max="5.0" step="0.01" value="${freeDistance.toFixed(2)}">
+                            <span id="distVal">${freeDistance.toFixed(2)} m</span>
+                        </div>
+                        <div class="slider-row">
+                            <span>🗿 Pedestal Height (m):</span>
+                            <input type="range" id="pedSlider" min="0.5" max="5.0" step="0.01" value="${freePedestal.toFixed(2)}">
+                            <span id="pedVal">${freePedestal.toFixed(2)} m</span>
+                        </div>
+                        <div class="formula">
+                            📐 Current ∠ pedestal top: <span id="anglePedLive">--</span>° &nbsp;| ∠ statue top: <span id="angleStatLive">--</span>°
+                        </div>
+                        <div class="inline-note">💡 Try to match ∠ pedestal = 45° and ∠ statue = 60° exactly. That's the challenge!</div>
+                        <button id="readyChallenge">✅ I'm Ready — Start Challenge</button>
+                    </div>`;
+        }
+        // PHASE 3: CHALLENGE with prediction
+        else if (currentStep === 3) {
+            html += `<div class="step-card">
+                        <div class="step-header">🏆 CHALLENGE</div>
+                        <div style="background:#FFF3E0; padding:12px; border-radius:20px; margin-bottom:12px;">
+                            <strong>“A statue 1.6 m tall stands on a pedestal. From a point on ground, angle to top of statue = 60°, to top of pedestal = 45°. Find pedestal height.”</strong>
+                        </div>
+                        ${!predictionSubmitted ? `
+                        <div class="prediction-area">
+                            <label>📝 Before solving, guess the pedestal height (meters):</label>
+                            <input type="number" id="predictionInput" step="0.1" placeholder="e.g., 2.2" style="width:100%; padding:8px; margin:8px 0; border-radius:30px; border:1px solid #CCC;">
+                            <button id="submitPredictionBtn">Make Prediction</button>
+                        </div>
+                        ` : `
+                        <div>🎯 Your prediction: <strong>${predictionMade} m</strong></div>
+                        <div class="formula">Use the formula: tan(θ) = opposite/adjacent → For 45°: tan45 = pedestal / distance → pedestal = distance.<br> For 60°: tan60 = (pedestal+1.6)/distance → Solve both.</div>
+                        <button id="solveStepBtn">🔢 Show Step-by-Step & Reveal Answer</button>
+                        `}
+                    </div>`;
+        }
+        // PHASE 4: REVEAL (formula & answer)
+        else if (currentStep === 4) {
+            const ans = correctPedestalHeight.toFixed(3);
+            const distCorrect = correctDistance.toFixed(3);
+            html += `<div class="step-card">
+                        <div class="step-header">📐 REVEAL — The Formula</div>
+                        <div>Let h = pedestal height, d = distance from point.</div>
+                        <div class="formula">tan45° = h/d  → 1 = h/d → <strong>h = d</strong></div>
+                        <div class="formula">tan60° = (h+1.6)/d → √3 = (h+1.6)/h → h√3 = h+1.6 → h(√3-1)=1.6 → h = 1.6/(√3-1)</div>
+                        <div class="result-highlight">Pedestal Height = ${ans} m</div>
+                        <div>Distance from point = ${distCorrect} m</div>
+                        ${predictionMade ? `<div class="badge">📊 Your guess: ${predictionMade} m — ${Math.abs(predictionMade - correctPedestalHeight) < 0.3 ? "Excellent! 🎯" : "Good try — now you see the exact math!"}</div>` : ''}
+                        <button id="masterBtn">🚀 Next: Master Challenges →</button>
+                    </div>`;
+        }
+        // PHASE 5: MASTER
+        else if (currentStep === 5) {
+            html += `<div class="step-card">
+                        <div class="step-header">🧠 MASTER — Real-World Extension</div>
+                        <div><strong>Variant 1:</strong> If the statue height were 2.0 m and angles 45° and 65°, what’s the pedestal? (Hint: same method)</div>
+                        <div class="formula" style="background:#E9F0EA;">Answer: h = statue/(tan65° - 1) ≈ 2.0/(2.1445-1) ≈ 1.75 m</div>
+                        <div><strong>Variant 2:</strong> From a lighthouse, angle of depression changes – similar right-triangle concept.</div>
+                        <div><strong>Variant 3:</strong> You are designing a ramp. Angle 10°, height 1.2 m → find length. Trig everywhere!</div>
+                        <button id="resetSim">🔄 Reset & Practice Again</button>
+                        <div class="inline-note">📖 Teacher Summary: The key is using two tangent equations and solving simultaneous. Common mistake: not converting degrees to radians but using tan correctly.</div>
+                    </div>`;
+        }
+        panelDiv.innerHTML = html;
+        attachPanelEvents();
+    }
+    
+    function attachPanelEvents() {
+        if (currentStep === 1) {
+            const btn = document.getElementById('hookContinue');
+            if (btn) btn.onclick = () => { currentStep = 2; explorationMode = true; freeDistance = correctDistance; freePedestal = correctPedestalHeight; renderPanel(); drawCanvas(); };
+        }
+        if (currentStep === 2) {
+            const distSliderElem = document.getElementById('distSlider');
+            const pedSliderElem = document.getElementById('pedSlider');
+            const readyBtn = document.getElementById('readyChallenge');
+            if (distSliderElem) {
+                distSliderElem.oninput = (e) => { freeDistance = parseFloat(e.target.value); document.getElementById('distVal').innerText = freeDistance.toFixed(2)+" m"; drawCanvas(); updateLiveAngleLabels(); };
+                pedSliderElem.oninput = (e) => { freePedestal = parseFloat(e.target.value); document.getElementById('pedVal').innerText = freePedestal.toFixed(2)+" m"; drawCanvas(); updateLiveAngleLabels(); };
+            }
+            if (readyBtn) readyBtn.onclick = () => { currentStep = 3; predictionSubmitted = false; renderPanel(); drawCanvas(); };
+            updateLiveAngleLabels();
+        }
+        if (currentStep === 3) {
+            const predBtn = document.getElementById('submitPredictionBtn');
+            if (predBtn && !predictionSubmitted) {
+                predBtn.onclick = () => {
+                    const inputVal = parseFloat(document.getElementById('predictionInput').value);
+                    if (!isNaN(inputVal)) {
+                        predictionMade = inputVal;
+                        predictionSubmitted = true;
+                        renderPanel();
+                        drawCanvas();
+                    }
+                };
+            }
+            const solveBtn = document.getElementById('solveStepBtn');
+            if (solveBtn && predictionSubmitted) {
+                solveBtn.onclick = () => {
+                    currentStep = 4;
+                    renderPanel();
+                    drawCanvas();
+                };
+            }
+        }
+        if (currentStep === 4) {
+            const masterBtn = document.getElementById('masterBtn');
+            if (masterBtn) masterBtn.onclick = () => { currentStep = 5; renderPanel(); drawCanvas(); };
+        }
+        if (currentStep === 5) {
+            const resetBtn = document.getElementById('resetSim');
+            if (resetBtn) resetBtn.onclick = () => { currentStep = 1; predictionSubmitted = false; predictionMade = null; freeDistance = correctDistance; freePedestal = correctPedestalHeight; renderPanel(); drawCanvas(); };
+        }
+    }
+    
+    function updateLiveAngleLabels() {
+        if (currentStep === 2 && document.getElementById('anglePedLive')) {
+            const angles = computeCurrentAngles(freeDistance, freePedestal);
+            document.getElementById('anglePedLive').innerText = angles.ang1.toFixed(1);
+            document.getElementById('angleStatLive').innerText = angles.ang2.toFixed(1);
+        }
+    }
+    
+    // ╔══════════════════════════════════════════╗
+    // ║  CANVAS: REAL OBJECT + GEOMETRY + LINES  ║
+    // ╚══════════════════════════════════════════╝
+    function drawCanvas() {
+        if (!ctx) return;
+        ctx.clearRect(0, 0, width, height);
+        
+        // Draw coordinate grid (visible)
+        ctx.save();
+        ctx.strokeStyle = 'rgba(28,25,23,0.12)';
+        ctx.lineWidth = 0.8;
+        for (let x = 50; x < width; x += 40) {
+            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke();
+        }
+        for (let y = 40; y < height; y += 40) {
+            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke();
+        }
+        // Ground line (thick)
+        ctx.beginPath(); ctx.moveTo(0, groundY); ctx.lineTo(width, groundY); ctx.strokeStyle = '#8B7A6B'; ctx.lineWidth = 3; ctx.stroke();
+        ctx.fillStyle = "#C5B59B"; ctx.fillRect(0, groundY, width, 10);
+        
+        // Pedestal & statue (real object: stone pedestal + bronze statue)
+        const pedestalBaseX = wallBaseX - 40;
+        const pedestalWidth = 70;
+        const pedestalTopY = groundY - currentStep === 2 ? freePedestal * 20 : (currentStep >=3 ? correctPedestalHeight * 20 : (freePedestal*20));
+        let pedestalDrawHeight = (currentStep === 2 ? freePedestal : (currentStep >=3 ? correctPedestalHeight : freePedestal)) * 20;
+        let statueDrawHeight = statueHeight * 20;
+        
+        if(currentStep === 2) pedestalDrawHeight = freePedestal * 20;
+        else if(currentStep>=3) pedestalDrawHeight = correctPedestalHeight * 20;
+        else pedestalDrawHeight = correctPedestalHeight * 20;
+        
+        // pedestal rectangle
+        ctx.fillStyle = "#BCAA7A";
+        ctx.shadowBlur = 4; ctx.shadowColor = "rgba(0,0,0,0.1)";
+        ctx.fillRect(pedestalBaseX, groundY - pedestalDrawHeight, pedestalWidth, pedestalDrawHeight);
+        ctx.fillStyle = "#B8926C";
+        ctx.fillRect(pedestalBaseX+8, groundY - pedestalDrawHeight-5, pedestalWidth-16, 10);
+        // statue
+        ctx.fillStyle = "#8B6C42";
+        ctx.fillRect(pedestalBaseX+15, groundY - pedestalDrawHeight - statueDrawHeight, 40, statueDrawHeight);
+        ctx.fillStyle = "#D4AF37"; // golden statue head
+        ctx.beginPath(); ctx.arc(pedestalBaseX+35, groundY - pedestalDrawHeight - statueDrawHeight - 8, 14, 0, 2*Math.PI); ctx.fill();
+        
+        // Observation point (person icon)
+        ctx.fillStyle = "#3B5B8C";
+        ctx.beginPath(); ctx.arc(originX, groundY-3, 12, 0, 2*Math.PI); ctx.fill();
+        ctx.fillStyle = "white"; ctx.beginPath(); ctx.arc(originX-3, groundY-8, 2, 0, 2*Math.PI); ctx.fill(); ctx.beginPath(); ctx.arc(originX+3, groundY-8, 2, 0, 2*Math.PI); ctx.fill();
+        
+        // Construction lines (dashed) & triangles
+        const eyeX = originX;
+        const eyeY = groundY-3;
+        const pedestalTopX = pedestalBaseX+35;
+        const pedestalTopYpoint = groundY - pedestalDrawHeight;
+        const statueTopYpoint = groundY - pedestalDrawHeight - statueDrawHeight;
+        
+        ctx.setLineDash([8, 5]);
+        ctx.strokeStyle = '#3B5B8C'; ctx.lineWidth = 1.5;
+        // line to pedestal top
+        ctx.beginPath(); ctx.moveTo(eyeX, eyeY); ctx.lineTo(pedestalTopX, pedestalTopYpoint); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(eyeX, eyeY); ctx.lineTo(pedestalTopX, statueTopYpoint); ctx.stroke();
+        // horizontal dashed helper
+        ctx.beginPath(); ctx.moveTo(eyeX, groundY); ctx.lineTo(pedestalTopX, groundY); ctx.stroke();
+        ctx.setLineDash([]);
+        
+        // Right angle marker
+        ctx.fillStyle = "#C4622D";
+        ctx.font = "bold 14px Georgia";
+        // angle arcs
+        const distActual = pedestalTopX - eyeX;
+        const hPed = pedestalDrawHeight;
+        const anglePedRad = Math.atan2(hPed, distActual);
+        const angleStatRad = Math.atan2(hPed+statueDrawHeight, distActual);
+        // arc for pedestal angle (45° target)
+        ctx.beginPath(); ctx.arc(eyeX, eyeY, 50, -anglePedRad, 0); ctx.strokeStyle = "#3B5B8C"; ctx.lineWidth=2; ctx.stroke();
+        ctx.fillStyle = "#3B5B8C"; ctx.fillText(`${(anglePedRad*180/Math.PI).toFixed(1)}°`, eyeX+38, eyeY-15);
+        ctx.beginPath(); ctx.arc(eyeX, eyeY, 75, -angleStatRad, 0); ctx.strokeStyle = "#C4622D"; ctx.stroke();
+        ctx.fillStyle = "#C4622D"; ctx.fillText(`${(angleStatRad*180/Math.PI).toFixed(1)}°`, eyeX+60, eyeY-34);
+        
+        // labels
+        ctx.font = "13px Georgia"; ctx.fillStyle = "#1C1917";
+        ctx.fillText(`d = ${(distActual/20).toFixed(2)} m`, eyeX+30, groundY+15);
+        ctx.fillText(`h_pedestal = ${(pedestalDrawHeight/20).toFixed(2)} m`, pedestalTopX-15, groundY-pedestalDrawHeight-8);
+        ctx.fillText(`h_statue = 1.6 m`, pedestalTopX-15, groundY-pedestalDrawHeight-statueDrawHeight-12);
+        
+        // Unit circle inset (top-right)
+        const ucX = width-100, ucY = 90, r = 45;
+        ctx.beginPath(); ctx.arc(ucX, ucY, r, 0, 2*Math.PI); ctx.strokeStyle = "#aaa"; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(ucX-r-10, ucY); ctx.lineTo(ucX+r+10, ucY); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(ucX, ucY-r-10); ctx.lineTo(ucX, ucY+r+10); ctx.stroke();
+        const angleDemo = anglePedRad;
+        const cosX = ucX + r*Math.cos(angleDemo);
+        const sinY = ucY - r*Math.sin(angleDemo);
+        ctx.beginPath(); ctx.moveTo(ucX, ucY); ctx.lineTo(cosX, sinY); ctx.strokeStyle="#3B5B8C"; ctx.stroke();
+        ctx.fillStyle = "#2A7C6F"; ctx.fillText(`sin = ${Math.sin(angleDemo).toFixed(2)}`, ucX-40, ucY+20);
+        ctx.fillStyle = "#3B5B8C"; ctx.fillText(`cos = ${Math.cos(angleDemo).toFixed(2)}`, ucX-40, ucY+35);
+        ctx.fillStyle = "#D4A843"; ctx.beginPath(); ctx.arc(cosX, sinY, 4, 0, 2*Math.PI); ctx.fill();
+        
+        if (currentStep === 2) {
+            ctx.fillStyle = "#2A7C6F"; ctx.font = "italic 12px Georgia";
+            ctx.fillText("✨ Drag sliders → match 45° & 60°", width-200, 30);
+        }
+        ctx.restore();
+    }
+    
+    function animateAndUpdate() {
+        drawCanvas();
+        if(currentStep === 2) updateLiveAngleLabels();
+        requestAnimationFrame(animateAndUpdate);
+    }
+    
+    // initialize default values
+    function init() {
+        freeDistance = correctDistance;
+        freePedestal = correctPedestalHeight;
+        currentStep = 1;
+        predictionSubmitted = false;
+        renderPanel();
+        drawCanvas();
+        animateAndUpdate();
+    }
+    
+    // Resize awareness
+    window.addEventListener('resize', () => {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = Math.max(600, rect.width);
+        canvas.height = 450;
+        width = canvas.width; height = canvas.height;
+        groundY = height - 70;
+        originX = 120;
+        wallBaseX = width - 130;
+        drawCanvas();
+    });
+    init();
+</script>
+</body>
+</html>

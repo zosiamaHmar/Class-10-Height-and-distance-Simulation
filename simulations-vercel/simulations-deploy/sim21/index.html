@@ -1,0 +1,959 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APEX-EDU: Angles of Elevation</title>
+<style>
+:root {
+  --bg: #FAFAF5;
+  --ink: #1C1917;
+  --ink-light: #6B6560;
+  --accent: #3B5B8C;
+  --accent-warm: #C4622D;
+  --highlight: #D4A843;
+  --panel-bg: #F2EDE5;
+  --panel-border: #DDD5C8;
+  --success: #2A7C6F;
+  --font-body: Georgia, 'Times New Roman', serif;
+  --font-mono: 'Courier New', monospace;
+  --font-label: Verdana, Geneva, sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); }
+#app { display: flex; flex-direction: column; min-height: 100vh; }
+.top-bar { background: var(--panel-bg); border-bottom: 1px solid var(--panel-border); padding: 8px 16px; display: flex; align-items: center; justify-content: space-between; }
+.topic-tag { font-family: var(--font-label); font-size: 11px; color: var(--ink-light); letter-spacing: 0.05em; text-transform: uppercase; }
+.phase-indicator { font-family: var(--font-label); font-size: 11px; color: var(--accent); font-weight: bold; }
+.main { display: flex; flex: 1; }
+#canvas-area { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 0; position: relative; }
+canvas { display: block; }
+.panel { width: 320px; background: var(--panel-bg); border-left: 1px solid var(--panel-border); display: flex; flex-direction: column; overflow-y: auto; }
+.panel-inner { padding: 16px; flex: 1; }
+.step-card { background: #fff; border: 1px solid var(--panel-border); border-radius: 8px; padding: 14px; margin-bottom: 12px; }
+.step-title { font-family: var(--font-label); font-size: 11px; color: var(--accent); font-weight: bold; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+.step-body { font-size: 13px; line-height: 1.65; color: var(--ink); }
+.formula-box { background: var(--panel-bg); border: 1.5px solid var(--panel-border); border-radius: 6px; padding: 10px 14px; margin: 10px 0; font-family: var(--font-mono); font-size: 13px; text-align: center; color: var(--ink); }
+.highlight-box { background: #EEF4F9; border-left: 3px solid var(--accent); padding: 8px 12px; border-radius: 0 6px 6px 0; margin: 8px 0; font-size: 13px; }
+.warn-box { background: #FDF3ED; border-left: 3px solid var(--accent-warm); padding: 8px 12px; border-radius: 0 6px 6px 0; margin: 8px 0; font-size: 12px; }
+.answer-box { background: var(--bg); border: 2px solid var(--success); border-radius: 8px; padding: 12px; margin: 10px 0; text-align: center; }
+.answer-val { font-size: 22px; font-weight: bold; color: var(--success); font-family: var(--font-mono); }
+.answer-label { font-size: 11px; color: var(--ink-light); font-family: var(--font-label); margin-top: 2px; }
+.step-nav { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--panel-border); background: var(--panel-bg); }
+.btn { font-family: var(--font-label); font-size: 12px; padding: 7px 14px; border-radius: 6px; border: 1.5px solid var(--panel-border); background: #fff; color: var(--ink); cursor: pointer; flex: 1; transition: background 0.15s; }
+.btn:hover { background: var(--panel-border); }
+.btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn-primary:hover { background: #2d4870; }
+.progress-bar { height: 3px; background: var(--panel-border); margin-bottom: 14px; border-radius: 2px; }
+.progress-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.4s; }
+.controls-card { background: #fff; border: 1px solid var(--panel-border); border-radius: 8px; padding: 12px; margin-bottom: 10px; }
+.ctrl-label { font-family: var(--font-label); font-size: 11px; color: var(--ink-light); margin-bottom: 4px; }
+.ctrl-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.ctrl-row input[type=range] { flex: 1; accent-color: var(--accent); }
+.ctrl-val { font-family: var(--font-mono); font-size: 13px; min-width: 56px; text-align: right; color: var(--accent); }
+.results-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; }
+.result-cell { background: var(--bg); border: 1px solid var(--panel-border); border-radius: 6px; padding: 8px; text-align: center; }
+.result-cell .rval { font-family: var(--font-mono); font-size: 14px; font-weight: bold; color: var(--accent); }
+.result-cell .rlbl { font-family: var(--font-label); font-size: 10px; color: var(--ink-light); margin-top: 2px; }
+.result-cell.warm .rval { color: var(--accent-warm); }
+.challenge-card { background: #fff; border: 2px solid var(--accent); border-radius: 8px; padding: 14px; margin-bottom: 12px; }
+.challenge-header { font-family: var(--font-label); font-size: 11px; color: var(--accent); font-weight: bold; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+.challenge-text { font-size: 13px; line-height: 1.7; color: var(--ink); }
+.difficulty { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
+.diff-dot { width: 8px; height: 8px; border-radius: 50%; }
+.diff-filled { background: var(--accent); }
+.diff-empty { background: var(--panel-border); }
+.diff-label { font-family: var(--font-label); font-size: 11px; color: var(--ink-light); }
+.prediction-area { padding: 14px; background: #fff; border: 1px solid var(--panel-border); border-radius: 8px; margin-bottom: 12px; }
+.prediction-q { font-size: 13px; color: var(--ink); margin-bottom: 10px; line-height: 1.6; }
+.pred-input { width: 100%; font-family: var(--font-mono); font-size: 16px; padding: 8px; border: 1.5px solid var(--panel-border); border-radius: 6px; text-align: center; color: var(--ink); background: var(--bg); }
+.did-you-know { padding: 8px 14px; font-style: italic; font-size: 11.5px; color: var(--ink-light); font-family: var(--font-body); border-top: 1px solid var(--panel-border); }
+.trig-val-display { font-family: var(--font-mono); font-size: 12px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="top-bar">
+    <span class="topic-tag">Trigonometry · Angles of Elevation · Class 10</span>
+    <span class="phase-indicator" id="phase-label">Phase 1 · Hook</span>
+  </div>
+  <div class="main">
+    <div id="canvas-area">
+      <canvas id="mainCanvas"></canvas>
+    </div>
+    <div class="panel">
+      <div class="panel-inner" id="panel-content">
+      </div>
+      <div class="step-nav" id="step-nav">
+        <button class="btn" id="btn-back" onclick="prevStep()">← Back</button>
+        <button class="btn btn-primary" id="btn-next" onclick="nextStep()">Continue →</button>
+      </div>
+      <div class="did-you-know" id="dyk">
+        ✦ Air traffic controllers use these exact angle calculations to maintain safe vertical separation between aircraft at different altitudes.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('mainCanvas');
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas() {
+  const area = document.getElementById('canvas-area');
+  canvas.width = area.clientWidth;
+  canvas.height = area.clientHeight || window.innerHeight - 40;
+}
+window.addEventListener('resize', () => { resizeCanvas(); draw(); });
+resizeCanvas();
+
+// ── STATE ──────────────────────────────────────────────────────
+const state = {
+  step: 0,
+  totalSteps: 7,
+  phase: 'hook',
+  showUpperPlane: true,
+  showLowerPlane: true,
+  showConstructionLines: true,
+  showUnitCircle: true,
+  showLabels: true,
+  showAnswer: false,
+  prediction: null,
+  animate: true,
+  t: 0,
+  highlightAngle1: false,
+  highlightAngle2: false,
+  groundHeight: 3000,
+  angle1: 60,
+  angle2: 45,
+  interactive: false,
+  userAngle1: 60,
+  userAngle2: 45
+};
+
+// Fixed problem values
+const H_UPPER = 3000;
+const ANGLE_UPPER_DEG = 60;
+const ANGLE_LOWER_DEG = 45;
+const SQRT3 = 1.73;
+
+// tan(60) = sqrt(3), tan(45) = 1
+// x = H_upper / tan(60) = 3000/sqrt(3) = 3000/1.73 ≈ 1734.1
+// h_lower = x * tan(45) = x * 1 = x ≈ 1734.1
+// vertical distance = 3000 - 1734.1 = 1265.9 ≈ 1000*(3-sqrt(3)) = 3000-3000/sqrt(3)
+// = 3000*(1 - 1/sqrt(3)) = 3000*(sqrt(3)-1)/sqrt(3) = 1000*(sqrt(3)-1)*sqrt(3)/1 
+// exact: 3000 - 3000/sqrt(3) = 3000(1 - 1/sqrt(3)) = 3000(sqrt3-1)/sqrt3
+// = 3000*0.7321/1.732 ≈ 1268.2
+// OR: 1000(3-sqrt3) = 1000(3-1.73) = 1000*1.27 = 1270 m
+
+let animFrame;
+function loop() {
+  state.t += 0.016;
+  draw();
+  animFrame = requestAnimationFrame(loop);
+}
+
+// ── DRAWING ────────────────────────────────────────────────────
+function draw() {
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  // Background
+  ctx.fillStyle = '#FAFAF5';
+  ctx.fillRect(0, 0, W, H);
+
+  // Scene parameters
+  const groundY = H - 70;
+  const originX = 80;
+  const sceneW = W - 200;
+
+  // Scale: ground to upper plane
+  const totalSceneH = groundY - 80;
+  const pixPerMeter = totalSceneH / 3500;
+  const upperPlaneY = groundY - H_UPPER * pixPerMeter;
+  const observerX = originX + 40;
+
+  // Calculate horizontal distance from observer to upper plane
+  // tan(60) = 3000/d => d = 3000/tan(60) = 3000/sqrt(3)
+  const d_meters = H_UPPER / Math.tan(ANGLE_UPPER_DEG * Math.PI / 180);
+  const d_px = d_meters * pixPerMeter;
+  const upperPlaneX = observerX + d_px;
+
+  // Lower plane height: tan(45) = h_lower/d => h_lower = d*tan(45) = d
+  const lowerH_meters = d_meters * Math.tan(ANGLE_LOWER_DEG * Math.PI / 180);
+  const lowerPlaneY = groundY - lowerH_meters * pixPerMeter;
+  const lowerPlaneX = upperPlaneX; // same horizontal position
+
+  // Draw sky gradient
+  const skyGrad = ctx.createLinearGradient(0, 0, 0, groundY);
+  skyGrad.addColorStop(0, '#C8D8EA');
+  skyGrad.addColorStop(0.5, '#E0EBF4');
+  skyGrad.addColorStop(1, '#F0F4F8');
+  ctx.fillStyle = skyGrad;
+  ctx.fillRect(0, 0, W, groundY);
+
+  // Draw clouds (decorative)
+  drawCloud(ctx, 120, 60, 0.8);
+  drawCloud(ctx, 350, 40, 0.6);
+  drawCloud(ctx, 480, 80, 0.9);
+
+  // Ground
+  drawGround(ctx, 0, groundY, W);
+
+  // Draw grid
+  drawGrid(ctx, originX, groundY, sceneW, totalSceneH);
+
+  // Draw Y axis (altitude axis)
+  ctx.strokeStyle = 'rgba(28,25,23,0.25)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(originX, groundY + 10);
+  ctx.lineTo(originX, 30);
+  ctx.stroke();
+  // Arrow
+  ctx.beginPath();
+  ctx.moveTo(originX - 5, 38);
+  ctx.lineTo(originX, 28);
+  ctx.lineTo(originX + 5, 38);
+  ctx.strokeStyle = 'rgba(28,25,23,0.35)';
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(28,25,23,0.5)';
+  ctx.font = '12px Verdana';
+  ctx.fillText('h (m)', originX - 30, 22);
+
+  // Altitude markers on Y axis
+  [1000, 2000, 3000].forEach(alt => {
+    const py = groundY - alt * pixPerMeter;
+    ctx.strokeStyle = 'rgba(28,25,23,0.2)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(originX - 8, py);
+    ctx.lineTo(originX + 5, py);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(28,25,23,0.45)';
+    ctx.font = '10px Verdana';
+    ctx.textAlign = 'right';
+    ctx.fillText(alt.toLocaleString(), originX - 10, py + 4);
+    ctx.textAlign = 'left';
+  });
+
+  // Observer point
+  drawObserver(ctx, observerX, groundY);
+
+  // Construction lines
+  if (state.showConstructionLines) {
+    // Horizontal line from observer to base below upper plane
+    ctx.setLineDash([8, 5]);
+    ctx.strokeStyle = 'rgba(59,91,140,0.4)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(observerX, groundY);
+    ctx.lineTo(upperPlaneX, groundY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Vertical line from ground to upper plane (shows 3000m)
+    ctx.setLineDash([6, 4]);
+    ctx.strokeStyle = 'rgba(59,91,140,0.5)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(upperPlaneX, groundY);
+    ctx.lineTo(upperPlaneX, upperPlaneY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Right angle marker at base of vertical
+    drawRightAngle(ctx, upperPlaneX, groundY, 12);
+
+    // Horizontal line showing vertical gap
+    if (state.step >= 3) {
+      ctx.setLineDash([5, 4]);
+      ctx.strokeStyle = 'rgba(196,98,45,0.45)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(upperPlaneX + 30, lowerPlaneY);
+      ctx.lineTo(upperPlaneX + 30, upperPlaneY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Arrowheads for vertical gap
+      drawArrowV(ctx, upperPlaneX + 30, lowerPlaneY, upperPlaneY);
+
+      // Label
+      ctx.fillStyle = 'rgba(196,98,45,0.9)';
+      ctx.font = 'bold 12px Verdana';
+      ctx.textAlign = 'center';
+      ctx.fillText('?', upperPlaneX + 44, (lowerPlaneY + upperPlaneY) / 2 + 4);
+      ctx.textAlign = 'left';
+    }
+  }
+
+  // Elevation lines from observer
+  // Upper line (60°)
+  const lineLen = Math.sqrt(Math.pow(upperPlaneX - observerX, 2) + Math.pow(groundY - upperPlaneY, 2));
+
+  ctx.strokeStyle = 'rgba(59,91,140,0.75)';
+  ctx.lineWidth = state.highlightAngle1 ? 3 : 2;
+  ctx.beginPath();
+  ctx.moveTo(observerX, groundY);
+  ctx.lineTo(upperPlaneX, upperPlaneY);
+  ctx.stroke();
+
+  // Lower line (45°)
+  ctx.strokeStyle = 'rgba(196,98,45,0.75)';
+  ctx.lineWidth = state.highlightAngle2 ? 3 : 2;
+  ctx.beginPath();
+  ctx.moveTo(observerX, groundY);
+  ctx.lineTo(lowerPlaneX, lowerPlaneY);
+  ctx.stroke();
+
+  // Ground line continuation
+  ctx.strokeStyle = 'rgba(28,25,23,0.2)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(observerX, groundY);
+  ctx.lineTo(upperPlaneX + 40, groundY);
+  ctx.stroke();
+
+  // Angle arcs at observer
+  // Angle 1 (60°) from ground
+  ctx.strokeStyle = 'rgba(59,91,140,0.8)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(observerX, groundY, 55, -ANGLE_UPPER_DEG * Math.PI / 180, 0);
+  ctx.stroke();
+
+  // Angle 2 (45°) from ground
+  ctx.strokeStyle = 'rgba(196,98,45,0.7)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(observerX, groundY, 38, -ANGLE_LOWER_DEG * Math.PI / 180, 0);
+  ctx.stroke();
+
+  // Angle labels
+  ctx.font = 'bold 13px Georgia';
+  ctx.fillStyle = '#3B5B8C';
+  ctx.fillText('60°', observerX + 58, groundY - 18);
+  ctx.fillStyle = '#C4622D';
+  ctx.fillText('45°', observerX + 42, groundY - 8);
+
+  // Dimension: d (horizontal) with bracket
+  if (state.step >= 2) {
+    ctx.strokeStyle = 'rgba(59,91,140,0.4)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(observerX, groundY + 20);
+    ctx.lineTo(upperPlaneX, groundY + 20);
+    ctx.stroke();
+    drawArrowH(ctx, observerX, upperPlaneX, groundY + 20);
+    ctx.fillStyle = 'rgba(59,91,140,0.8)';
+    ctx.font = 'italic 12px Georgia';
+    ctx.textAlign = 'center';
+    ctx.fillText('d = 3000/√3 m', (observerX + upperPlaneX) / 2, groundY + 34);
+    ctx.textAlign = 'left';
+  }
+
+  // Height label for upper plane
+  if (state.step >= 1) {
+    ctx.strokeStyle = 'rgba(59,91,140,0.4)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 3]);
+    ctx.beginPath();
+    ctx.moveTo(upperPlaneX - 15, groundY);
+    ctx.lineTo(upperPlaneX - 15, upperPlaneY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    drawArrowV(ctx, upperPlaneX - 15, groundY, upperPlaneY);
+    ctx.fillStyle = 'rgba(59,91,140,0.85)';
+    ctx.font = 'bold 12px Georgia';
+    ctx.textAlign = 'right';
+    ctx.fillText('3000 m', upperPlaneX - 18, (groundY + upperPlaneY) / 2 + 4);
+    ctx.textAlign = 'left';
+  }
+
+  // Lower plane height label
+  if (state.step >= 3) {
+    ctx.font = 'italic 12px Georgia';
+    ctx.fillStyle = 'rgba(196,98,45,0.85)';
+    ctx.textAlign = 'right';
+    ctx.fillText('h₂ = ?', upperPlaneX - 3, lowerPlaneY - 8);
+    ctx.textAlign = 'left';
+  }
+
+  // Draw aeroplanes
+  if (state.showUpperPlane) {
+    const bobble = Math.sin(state.t * 1.2) * 3;
+    drawAeroplane(ctx, upperPlaneX, upperPlaneY + bobble, '#3B5B8C', 'A', 1.0);
+  }
+  if (state.showLowerPlane) {
+    const bobble = Math.sin(state.t * 0.9 + 1) * 2.5;
+    drawAeroplane(ctx, lowerPlaneX, lowerPlaneY + bobble, '#C4622D', 'B', 0.85);
+  }
+
+  // Labels for planes
+  if (state.showLabels) {
+    ctx.fillStyle = '#3B5B8C';
+    ctx.font = 'bold 13px Georgia';
+    ctx.fillText('Plane A (3000 m)', upperPlaneX + 22, upperPlaneY + 5);
+
+    ctx.fillStyle = '#C4622D';
+    ctx.fillText('Plane B', lowerPlaneX + 22, lowerPlaneY + 5);
+    if (state.step >= 3 && state.showAnswer) {
+      ctx.fillStyle = '#C4622D';
+      ctx.font = '12px Georgia';
+      ctx.fillText('≈ 1731 m', lowerPlaneX + 22, lowerPlaneY + 20);
+    }
+  }
+
+  // Unit circle inset
+  if (state.showUnitCircle && state.step >= 2) {
+    drawUnitCircleInset(ctx, W - 105, 115, 75);
+  }
+
+  // Answer label
+  if (state.showAnswer) {
+    const midY = (upperPlaneY + lowerPlaneY) / 2;
+    ctx.fillStyle = 'rgba(42,124,111,0.9)';
+    ctx.font = 'bold 13px Georgia';
+    ctx.fillText('≈ 1268 m', upperPlaneX + 36, midY + 4);
+  }
+}
+
+function drawCloud(ctx, x, y, scale) {
+  ctx.fillStyle = 'rgba(255,255,255,0.65)';
+  ctx.beginPath();
+  ctx.arc(x, y, 18 * scale, 0, Math.PI * 2);
+  ctx.arc(x + 20 * scale, y - 5 * scale, 14 * scale, 0, Math.PI * 2);
+  ctx.arc(x + 38 * scale, y, 16 * scale, 0, Math.PI * 2);
+  ctx.arc(x + 18 * scale, y + 8 * scale, 14 * scale, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawGround(ctx, x, y, w) {
+  ctx.fillStyle = '#8B7355';
+  ctx.fillRect(x, y, w, 8);
+  ctx.fillStyle = '#6B8C5A';
+  ctx.fillRect(x, y, w, 4);
+  // Shadow
+  ctx.fillStyle = 'rgba(28,25,23,0.08)';
+  ctx.fillRect(x, y + 4, w, 4);
+  // Runway markings
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  for (let rx = 60; rx < w; rx += 80) {
+    ctx.fillRect(rx, y + 1, 30, 2);
+  }
+}
+
+function drawGrid(ctx, ox, gy, sw, sh) {
+  ctx.strokeStyle = 'rgba(28,25,23,0.06)';
+  ctx.lineWidth = 1;
+  for (let py = gy; py > gy - sh; py -= sh / 7) {
+    ctx.beginPath(); ctx.moveTo(ox, py); ctx.lineTo(ox + sw, py); ctx.stroke();
+  }
+  for (let px = ox; px < ox + sw; px += sw / 6) {
+    ctx.beginPath(); ctx.moveTo(px, gy); ctx.lineTo(px, gy - sh); ctx.stroke();
+  }
+}
+
+function drawObserver(ctx, x, y) {
+  // Person silhouette at ground point
+  ctx.fillStyle = '#1C1917';
+  ctx.beginPath();
+  ctx.arc(x, y - 14, 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(x, y - 9);
+  ctx.lineTo(x, y - 2);
+  ctx.lineTo(x - 4, y + 5);
+  ctx.moveTo(x, y - 2);
+  ctx.lineTo(x + 4, y + 5);
+  ctx.moveTo(x - 6, y - 5);
+  ctx.lineTo(x + 6, y - 5);
+  ctx.strokeStyle = '#1C1917';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // "Observer" label
+  ctx.fillStyle = 'rgba(28,25,23,0.7)';
+  ctx.font = '11px Verdana';
+  ctx.textAlign = 'center';
+  ctx.fillText('Observer', x, y + 20);
+  ctx.textAlign = 'left';
+
+  // Point dot
+  ctx.fillStyle = '#D4A843';
+  ctx.beginPath();
+  ctx.arc(x, y, 4, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawRightAngle(ctx, x, y, size) {
+  ctx.strokeStyle = 'rgba(28,25,23,0.4)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(x - size, y);
+  ctx.lineTo(x - size, y - size);
+  ctx.lineTo(x, y - size);
+  ctx.stroke();
+}
+
+function drawArrowV(ctx, x, y1, y2) {
+  const head = 6;
+  ctx.strokeStyle = ctx.fillStyle || '#3B5B8C';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(x, y1);
+  ctx.lineTo(x, y2);
+  ctx.stroke();
+  // Bottom arrow
+  ctx.beginPath();
+  ctx.moveTo(x - head / 2, y1 + head);
+  ctx.lineTo(x, y1);
+  ctx.lineTo(x + head / 2, y1 + head);
+  ctx.stroke();
+  // Top arrow
+  ctx.beginPath();
+  ctx.moveTo(x - head / 2, y2 - head);
+  ctx.lineTo(x, y2);
+  ctx.lineTo(x + head / 2, y2 - head);
+  ctx.stroke();
+}
+
+function drawArrowH(ctx, x1, x2, y) {
+  const head = 5;
+  ctx.strokeStyle = ctx.fillStyle || '#3B5B8C';
+  ctx.lineWidth = 1;
+  // Left arrow
+  ctx.beginPath();
+  ctx.moveTo(x1 + head, y - head / 2);
+  ctx.lineTo(x1, y);
+  ctx.lineTo(x1 + head, y + head / 2);
+  ctx.stroke();
+  // Right arrow
+  ctx.beginPath();
+  ctx.moveTo(x2 - head, y - head / 2);
+  ctx.lineTo(x2, y);
+  ctx.lineTo(x2 - head, y + head / 2);
+  ctx.stroke();
+}
+
+function drawAeroplane(ctx, x, y, color, label, scale) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(scale, scale);
+  ctx.fillStyle = color;
+  ctx.strokeStyle = 'rgba(28,25,23,0.5)';
+  ctx.lineWidth = 0.8;
+
+  // Fuselage
+  ctx.beginPath();
+  ctx.moveTo(24, 0);
+  ctx.bezierCurveTo(20, -4, -8, -5, -20, -4);
+  ctx.bezierCurveTo(-22, -2, -22, 2, -20, 4);
+  ctx.bezierCurveTo(-8, 5, 20, 4, 24, 0);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Wing
+  ctx.beginPath();
+  ctx.moveTo(4, -1);
+  ctx.lineTo(-2, -18);
+  ctx.lineTo(-10, -18);
+  ctx.lineTo(-8, -1);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Tail fin
+  ctx.beginPath();
+  ctx.moveTo(-14, -1);
+  ctx.lineTo(-20, -10);
+  ctx.lineTo(-22, -10);
+  ctx.lineTo(-20, -1);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Engine
+  ctx.beginPath();
+  ctx.ellipse(-2, 4, 5, 3, 0, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(28,25,23,0.3)';
+  ctx.fill();
+
+  ctx.restore();
+
+  // Label badge
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.roundRect(x - 8, y - 32, 16, 16, 4);
+  ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 10px Verdana';
+  ctx.textAlign = 'center';
+  ctx.fillText(label, x, y - 21);
+  ctx.textAlign = 'left';
+}
+
+function drawUnitCircleInset(ctx, cx, cy, r) {
+  ctx.save();
+  // Background
+  ctx.fillStyle = 'rgba(250,250,245,0.92)';
+  ctx.strokeStyle = 'rgba(28,25,23,0.15)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(cx - r - 8, cy - r - 8, r * 2 + 16, r * 2 + 16, 8);
+  ctx.fill();
+  ctx.stroke();
+
+  // Title
+  ctx.fillStyle = 'rgba(28,25,23,0.5)';
+  ctx.font = '9px Verdana';
+  ctx.textAlign = 'center';
+  ctx.fillText('Unit Circle', cx, cy - r + 2);
+  ctx.textAlign = 'left';
+
+  // Circle
+  ctx.strokeStyle = 'rgba(28,25,23,0.25)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r * 0.75, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Axes
+  const rr = r * 0.75;
+  ctx.strokeStyle = 'rgba(28,25,23,0.2)';
+  ctx.beginPath();
+  ctx.moveTo(cx - rr - 8, cy); ctx.lineTo(cx + rr + 8, cy); ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - rr - 8); ctx.lineTo(cx, cy + rr + 8); ctx.stroke();
+
+  // 60° radius
+  const a1 = -60 * Math.PI / 180;
+  const ex1 = cx + rr * Math.cos(a1);
+  const ey1 = cy + rr * Math.sin(a1);
+  ctx.strokeStyle = '#3B5B8C';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(ex1, ey1); ctx.stroke();
+
+  // sin 60 drop
+  ctx.setLineDash([3, 2]);
+  ctx.strokeStyle = '#C4622D';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(ex1, ey1); ctx.lineTo(ex1, cy); ctx.stroke();
+  ctx.strokeStyle = '#2A7C6F';
+  ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(ex1, cy); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // 45° radius
+  const a2 = -45 * Math.PI / 180;
+  const ex2 = cx + rr * Math.cos(a2);
+  const ey2 = cy + rr * Math.sin(a2);
+  ctx.strokeStyle = 'rgba(196,98,45,0.6)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(ex2, ey2); ctx.stroke();
+
+  // Dots
+  ctx.fillStyle = '#3B5B8C';
+  ctx.beginPath(); ctx.arc(ex1, ey1, 3, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#C4622D';
+  ctx.beginPath(); ctx.arc(ex2, ey2, 3, 0, Math.PI * 2); ctx.fill();
+
+  // Angle arcs
+  ctx.strokeStyle = '#3B5B8C';
+  ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.arc(cx, cy, 18, a1, 0); ctx.stroke();
+  ctx.strokeStyle = '#C4622D';
+  ctx.beginPath(); ctx.arc(cx, cy, 12, a2, 0); ctx.stroke();
+
+  // Labels
+  ctx.font = 'bold 9px Verdana';
+  ctx.fillStyle = '#3B5B8C';
+  ctx.fillText('60°', cx + 20, cy - 4);
+  ctx.fillStyle = '#C4622D';
+  ctx.fillText('45°', cx + 15, cy + 10);
+
+  ctx.restore();
+}
+
+// ── PANEL CONTENT ────────────────────────────────────────────────
+const steps = [
+  renderHook,
+  renderStep1,
+  renderStep2,
+  renderStep3,
+  renderStep4,
+  renderStep5,
+  renderStep6,
+];
+
+function renderPanel() {
+  document.getElementById('panel-content').innerHTML = '';
+  document.getElementById('phase-label').textContent = ['Phase 1 · Hook', 'Phase 2 · Explore', 'Phase 3 · The Triangle', 'Phase 4 · Find d', 'Phase 5 · Find h₂', 'Phase 6 · Answer', 'Phase 7 · Master'][state.step] || '';
+
+  const prog = document.getElementById('panel-content');
+  const pbar = document.createElement('div');
+  pbar.className = 'progress-bar';
+  pbar.innerHTML = `<div class="progress-fill" style="width:${Math.round((state.step / (steps.length - 1)) * 100)}%"></div>`;
+  prog.appendChild(pbar);
+
+  steps[state.step](prog);
+
+  document.getElementById('btn-back').disabled = state.step === 0;
+  document.getElementById('btn-next').textContent = state.step === steps.length - 1 ? 'Restart' : 'Continue →';
+}
+
+function renderHook(el) {
+  el.innerHTML += `
+    <div class="challenge-card">
+      <div class="challenge-header">🏆 Challenge</div>
+      <div class="challenge-text">
+        An aeroplane at <strong>3000 m</strong> passes vertically above another. From a point on the ground,
+        the angles of elevation of the two planes are <strong style="color:#3B5B8C">60°</strong> 
+        and <strong style="color:#C4622D">45°</strong> respectively.<br><br>
+        Find the <strong>vertical distance</strong> between the aeroplanes.
+        <em style="font-size:11px;color:var(--ink-light)">(Take √3 = 1.73)</em>
+      </div>
+      <div class="difficulty">
+        <div class="diff-dot diff-filled"></div>
+        <div class="diff-dot diff-filled"></div>
+        <div class="diff-dot diff-filled"></div>
+        <div class="diff-dot diff-empty"></div>
+        <div class="diff-dot diff-empty"></div>
+        <span class="diff-label">Class 10 · Trigonometry</span>
+      </div>
+    </div>
+
+    <div class="prediction-area">
+      <div class="prediction-q">Before solving — make your prediction. The vertical gap between the two planes is closest to:</div>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        ${['About 500 m', 'About 1000–1200 m', 'About 1500–1700 m', 'More than 2000 m'].map((opt, i) =>
+          `<button onclick="setPrediction(${i})" id="pred-${i}" style="font-size:12px;padding:7px 10px;border:1.5px solid var(--panel-border);border-radius:6px;background:#fff;cursor:pointer;text-align:left;font-family:var(--font-label);transition:background 0.15s" onmouseover="this.style.background='#EEF4F9'" onmouseout="if(window._pred!=${i}) this.style.background='#fff'">${opt}</button>`
+        ).join('')}
+      </div>
+    </div>
+  `;
+}
+
+window.setPrediction = function(i) {
+  window._pred = i;
+  [0,1,2,3].forEach(j => {
+    const btn = document.getElementById('pred-' + j);
+    if (btn) {
+      btn.style.background = j === i ? '#EEF4F9' : '#fff';
+      btn.style.borderColor = j === i ? '#3B5B8C' : 'var(--panel-border)';
+    }
+  });
+  state.prediction = i;
+};
+
+function renderStep1(el) {
+  el.innerHTML += `
+    <div class="step-card">
+      <div class="step-title">Step 1 · The Scene</div>
+      <div class="step-body">
+        Imagine standing on the ground. Two aeroplanes are directly above each other — one at 3000 m, the other somewhere lower.
+        <br><br>
+        You look up at <strong style="color:#3B5B8C">Plane A</strong> at an angle of <strong style="color:#3B5B8C">60°</strong> from the ground.
+        <br><br>
+        You then look up at <strong style="color:#C4622D">Plane B</strong> at a shallower angle of <strong style="color:#C4622D">45°</strong>.
+        <br><br>
+        Both planes are directly above the <em>same point</em> on the ground — but at different heights.
+      </div>
+    </div>
+    <div class="step-card">
+      <div class="step-title">Key Observation</div>
+      <div class="step-body">
+        Your position → Plane A overhead → the ground point below = <strong>one right triangle</strong>.<br><br>
+        Your position → Plane B → the same ground point below = <strong>another right triangle</strong>.<br><br>
+        <em>Both triangles share the same horizontal base!</em>
+      </div>
+    </div>
+  `;
+  state.showConstructionLines = true;
+  state.showLabels = true;
+  state.step1lit = true;
+}
+
+function renderStep2(el) {
+  el.innerHTML += `
+    <div class="step-card">
+      <div class="step-title">Step 2 · Set Up Variables</div>
+      <div class="step-body">
+        Let <strong>O</strong> = observer on the ground<br>
+        Let <strong>P</strong> = point on ground directly below both planes<br>
+        Let <strong>d</strong> = OP (horizontal distance)<br>
+        Let <strong>h₁ = 3000 m</strong> (height of Plane A)<br>
+        Let <strong>h₂ = ?</strong> (height of Plane B)
+      </div>
+    </div>
+    <div class="step-card">
+      <div class="step-title">Two Triangles, Same Base</div>
+      <div class="step-body">
+        <strong style="color:#3B5B8C">Triangle 1 (Plane A):</strong><br>
+        tan(60°) = h₁ / d = 3000 / d
+        <div class="formula-box">d = 3000 / tan(60°)</div>
+        <strong style="color:#C4622D">Triangle 2 (Plane B):</strong><br>
+        tan(45°) = h₂ / d
+        <div class="formula-box">h₂ = d × tan(45°)</div>
+      </div>
+    </div>
+    <div class="controls-card">
+      <div class="ctrl-label">Watch the triangles on the canvas →</div>
+      <div style="font-size:12px;color:var(--ink-light);margin-top:4px;">The dashed lines show both right triangles sharing the same base distance <em>d</em>.</div>
+    </div>
+  `;
+  state.showConstructionLines = true;
+}
+
+function renderStep3(el) {
+  el.innerHTML += `
+    <div class="step-card">
+      <div class="step-title">Step 3 · Find d (horizontal distance)</div>
+      <div class="step-body">
+        From Triangle 1:<br><br>
+        <div class="formula-box">tan 60° = 3000 / d</div>
+        We know tan 60° = √3 = 1.73
+        <div class="highlight-box">d = 3000 / √3</div>
+        Rationalise the denominator:
+        <div class="formula-box">d = 3000/√3 × √3/√3 = 3000√3 / 3 = 1000√3 m</div>
+        Using √3 = 1.73:
+        <div class="answer-box">
+          <div class="answer-val">d = 1730 m</div>
+          <div class="answer-label">Horizontal distance from observer to point below planes</div>
+        </div>
+      </div>
+    </div>
+    <div class="warn-box">⚠ Common mistake: students write d = 3000 × tan(60°). Remember — tan = opposite/adjacent, so d is the <em>adjacent</em> side, giving d = opposite/tan.</div>
+  `;
+  state.step = 3;
+  draw();
+}
+
+function renderStep4(el) {
+  el.innerHTML += `
+    <div class="step-card">
+      <div class="step-title">Step 4 · Find h₂ (height of Plane B)</div>
+      <div class="step-body">
+        From Triangle 2 (Plane B at 45°):
+        <div class="formula-box">tan 45° = h₂ / d</div>
+        We know tan 45° = 1 (exactly!)
+        <div class="highlight-box">h₂ = d × tan(45°) = d × 1 = d</div>
+        So h₂ = d exactly!
+        <div class="formula-box">h₂ = 1000√3 m</div>
+        Using √3 = 1.73:
+        <div class="answer-box">
+          <div class="answer-val">h₂ = 1730 m</div>
+          <div class="answer-label">Height of Plane B above ground</div>
+        </div>
+      </div>
+    </div>
+    <div class="step-card">
+      <div class="step-title">Why tan 45° = 1?</div>
+      <div class="step-body">
+        At 45°, the opposite = adjacent → the triangle is isosceles. The height equals the horizontal distance — a perfect square triangle!
+      </div>
+    </div>
+  `;
+}
+
+function renderStep5(el) {
+  el.innerHTML += `
+    <div class="step-card">
+      <div class="step-title">Step 5 · Vertical Distance</div>
+      <div class="step-body">
+        The vertical distance between the planes:
+        <div class="formula-box">Distance = h₁ − h₂ = 3000 − h₂</div>
+        <div class="formula-box">= 3000 − 1000√3</div>
+        <div class="formula-box">= 1000(3 − √3)</div>
+        Using √3 = 1.73:
+        <div class="formula-box">= 1000(3 − 1.73) = 1000 × 1.27</div>
+        <div class="answer-box">
+          <div class="answer-val">= 1268.2 m ≈ <span style="color:#2A7C6F">1000(3−√3) m</span></div>
+          <div class="answer-label">Exact answer: 1000(3 − √3) metres</div>
+        </div>
+      </div>
+    </div>
+    <div class="step-card">
+      <div class="step-title">Exact vs Approximate</div>
+      <div class="step-body">
+        Exact: <strong>1000(3 − √3) m</strong><br>
+        Using √3 = 1.73: <strong>1270 m</strong><br>
+        Using √3 = 1.732: <strong>1268 m</strong><br><br>
+        <em style="color:var(--ink-light)">The question says use √3 = 1.73, so answer = <strong>1270 m</strong>.</em>
+      </div>
+    </div>
+  `;
+  state.showAnswer = true;
+  draw();
+}
+
+function renderStep6(el) {
+  const predLabels = ['About 500 m', 'About 1000–1200 m', 'About 1500–1700 m', 'More than 2000 m'];
+  const predCorrect = state.prediction === 1;
+  el.innerHTML += `
+    <div class="step-card">
+      <div class="step-title">Final Answer</div>
+      <div class="step-body">
+        <div class="answer-box" style="border-color: #2A7C6F;">
+          <div class="answer-val" style="font-size:20px;">1000(3 − √3) m</div>
+          <div class="answer-label" style="font-size:13px;margin-top:4px;">= <strong>1270 m</strong> (using √3 = 1.73)</div>
+        </div>
+        ${state.prediction !== null ? `
+        <div style="margin-top:10px;padding:10px;background:${predCorrect ? '#EAF6F3' : '#FDF3ED'};border-radius:6px;font-size:12px;">
+          Your prediction: <strong>${predLabels[state.prediction]}</strong><br>
+          ${predCorrect ? '✓ Spot on! The answer falls in that range.' : 'The actual answer is about 1270 m — close to 1000–1200 m range.'}
+        </div>` : ''}
+      </div>
+    </div>
+    <div class="step-card">
+      <div class="step-title">Summary — The Method</div>
+      <div class="step-body">
+        <strong>1.</strong> Find d using tan(angle of upper plane):<br>
+        &nbsp;&nbsp;d = h_upper / tan(θ₁)<br><br>
+        <strong>2.</strong> Find h₂ using tan(angle of lower plane):<br>
+        &nbsp;&nbsp;h₂ = d × tan(θ₂)<br><br>
+        <strong>3.</strong> Vertical distance = h₁ − h₂
+        <div class="formula-box" style="margin-top:8px;">Gap = h₁ − d·tan(θ₂) = h₁(1 − tan θ₂/tan θ₁)</div>
+      </div>
+    </div>
+    <div class="step-card">
+      <div class="step-title">Try Yourself</div>
+      <div class="step-body" style="font-size:12px;">
+        <strong>Variant 1:</strong> Upper plane at 4000 m, angles 60° and 30°. Find vertical gap.<br><br>
+        <strong>Variant 2:</strong> Angles 45° and 30°. Upper plane 2000 m. Find gap.<br><br>
+        <em style="color:var(--ink-light)">Hint: Same method. tan(30°) = 1/√3, tan(45°) = 1, tan(60°) = √3.</em>
+      </div>
+    </div>
+  `;
+}
+
+function nextStep() {
+  if (state.step >= steps.length - 1) {
+    state.step = 0;
+    state.showAnswer = false;
+    state.prediction = null;
+    window._pred = undefined;
+  } else {
+    state.step++;
+  }
+  renderPanel();
+}
+
+function prevStep() {
+  if (state.step > 0) {
+    state.step--;
+    if (state.step < 5) state.showAnswer = false;
+    renderPanel();
+  }
+}
+
+// Init
+renderPanel();
+loop();
+</script>
+</body>
+</html>

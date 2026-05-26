@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APEX-EDU v4 — TV Tower: Angles of Elevation</title>
+<style>
+:root {
+  --bg-canvas:#F8F5F0;--bg-panel:#F0EBE3;--bg-card:#FDFBF8;--bg-proof:#EEF2F8;
+  --ink-primary:#1A1714;--ink-secondary:#5C5652;--ink-ghost:#A8A29E;
+  --fill-color:#3D6B9E;--drain-color:#C25D2E;--highlight:#C9961A;
+  --correct:#2A7A6B;--proof:#4A6FA5;--construction:rgba(59,91,140,0.35);
+  --angle-color:#3D6B9E;--sin-color:#C25D2E;--cos-color:#2A7A6B;
+  --hyp-color:#5B4A8A;--grid-color:rgba(26,23,20,0.07);--axis-color:rgba(26,23,20,0.22);
+  --font-body:Georgia,'Times New Roman',serif;--font-label:'Verdana',Geneva,Tahoma,sans-serif;
+  --font-mono:'Courier New',Courier,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg-canvas);color:var(--ink-primary);font-family:var(--font-body);overflow-x:hidden}
+.apex-container{display:flex;flex-direction:row;min-height:100vh;gap:0}
+.canvas-zone{flex:1;min-width:0;position:relative;background:var(--bg-canvas)}
+canvas{display:block;width:100%;height:100%}
+.panel-zone{width:320px;flex-shrink:0;background:var(--bg-panel);border-left:1px solid rgba(26,23,20,0.1);overflow-y:auto;display:flex;flex-direction:column}
+.proof-zone{width:270px;flex-shrink:0;background:var(--bg-proof);border-left:1px solid rgba(61,107,158,0.2);overflow-y:auto;display:none}
+.phase-bar{background:var(--ink-primary);color:#F8F5F0;padding:8px 16px;font-family:var(--font-label);font-size:11px;letter-spacing:1px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.phase-dots{display:flex;gap:5px}
+.phase-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.25);transition:background 0.3s}
+.phase-dot.active{background:#C9961A}
+.phase-dot.done{background:rgba(255,255,255,0.6)}
+.panel-content{padding:16px;flex:1;overflow-y:auto}
+.panel-section{margin-bottom:20px}
+.panel-title{font-family:var(--font-label);font-size:11px;letter-spacing:1.5px;color:var(--ink-ghost);text-transform:uppercase;margin-bottom:8px}
+.panel-body{font-size:14px;line-height:1.65;color:var(--ink-primary)}
+.step-card{background:var(--bg-card);border:1px solid rgba(26,23,20,0.1);border-radius:8px;padding:12px 14px;margin-bottom:10px;transition:border-color 0.2s}
+.step-card.active{border-color:var(--highlight);border-left:3px solid var(--highlight)}
+.step-card.done{border-color:var(--correct);opacity:0.85}
+.step-num{font-family:var(--font-label);font-size:10px;color:var(--ink-ghost);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px}
+.step-text{font-size:13px;line-height:1.6;color:var(--ink-primary)}
+.step-math{font-family:var(--font-mono);background:rgba(26,23,20,0.05);padding:3px 7px;border-radius:4px;font-size:13px;display:inline-block;margin:3px 0}
+.formula-reveal{background:linear-gradient(135deg,rgba(61,107,158,0.08),rgba(90,74,138,0.08));border:1px solid rgba(61,107,158,0.25);border-radius:8px;padding:14px;text-align:center;font-size:16px;margin:10px 0}
+.btn{font-family:var(--font-label);font-size:12px;padding:8px 16px;border-radius:6px;border:1.5px solid var(--ink-primary);background:transparent;color:var(--ink-primary);cursor:pointer;transition:all 0.2s;letter-spacing:0.5px}
+.btn:hover{background:var(--ink-primary);color:var(--bg-canvas)}
+.btn-primary{background:var(--fill-color);border-color:var(--fill-color);color:#fff}
+.btn-primary:hover{background:#2d5280;border-color:#2d5280;color:#fff}
+.btn-sm{padding:5px 10px;font-size:11px}
+.predict-widget{background:var(--bg-card);border:1.5px solid var(--highlight);border-radius:8px;padding:14px;margin:10px 0}
+.predict-widget h4{font-family:var(--font-label);font-size:12px;color:var(--highlight);margin-bottom:8px;letter-spacing:0.5px}
+.predict-options{display:flex;flex-direction:column;gap:6px}
+.predict-opt{padding:8px 12px;border:1px solid rgba(26,23,20,0.15);border-radius:6px;cursor:pointer;font-size:13px;transition:all 0.2s;background:var(--bg-card)}
+.predict-opt:hover{border-color:var(--highlight);background:rgba(201,150,26,0.08)}
+.predict-opt.selected{border-color:var(--fill-color);background:rgba(61,107,158,0.1)}
+.predict-opt.correct{border-color:var(--correct);background:rgba(42,122,107,0.1)}
+.predict-opt.wrong{border-color:var(--drain-color);background:rgba(194,93,46,0.1)}
+.repr-bar{display:flex;gap:4px;margin-bottom:10px;flex-wrap:wrap}
+.repr-btn{font-family:var(--font-label);font-size:10px;padding:4px 8px;border-radius:4px;border:1px solid rgba(26,23,20,0.2);background:transparent;cursor:pointer;letter-spacing:0.5px;color:var(--ink-secondary)}
+.repr-btn.active{background:var(--fill-color);border-color:var(--fill-color);color:#fff}
+.misconception-banner{background:rgba(194,93,46,0.1);border-left:3px solid var(--drain-color);border-radius:0 6px 6px 0;padding:10px 12px;margin:8px 0;font-size:12px;color:var(--ink-primary);display:none}
+.why-toggle{font-family:var(--font-label);font-size:10px;color:var(--fill-color);cursor:pointer;border:none;background:none;padding:2px 0;letter-spacing:0.5px;text-decoration:underline dotted}
+.why-content{font-size:12px;color:var(--ink-secondary);background:rgba(61,107,158,0.06);border-radius:4px;padding:8px;margin-top:4px;display:none;line-height:1.5}
+.proof-panel-inner{padding:14px}
+.proof-title-bar{font-family:var(--font-label);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--proof);padding:8px 14px;border-bottom:1px solid rgba(61,107,158,0.15);display:flex;justify-content:space-between;align-items:center}
+.proof-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}
+.proof-table th{font-family:var(--font-label);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--proof);padding:6px 8px;border-bottom:2px solid rgba(61,107,158,0.2);text-align:left}
+.proof-table td{padding:7px 8px;border-bottom:1px solid rgba(61,107,158,0.1);vertical-align:top;line-height:1.5}
+.proof-table tr:nth-child(even) td{background:rgba(61,107,158,0.03)}
+.proof-qed{color:var(--proof);font-weight:bold;font-size:13px;text-align:right;margin-top:10px}
+.input-blank{border:none;border-bottom:2px solid var(--highlight);background:transparent;font-family:var(--font-mono);font-size:13px;width:60px;text-align:center;outline:none;color:var(--ink-primary)}
+.input-blank:focus{border-bottom-color:var(--fill-color)}
+.input-blank.correct{border-bottom-color:var(--correct);color:var(--correct)}
+.input-blank.wrong{border-bottom-color:var(--drain-color);color:var(--drain-color)}
+.cross-bridge{background:rgba(42,122,107,0.08);border:1px solid rgba(42,122,107,0.25);border-radius:8px;padding:12px;margin-top:12px;font-size:12px;line-height:1.6;color:var(--ink-primary)}
+.cross-bridge strong{color:var(--correct)}
+.badge{display:inline-block;font-family:var(--font-label);font-size:10px;padding:3px 8px;border-radius:4px;letter-spacing:0.5px;margin:0 4px}
+.badge-grade{background:rgba(61,107,158,0.12);color:var(--fill-color)}
+.badge-ncert{background:rgba(42,122,107,0.12);color:var(--correct)}
+.controls-bar{padding:10px 14px;border-top:1px solid rgba(26,23,20,0.08);display:flex;gap:8px;flex-wrap:wrap;align-items:center;flex-shrink:0}
+.phase-label{font-family:var(--font-label);font-size:10px;color:var(--ink-ghost);letter-spacing:0.5px}
+.answer-reveal{background:var(--bg-card);border:2px solid var(--correct);border-radius:8px;padding:14px;margin:10px 0;text-align:center}
+.answer-reveal .big-ans{font-size:22px;font-weight:bold;color:var(--correct);font-family:var(--font-mono)}
+.slider-row{display:flex;align-items:center;gap:10px;margin:8px 0;font-family:var(--font-label);font-size:12px;color:var(--ink-secondary)}
+.slider-row input[type=range]{flex:1;accent-color:var(--fill-color)}
+.slider-val{min-width:45px;font-family:var(--font-mono);font-size:12px;color:var(--ink-primary)}
+.phase-0-options{display:flex;flex-direction:column;gap:6px;margin:10px 0}
+.p0-opt{padding:10px 14px;border:1.5px solid rgba(26,23,20,0.15);border-radius:8px;cursor:pointer;font-size:14px;transition:all 0.2s;background:var(--bg-card)}
+.p0-opt:hover{border-color:var(--highlight)}
+.hook-counter{font-size:32px;font-weight:bold;color:var(--fill-color);text-align:center;margin:8px 0;font-family:var(--font-mono)}
+#did-you-know{font-size:12px;color:var(--ink-secondary);font-style:italic;border-left:3px solid var(--highlight);padding:6px 10px;margin-top:10px;background:rgba(201,150,26,0.05)}
+.self-test-q{background:var(--bg-card);border:1px solid rgba(26,23,20,0.1);border-radius:8px;padding:12px;margin:8px 0}
+.self-test-q p{font-size:13px;margin-bottom:8px}
+.self-test-q input{border:none;border-bottom:2px solid var(--highlight);background:transparent;font-size:14px;width:80px;text-align:center;outline:none;font-family:var(--font-mono)}
+.check-btn{font-family:var(--font-label);font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid var(--fill-color);background:transparent;color:var(--fill-color);cursor:pointer;margin-left:8px}
+.result-tag{font-size:11px;font-family:var(--font-label);margin-left:8px;font-weight:bold}
+.hint-box{font-size:12px;color:var(--ink-secondary);background:rgba(61,107,158,0.06);padding:8px;border-radius:4px;margin-top:6px;display:none}
+@media(max-width:900px){
+  .apex-container{flex-direction:column}
+  .canvas-zone{height:55vw;min-height:280px}
+  .panel-zone{width:100%;border-left:none;border-top:1px solid rgba(26,23,20,0.1);max-height:50vh;overflow-y:auto}
+  .proof-zone{display:none!important}
+}
+@media(max-width:640px){
+  .canvas-zone{height:64vw;min-height:240px}
+  .panel-zone{max-height:56vh}
+}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="apex-container" id="app">
+
+  <!-- PROOF PANEL (left, desktop only) -->
+  <div class="proof-zone" id="proofZone">
+    <div class="proof-title-bar">
+      <span>FORMAL PROOF</span>
+      <button class="btn btn-sm" onclick="toggleProof()" style="padding:2px 8px;font-size:10px">Hide</button>
+    </div>
+    <div class="proof-panel-inner" id="proofContent"></div>
+  </div>
+
+  <!-- CANVAS -->
+  <div class="canvas-zone">
+    <canvas id="simCanvas"></canvas>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="panel-zone">
+    <div class="phase-bar">
+      <span id="phaseLabel">PHASE 0 · ACTIVATE</span>
+      <div class="phase-dots" id="phaseDots">
+        <div class="phase-dot active" id="pd0"></div>
+        <div class="phase-dot" id="pd1"></div>
+        <div class="phase-dot" id="pd2"></div>
+        <div class="phase-dot" id="pd3"></div>
+        <div class="phase-dot" id="pd4"></div>
+        <div class="phase-dot" id="pd5"></div>
+        <div class="phase-dot" id="pd6"></div>
+      </div>
+    </div>
+
+    <div class="panel-content" id="panelContent">
+      <!-- Dynamically populated -->
+    </div>
+
+    <div class="controls-bar" id="controlsBar">
+      <span class="phase-label" id="ctrlPhaseLabel">Phase 0 of 6</span>
+      <button class="btn btn-sm" onclick="prevPhase()" id="prevBtn" style="display:none">← Back</button>
+      <button class="btn btn-primary btn-sm" onclick="nextPhase()" id="nextBtn">Continue →</button>
+      <button class="btn btn-sm" onclick="resetSim()" style="margin-left:auto" title="Reset (R)">↺ Reset</button>
+      <button class="btn btn-sm" onclick="toggleProof()" id="proofBtn" style="display:none">☰ Proof</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  APEX-EDU v4 — TV Tower Angles of Elevation                 ║
+// ║  NCERT Class 10 · Chapter 9 (Some Applications of Trig)     ║
+// ║  Topic: Double Angle-of-Elevation → Height + Width          ║
+// ║  Grade: 9–10 · Scaffolding: Medium                          ║
+// ║                                                              ║
+// ║  TOPIC ANALYSIS:                                             ║
+// ║  Problem: TV tower on canal bank.                           ║
+// ║    - From point B (opposite bank), angle of elevation = 60° ║
+// ║    - From point D (20m further away on same line), elev=30° ║
+// ║    - Find height h of tower and width w of canal.           ║
+// ║  Setup: h/w = tan60°=√3 → h=w√3                             ║
+// ║         h/(w+20) = tan30°=1/√3 → h=(w+20)/√3               ║
+// ║  Solve: w√3=(w+20)/√3 → 3w=w+20 → 2w=20 → w=10m            ║
+// ║         h=10√3≈17.32m                                        ║
+// ║                                                              ║
+// ║  MISCONCEPTIONS (top 5):                                     ║
+// ║  1. Angle measured from vertical (not horizontal)           ║
+// ║  2. tan=opp/hyp confusion (sin vs tan)                       ║
+// ║  3. Setting up same equation twice (not two different pts)  ║
+// ║  4. Not using same height h in both equations                ║
+// ║  5. √3 × 1/√3 ≠ 1 confusion (rationalization errors)       ║
+// ╚══════════════════════════════════════════════════════════════╝
+
+const canvas = document.getElementById('simCanvas');
+const ctx = canvas.getContext('2d');
+
+// ── STATE ──────────────────────────────────────────────────────
+let phase = 0;
+let repr = 'visual';
+let phase3PredDone = false;
+let phase3PredAnswer = null;
+let proofVisible = false;
+let studentModel = {wrong:0,right:0,scaffolding:0.5};
+let animFrame = 0;
+let lastTime = 0;
+let curiosityTimer = 0;
+let showCuriosity = false;
+let constructionVisible = true;
+let gridVisible = true;
+let phase2Explored = false;
+// Slider values (interactive exploration)
+let sliderAngle1 = 60; // angle at B
+let sliderAngle2 = 30; // angle at D
+let sliderDist = 20;   // BD distance
+// Solved values (update with sliders)
+let solvedH = 0, solvedW = 0;
+// Phase transition
+let transitionProgress = 1;
+let transitionActive = false;
+let transitionStart = 0;
+// Misconception animation
+let miscActive = false;
+let miscTimer = 0;
+let miscCode = 0;
+// Phase 1 hook state
+let hookPlayed = false;
+// Canvas dimensions
+let CW = 600, CH = 460;
+
+// ── RESIZE ─────────────────────────────────────────────────────
+function resizeCanvas() {
+  const zone = canvas.parentElement;
+  CW = zone.clientWidth;
+  CH = zone.clientHeight;
+  canvas.width = CW;
+  canvas.height = CH;
+}
+
+// ── MATH HELPERS ───────────────────────────────────────────────
+function solveTower(a1, a2, d) {
+  const t1 = Math.tan(a1*Math.PI/180);
+  const t2 = Math.tan(a2*Math.PI/180);
+  if(Math.abs(t1-t2)<0.001) return {h:0,w:0};
+  const w = d*t2/(t1-t2);
+  const h = w*t1;
+  return {h, w};
+}
+
+// ── DRAW UTILS ─────────────────────────────────────────────────
+function drawArrow(x1,y1,x2,y2,color,width=2) {
+  const angle = Math.atan2(y2-y1,x2-x1);
+  const size = 8;
+  ctx.save();
+  ctx.strokeStyle=color; ctx.fillStyle=color; ctx.lineWidth=width;
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x2,y2);
+  ctx.lineTo(x2-size*Math.cos(angle-0.4),y2-size*Math.sin(angle-0.4));
+  ctx.lineTo(x2-size*Math.cos(angle+0.4),y2-size*Math.sin(angle+0.4));
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+
+function drawDash(x1,y1,x2,y2,color='rgba(59,91,140,0.38)',dash=[8,4],lw=1.5) {
+  ctx.save();
+  ctx.strokeStyle=color; ctx.lineWidth=lw; ctx.setLineDash(dash);
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  ctx.setLineDash([]); ctx.restore();
+}
+
+function drawAngleArc(cx,cy,r,startDeg,endDeg,color,label) {
+  ctx.save();
+  ctx.strokeStyle=color; ctx.lineWidth=2;
+  ctx.beginPath();
+  ctx.arc(cx,cy,r,startDeg*Math.PI/180,endDeg*Math.PI/180);
+  ctx.stroke();
+  const midDeg=(startDeg+endDeg)/2;
+  ctx.fillStyle=color; ctx.font='bold 12px Georgia'; ctx.textAlign='center';
+  ctx.fillText(label,cx+(r+14)*Math.cos(midDeg*Math.PI/180),cy+(r+14)*Math.sin(midDeg*Math.PI/180));
+  ctx.restore();
+}
+
+function drawLabel(text,x,y,color=null,size=12,bold=false,align='left') {
+  ctx.save();
+  ctx.fillStyle=color||'#1A1714';
+  ctx.font=(bold?'bold ':'')+size+'px Verdana';
+  ctx.textAlign=align;
+  ctx.fillText(text,x,y);
+  ctx.restore();
+}
+
+function drawRightAngle(cx,cy,s,rot=0) {
+  ctx.save(); ctx.translate(cx,cy); ctx.rotate(rot);
+  ctx.strokeStyle='rgba(26,23,20,0.45)'; ctx.lineWidth=1.5;
+  ctx.beginPath();
+  ctx.moveTo(s,0); ctx.lineTo(s,-s); ctx.lineTo(0,-s);
+  ctx.stroke(); ctx.restore();
+}
+
+function pill(text,x,y,bg,fg,w=null) {
+  ctx.save();
+  ctx.font='bold 11px Verdana';
+  const tw=w||ctx.measureText(text).width+16;
+  ctx.fillStyle=bg; ctx.strokeStyle='rgba(26,23,20,0.15)'; ctx.lineWidth=0.5;
+  ctx.beginPath(); ctx.roundRect(x-tw/2,y-10,tw,20,5); ctx.fill(); ctx.stroke();
+  ctx.fillStyle=fg; ctx.textAlign='center';
+  ctx.fillText(text,x,y+4);
+  ctx.restore();
+}
+
+// ── SCENE GEOMETRY ─────────────────────────────────────────────
+function sceneLayout() {
+  // Base: canal and tower positions in canvas coords
+  const margin=50, ground=CH-80;
+  // Tower foot at foot of tower
+  const towerX = Math.round(CW*0.62);
+  const bankB  = Math.round(CW*0.38); // other bank
+  const {h,w} = solveTower(sliderAngle1,sliderAngle2,sliderDist);
+  solvedH=h; solvedW=w;
+  // Scale: w=10m → some pixels
+  const scale = (bankB - margin) / (w>0 ? w + sliderDist + 5 : 35);
+  const bankBX = towerX - Math.round(w*scale);
+  const pointD  = bankBX - Math.round(sliderDist*scale);
+  const towerTopY = ground - Math.round(h*scale);
+  return {ground, towerX, bankBX, pointD, towerTopY, scale, h, w, margin};
+}
+
+// ── MAIN CANVAS DRAW ───────────────────────────────────────────
+function drawScene(dt) {
+  ctx.clearRect(0,0,CW,CH);
+  const sc = sceneLayout();
+  drawBackground(sc);
+  if(phase>=2) drawGrid(sc);
+  drawGround(sc);
+  drawCanal(sc);
+  drawTower(sc);
+  drawMeasurements(sc);
+  if(phase>=2||constructionVisible) drawConstruction(sc);
+  drawAngles(sc);
+  drawPoints(sc);
+  drawLabels(sc);
+  if(miscActive) drawMisconception(sc);
+  if(showCuriosity && phase===2) drawCuriosityPrompt(sc);
+}
+
+function drawBackground(sc) {
+  ctx.fillStyle='#F8F5F0'; ctx.fillRect(0,0,CW,CH);
+  // Sky gradient suggestion
+  const sky=ctx.createLinearGradient(0,0,0,sc.ground-60);
+  sky.addColorStop(0,'#EAF1F8'); sky.addColorStop(1,'#F8F5F0');
+  ctx.fillStyle=sky; ctx.fillRect(0,0,CW,sc.ground-60);
+}
+
+function drawGrid(sc) {
+  if(!gridVisible) return;
+  ctx.strokeStyle='rgba(26,23,20,0.05)'; ctx.lineWidth=1;
+  const step=40;
+  for(let x=0;x<CW;x+=step){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,CH);ctx.stroke();}
+  for(let y=0;y<CH;y+=step){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(CW,y);ctx.stroke();}
+}
+
+function drawGround(sc) {
+  // Ground line
+  ctx.strokeStyle='rgba(26,23,20,0.4)'; ctx.lineWidth=2.5;
+  ctx.beginPath(); ctx.moveTo(0,sc.ground); ctx.lineTo(CW,sc.ground); ctx.stroke();
+  // Ground fill
+  const grd=ctx.createLinearGradient(0,sc.ground,0,CH);
+  grd.addColorStop(0,'#C9B89A'); grd.addColorStop(1,'#B5A48A');
+  ctx.fillStyle=grd; ctx.fillRect(0,sc.ground,CW,CH-sc.ground);
+}
+
+function drawCanal(sc) {
+  // Canal (water between tower foot and B)
+  const gy=sc.ground;
+  ctx.fillStyle='#7BA8BC';
+  ctx.fillRect(sc.bankBX,gy-2,sc.towerX-sc.bankBX,4);
+  // Water body below ground line suggestion
+  const canal=ctx.createLinearGradient(0,gy,0,gy+18);
+  canal.addColorStop(0,'#7BA8BC'); canal.addColorStop(1,'#5B90A8');
+  ctx.fillStyle=canal; ctx.fillRect(sc.bankBX,gy,sc.towerX-sc.bankBX,18);
+  // Canal banks
+  ctx.strokeStyle='rgba(26,23,20,0.3)'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(sc.bankBX,gy-4); ctx.lineTo(sc.bankBX,gy+20); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(sc.towerX,gy-4); ctx.lineTo(sc.towerX,gy+20); ctx.stroke();
+  // Canal width label
+  if(constructionVisible&&phase>=1) {
+    const mid=(sc.bankBX+sc.towerX)/2;
+    pill('Canal (width = ?)',mid,sc.ground+30,'rgba(123,168,188,0.3)','#1A1714',120);
+  }
+}
+
+function drawTower(sc) {
+  const {ground,towerX,towerTopY}=sc;
+  // Shadow
+  ctx.fillStyle='rgba(26,23,20,0.08)';
+  ctx.beginPath(); ctx.ellipse(towerX+6,ground,12,5,0,0,Math.PI*2); ctx.fill();
+  // Tower structure
+  const tw=14;
+  ctx.fillStyle='#6B7280';
+  ctx.beginPath();
+  ctx.moveTo(towerX-tw/2,ground); ctx.lineTo(towerX+tw/2,ground);
+  ctx.lineTo(towerX+tw/2-4,towerTopY+20); ctx.lineTo(towerX-tw/2+4,towerTopY+20);
+  ctx.closePath(); ctx.fill();
+  // Tower body
+  ctx.strokeStyle='rgba(26,23,20,0.5)'; ctx.lineWidth=1.5;
+  ctx.stroke();
+  // Top section
+  ctx.fillStyle='#505869';
+  ctx.fillRect(towerX-5,towerTopY,10,25);
+  ctx.strokeRect(towerX-5,towerTopY,10,25);
+  // Antenna
+  ctx.strokeStyle='#1A1714'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(towerX,towerTopY); ctx.lineTo(towerX,towerTopY-15); ctx.stroke();
+  // Dish
+  ctx.strokeStyle='#888'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.arc(towerX,towerTopY-12,8,-0.8,0.8); ctx.stroke();
+  // Cross bracing
+  ctx.strokeStyle='rgba(26,23,20,0.3)'; ctx.lineWidth=1;
+  const numCross=4;
+  for(let i=0;i<numCross;i++) {
+    const y1=ground-(i/numCross)*(ground-towerTopY-20);
+    const y2=ground-((i+1)/numCross)*(ground-towerTopY-20);
+    const lw=tw/2-i*1.2, rw=tw/2-(i+1)*1.2;
+    ctx.beginPath(); ctx.moveTo(towerX-lw,y1); ctx.lineTo(towerX+rw,y2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(towerX+lw,y1); ctx.lineTo(towerX-rw,y2); ctx.stroke();
+  }
+}
+
+function drawConstruction(sc) {
+  const {ground,towerX,bankBX,pointD,towerTopY}=sc;
+  if(!constructionVisible) return;
+  // Line of sight from B to tower top
+  drawDash(bankBX,ground,towerX,towerTopY,'rgba(61,107,158,0.45)',[8,4],1.5);
+  // Line of sight from D to tower top
+  drawDash(pointD,ground,towerX,towerTopY,'rgba(91,74,138,0.4)',[6,4],1.5);
+  // Vertical height line
+  drawDash(towerX,ground,towerX,towerTopY,'rgba(194,93,46,0.45)',[4,4],1.5);
+  // Horizontal from B
+  if(phase>=3) {
+    drawDash(bankBX,ground,towerX,ground,'rgba(42,122,107,0.4)',[5,3],1.5);
+  }
+  // Right angle at tower foot
+  drawRightAngle(towerX,ground,9,Math.PI);
+}
+
+function drawAngles(sc) {
+  const {ground,towerX,bankBX,pointD,towerTopY}=sc;
+  const a1=sliderAngle1, a2=sliderAngle2;
+  // Angle at B (60°)
+  const r1=40;
+  ctx.save();
+  ctx.strokeStyle='#3D6B9E'; ctx.lineWidth=2;
+  ctx.beginPath();
+  const startA = -Math.atan2(towerTopY-ground,towerX-bankBX);
+  ctx.arc(bankBX,ground,r1,Math.PI+startA,Math.PI*2,false);
+  // actually: angle from horizontal going up
+  const elevB=Math.atan2(ground-towerTopY,towerX-bankBX);
+  ctx.beginPath();
+  ctx.arc(bankBX,ground,r1,-elevB,0,false);
+  ctx.stroke();
+  ctx.restore();
+  // Label
+  ctx.fillStyle='#3D6B9E'; ctx.font='bold 13px Georgia'; ctx.textAlign='center';
+  const midB=-elevB/2;
+  ctx.fillText(a1+'°',bankBX+r1*0.6*Math.cos(midB)-10,ground+r1*0.5*Math.sin(midB)+4);
+
+  // Angle at D (30°)
+  const r2=38;
+  const elevD=Math.atan2(ground-towerTopY,towerX-pointD);
+  ctx.save(); ctx.strokeStyle='#5B4A8A'; ctx.lineWidth=2;
+  ctx.beginPath();
+  ctx.arc(pointD,ground,r2,-elevD,0,false);
+  ctx.stroke(); ctx.restore();
+  ctx.fillStyle='#5B4A8A'; ctx.font='bold 13px Georgia'; ctx.textAlign='center';
+  const midD=-elevD/2;
+  ctx.fillText(a2+'°',pointD+r2*0.6*Math.cos(midD)+8,ground+r2*0.5*Math.sin(midD)+4);
+}
+
+function drawPoints(sc) {
+  const {ground,towerX,bankBX,pointD}=sc;
+  // Tower foot
+  ctx.fillStyle='#1A1714'; ctx.beginPath(); ctx.arc(towerX,ground,4,0,Math.PI*2); ctx.fill();
+  // Point B
+  ctx.fillStyle='#3D6B9E'; ctx.strokeStyle='#fff'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.arc(bankBX,ground,6,0,Math.PI*2); ctx.fill(); ctx.stroke();
+  // Point D
+  ctx.fillStyle='#5B4A8A'; ctx.strokeStyle='#fff'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.arc(pointD,ground,6,0,Math.PI*2); ctx.fill(); ctx.stroke();
+  // Tower top
+  ctx.fillStyle='#C9961A'; ctx.strokeStyle='#fff'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.arc(towerX,sc.towerTopY-14,5,0,Math.PI*2); ctx.fill(); ctx.stroke();
+}
+
+function drawMeasurements(sc) {
+  const {ground,towerX,bankBX,pointD,towerTopY,h,w}=sc;
+  // Height label
+  ctx.save();
+  ctx.fillStyle=phase>=4?'#C25D2E':'rgba(194,93,46,0.5)';
+  ctx.font='bold 12px Verdana'; ctx.textAlign='right';
+  const hStr=phase>=4?`h = ${h.toFixed(2)}m`:'h = ?';
+  ctx.fillText(hStr,towerX-10,(ground+towerTopY)/2+4);
+  // Width label
+  ctx.fillStyle=phase>=4?'#2A7A6B':'rgba(42,122,107,0.5)';
+  const wStr=phase>=4?`w = ${w.toFixed(1)}m`:'w = ?';
+  ctx.textAlign='center'; ctx.font='bold 12px Verdana';
+  ctx.fillText(wStr,(bankBX+towerX)/2,ground-22);
+  // BD = 20m label
+  ctx.fillStyle='#5B4A8A'; ctx.font='12px Verdana'; ctx.textAlign='center';
+  ctx.fillText('20 m',(pointD+bankBX)/2,ground-22);
+  // Dimension line BD
+  ctx.strokeStyle='rgba(91,74,138,0.4)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(pointD,ground-14); ctx.lineTo(bankBX,ground-14); ctx.stroke();
+  // Tick ends
+  [pointD,bankBX].forEach(x=>{
+    ctx.beginPath(); ctx.moveTo(x,ground-18); ctx.lineTo(x,ground-10); ctx.stroke();
+  });
+  ctx.restore();
+}
+
+function drawLabels(sc) {
+  const {ground,towerX,bankBX,pointD}=sc;
+  // Point A (tower foot)
+  drawLabel('A',towerX+8,ground-5,'#1A1714',12,true);
+  // Point B
+  drawLabel('B',bankBX-20,ground+4,'#3D6B9E',12,true);
+  // Point D
+  drawLabel('D',pointD-20,ground+4,'#5B4A8A',12,true);
+  // Tower top label
+  drawLabel('T',towerX+8,sc.towerTopY-10,'#C9961A',12,true);
+  // Phase-specific annotations
+  if(phase===0) {
+    pill('TV Tower',towerX-30,sc.towerTopY-30,'rgba(201,150,26,0.15)','#C9961A');
+    pill('You are here → B',bankBX,ground-38,'rgba(61,107,158,0.15)','#3D6B9E',110);
+  }
+  if(phase>=1) {
+    // "Canal" label
+    ctx.fillStyle='#7BA8BC'; ctx.font='italic 12px Georgia'; ctx.textAlign='center';
+    ctx.fillText('Canal',(bankBX+towerX)/2,ground+14);
+  }
+}
+
+function drawMisconception(sc) {
+  const alpha=Math.min(1,miscTimer/20)*Math.min(1,(80-miscTimer)/20);
+  ctx.save(); ctx.globalAlpha=alpha;
+  const msgs=['','Angle of elevation is measured FROM horizontal ground, not from vertical!',
+    'tan θ = opposite / adjacent (NOT opposite / hypotenuse — that\'s sin!)',
+    'Both observation points look at the SAME tower top. Height h is the same.',
+    'You must set up TWO different equations — one for each point!',
+    '√3 × (1/√3) = 1 — always rationalize before final answer!'];
+  const msg=msgs[miscCode]||'';
+  ctx.fillStyle='rgba(194,93,46,0.92)';
+  ctx.roundRect(CW/2-160,20,320,48,8); ctx.fill();
+  ctx.fillStyle='#fff'; ctx.font='bold 12px Verdana'; ctx.textAlign='center';
+  ctx.fillText(msg,CW/2,50,300);
+  ctx.restore();
+  miscTimer++;
+  if(miscTimer>80) {miscActive=false; miscTimer=0;}
+}
+
+function drawCuriosityPrompt(sc) {
+  const prompts=['What if angle 1 = angle 2? Try it!','Move angle 1 to 45°. What happens to height?'];
+  const p=prompts[Math.floor(animFrame/200)%prompts.length];
+  ctx.save(); ctx.fillStyle='rgba(201,150,26,0.9)';
+  ctx.roundRect(CW/2-130,CH-50,260,36,8); ctx.fill();
+  ctx.fillStyle='#1A1714'; ctx.font='12px Verdana'; ctx.textAlign='center';
+  ctx.fillText('💡 '+p,CW/2,CH-28); ctx.restore();
+}
+
+// ── ANIMATION LOOP ─────────────────────────────────────────────
+function loop(ts) {
+  const dt=Math.min((ts-lastTime)/1000,0.05);
+  lastTime=ts; animFrame++;
+  if(phase===2) {
+    curiosityTimer+=dt;
+    if(curiosityTimer>30) showCuriosity=true;
+  } else {showCuriosity=false;curiosityTimer=0;}
+  drawScene(dt);
+  requestAnimationFrame(loop);
+}
+
+// ── PHASE CONTENT ──────────────────────────────────────────────
+function renderPanel() {
+  const pc=document.getElementById('panelContent');
+  const ctrl=document.getElementById('ctrlPhaseLabel');
+  ctrl.textContent=`Phase ${phase} of 6`;
+  document.getElementById('prevBtn').style.display=phase>0?'inline-block':'none';
+  // Phase dots
+  for(let i=0;i<=6;i++) {
+    const d=document.getElementById('pd'+i);
+    if(!d) continue;
+    d.className='phase-dot'+(i<phase?' done':i===phase?' active':'');
+  }
+  const labels=['PHASE 0 · ACTIVATE','PHASE 1 · HOOK','PHASE 2 · EXPLORE',
+    'PHASE 3 · CHALLENGE','PHASE 4 · REVEAL','PHASE 5 · PROVE','PHASE 6 · MASTER'];
+  document.getElementById('phaseLabel').textContent=labels[phase];
+  document.getElementById('proofBtn').style.display=phase>=5?'inline-block':'none';
+  // Render by phase
+  const renderers=[p0,p1,p2,p3,p4,p5,p6];
+  pc.innerHTML=''; renderers[phase] && renderers[phase](pc);
+}
+
+// ─ PHASE 0 ────────────────────────────────────────────────────
+function p0(c) {
+  c.innerHTML=`
+  <div class="panel-section">
+    <div class="panel-title">Prior Knowledge Check</div>
+    <div class="panel-body">
+      <p style="font-size:14px;margin-bottom:12px">
+        A ramp makes a <strong>30° angle</strong> with the ground.
+        If the ramp is 10m long, what does the angle tell us about the ramp?
+      </p>
+      <div class="phase-0-options" id="p0opts">
+        <div class="p0-opt" onclick="p0Answer(this,0)">It leans gently — the end is not very high</div>
+        <div class="p0-opt" onclick="p0Answer(this,1)">The length and height are equal</div>
+        <div class="p0-opt" onclick="p0Answer(this,2)">It is very steep — almost vertical</div>
+      </div>
+      <div id="p0feedback" style="display:none;margin-top:10px"></div>
+    </div>
+  </div>
+  <div class="panel-section">
+    <div class="panel-title">Today's Problem</div>
+    <div class="panel-body" style="font-size:13px;line-height:1.7">
+      <span class="badge badge-ncert">NCERT Class 10 · Ch.9 · Q.10</span><br/><br/>
+      A <strong>TV tower</strong> stands on the bank of a canal.
+      From a point <strong>B</strong> directly opposite on the other bank,
+      the angle of elevation is <strong>60°</strong>.
+      From point <strong>D</strong> (20 m further on the same line),
+      the elevation is <strong>30°</strong>.
+      <em>Find the tower height and canal width.</em>
+    </div>
+  </div>`;
+}
+
+function p0Answer(el,idx) {
+  document.querySelectorAll('.p0-opt').forEach(o=>o.style.pointerEvents='none');
+  const fb=document.getElementById('p0feedback');
+  fb.style.display='block';
+  if(idx===0) {
+    el.style.background='rgba(42,122,107,0.15)';el.style.borderColor='#2A7A6B';
+    fb.innerHTML='<div class="step-card active" style="border-color:#2A7A6B"><span style="color:#2A7A6B">✓ Exactly right.</span> A 30° angle means the ramp is relatively gentle — the height is tan(30°) × base. Today\'s problem uses this same idea at two different points to find both an unknown height AND an unknown distance.</div>';
+    studentModel.right++;
+  } else {
+    fb.innerHTML='<div class="misconception-banner" style="display:block">The angle describes the steepness. 30° is a gentle slope — at 30°, tan(30°)=1/√3 ≈ 0.577. Only at 45° does height = base distance.</div>';
+    studentModel.wrong++;
+  }
+}
+
+// ─ PHASE 1 ────────────────────────────────────────────────────
+function p1(c) {
+  c.innerHTML=`
+  <div class="panel-section">
+    <div class="panel-title">The Hook</div>
+    <div class="panel-body">
+      <p style="font-size:14px;margin-bottom:10px">Watch the canvas — the <strong>TV tower</strong> has appeared.</p>
+      <p style="font-size:14px;margin-bottom:12px">
+        From point <strong style="color:#3D6B9E">B</strong> (blue dot), the angle upward is <strong>60°</strong>.<br/>
+        From point <strong style="color:#5B4A8A">D</strong> (purple dot, 20m further), the angle is only <strong>30°</strong>.
+      </p>
+      <p style="font-size:14px;font-weight:bold;margin-bottom:10px">
+        Counterintuitive question:
+      </p>
+      <p style="font-size:13px;line-height:1.6;margin-bottom:12px;background:rgba(201,150,26,0.1);padding:10px;border-radius:6px">
+        The angle at D is exactly <em>half</em> the angle at B (30° vs 60°).<br/>
+        Does that mean D is <em>twice as far</em> from the tower as B?
+      </p>
+      <div class="phase-0-options" id="hook-opts">
+        <div class="p0-opt" onclick="hookAnswer(this,'yes')">Yes — half angle = twice the distance</div>
+        <div class="p0-opt" onclick="hookAnswer(this,'no')">No — angles and distances don't scale that simply</div>
+        <div class="p0-opt" onclick="hookAnswer(this,'maybe')">Depends on the exact height</div>
+      </div>
+      <div id="hook-fb" style="display:none;margin-top:10px"></div>
+    </div>
+  </div>`;
+}
+
+function hookAnswer(el,a) {
+  document.querySelectorAll('#hook-opts .p0-opt').forEach(o=>o.style.pointerEvents='none');
+  const fb=document.getElementById('hook-fb');
+  fb.style.display='block';
+  if(a==='no') {
+    el.style.background='rgba(42,122,107,0.15)';el.style.borderColor='#2A7A6B';
+    fb.innerHTML='<div class="step-card active"><strong>Correct!</strong> Since tan is not linear, halving the angle does NOT double the distance. In fact you\'ll find D is only 20m further, but the distances work out elegantly via the tan 60°–tan 30° relationship. Explore in the next phase!</div>';
+  } else if(a==='yes') {
+    el.style.background='rgba(194,93,46,0.1)';el.style.borderColor='var(--drain-color)';
+    fb.innerHTML='<div class="misconception-banner" style="display:block"><strong>Not quite.</strong> Tangent is non-linear — tan(60°)=√3≈1.73 while tan(30°)=1/√3≈0.577. The ratio is 3:1, not 2:1. The actual distance relationship is more interesting! Try Phase 2 to discover it.</div>';
+    triggerMisconception(4);
+  } else {
+    fb.innerHTML='<div class="step-card"><strong>Partly right!</strong> It does depend on the height — and that\'s exactly what makes this problem clever. Two equations from two viewpoints, one unknown height. Explore in Phase 2!</div>';
+  }
+}
+
+// ─ PHASE 2 ────────────────────────────────────────────────────
+function p2(c) {
+  const {h,w}=solveTower(sliderAngle1,sliderAngle2,sliderDist);
+  c.innerHTML=`
+  <div class="panel-section">
+    <div class="panel-title">Explore Freely</div>
+    <div class="panel-body">
+      <p style="font-size:13px;color:var(--ink-secondary);margin-bottom:12px">
+        Drag the sliders. Watch the tower and angles update live.
+      </p>
+    </div>
+  </div>
+  <div class="panel-section">
+    <div class="slider-row">
+      <span style="min-width:90px">Angle at B (°)</span>
+      <input type="range" min="30" max="80" step="1" value="${sliderAngle1}" id="slA1" oninput="onSlide1(this.value)"/>
+      <span class="slider-val" id="svA1">${sliderAngle1}°</span>
+    </div>
+    <div class="slider-row">
+      <span style="min-width:90px">Angle at D (°)</span>
+      <input type="range" min="15" max="55" step="1" value="${sliderAngle2}" id="slA2" oninput="onSlide2(this.value)"/>
+      <span class="slider-val" id="svA2">${sliderAngle2}°</span>
+    </div>
+    <div class="slider-row">
+      <span style="min-width:90px">Distance BD (m)</span>
+      <input type="range" min="5" max="40" step="1" value="${sliderDist}" id="slDist" oninput="onSlideDist(this.value)"/>
+      <span class="slider-val" id="svDist">${sliderDist}m</span>
+    </div>
+  </div>
+  <div class="panel-section">
+    <div class="repr-bar" id="reprBar">
+      <button class="repr-btn ${repr==='visual'?'active':''}" onclick="setRepr('visual')">Visual</button>
+      <button class="repr-btn ${repr==='numeric'?'active':''}" onclick="setRepr('numeric')">Numeric</button>
+      <button class="repr-btn ${repr==='verbal'?'active':''}" onclick="setRepr('verbal')">Verbal</button>
+    </div>
+    <div id="reprContent"></div>
+  </div>`;
+  renderRepr(c);
+}
+
+function renderRepr(c) {
+  const {h,w}=solveTower(sliderAngle1,sliderAngle2,sliderDist);
+  const el=document.getElementById('reprContent');
+  if(!el) return;
+  if(repr==='visual') {
+    el.innerHTML=`<div class="step-card">
+      <div class="step-num">Live Values</div>
+      <div style="display:flex;justify-content:space-between;margin-top:6px">
+        <div style="text-align:center"><div style="font-size:20px;font-weight:bold;color:#C25D2E;font-family:monospace">${h.toFixed(2)}</div><div style="font-size:11px;color:#5C5652">Height (m)</div></div>
+        <div style="text-align:center"><div style="font-size:20px;font-weight:bold;color:#2A7A6B;font-family:monospace">${w.toFixed(2)}</div><div style="font-size:11px;color:#5C5652">Canal width (m)</div></div>
+      </div>
+    </div>`;
+  } else if(repr==='numeric') {
+    el.innerHTML=`<div class="step-card">
+      <p class="step-text">tan(${sliderAngle1}°) = ${Math.tan(sliderAngle1*Math.PI/180).toFixed(4)}<br/>
+      tan(${sliderAngle2}°) = ${Math.tan(sliderAngle2*Math.PI/180).toFixed(4)}<br/>
+      BD = ${sliderDist} m<br/>
+      Canal width w = <strong>${w.toFixed(2)} m</strong><br/>
+      Tower height h = <strong>${h.toFixed(2)} m</strong></p>
+    </div>`;
+  } else {
+    el.innerHTML=`<div class="step-card">
+      <p class="step-text">From point B, the tower appears at ${sliderAngle1}°.
+      From D, ${sliderDist}m further, it appears at only ${sliderAngle2}°.
+      The canal is <strong>${w.toFixed(1)} m</strong> wide
+      and the tower is <strong>${h.toFixed(1)} m</strong> tall.</p>
+    </div>`;
+  }
+}
+
+function setRepr(r) {repr=r;renderPanel();}
+function onSlide1(v){sliderAngle1=+v;if(sliderAngle1<=sliderAngle2)sliderAngle2=sliderAngle1-5;renderPanel();}
+function onSlide2(v){sliderAngle2=+v;if(sliderAngle2>=sliderAngle1)sliderAngle1=sliderAngle2+5;renderPanel();}
+function onSlideDist(v){sliderDist=+v;renderPanel();}
+
+// ─ PHASE 3 ────────────────────────────────────────────────────
+function p3(c) {
+  // Reset to original problem
+  sliderAngle1=60;sliderAngle2=30;sliderDist=20;
+  c.innerHTML=`
+  <div class="panel-section">
+    <div class="panel-title">Challenge <span class="badge badge-grade">Grade 10 · NCERT</span></div>
+    <div class="panel-body" style="font-size:13px;line-height:1.7">
+      <p><strong>TV tower</strong> on canal bank.<br/>
+      From B (opposite bank): elevation = <strong>60°</strong><br/>
+      From D (20m from B along same line): elevation = <strong>30°</strong><br/>
+      Find: <strong>height of tower</strong> and <strong>width of canal</strong>.</p>
+    </div>
+  </div>
+  ${!phase3PredDone?`
+  <div class="predict-widget">
+    <h4>PREDICT BEFORE SOLVING</h4>
+    <p style="font-size:12px;margin-bottom:8px;color:#5C5652">What do you expect the tower height to be?</p>
+    <div class="predict-options" id="predOpts">
+      <div class="predict-opt" onclick="p3Predict(this,'A')">Less than 10 m</div>
+      <div class="predict-opt" onclick="p3Predict(this,'B')">About 10–15 m</div>
+      <div class="predict-opt" onclick="p3Predict(this,'C')">About 17–18 m (10√3)</div>
+      <div class="predict-opt" onclick="p3Predict(this,'D')">More than 25 m</div>
+    </div>
+  </div>`:`
+  <div style="font-size:12px;color:#5C5652;margin-bottom:10px;padding:6px 10px;background:rgba(201,150,26,0.08);border-radius:6px">
+    Your prediction: <strong>${phase3PredAnswer}</strong> — compare with the solution below!
+  </div>`}
+  <div class="panel-section" id="solveArea">
+    <div class="panel-title">Step-by-Step Solution</div>
+    ${buildSolutionSteps()}
+  </div>`;
+}
+
+function p3Predict(el,ans) {
+  document.querySelectorAll('#predOpts .predict-opt').forEach(o=>o.style.pointerEvents='none');
+  phase3PredDone=true; phase3PredAnswer=ans;
+  el.classList.add('selected');
+  if(ans==='C') {el.classList.add('correct');studentModel.right++;}
+  else {el.classList.add('wrong');studentModel.wrong++;triggerMisconception(4);}
+  setTimeout(()=>renderPanel(),600);
+}
+
+function buildSolutionSteps() {
+  return `
+  <div class="step-card active">
+    <div class="step-num">STEP 1 · MENTAL MODEL</div>
+    <div class="step-text">
+      Two right triangles share the same vertical side <em>h</em> (tower height).<br/>
+      Triangle TAB: angle at B = 60°, base = width <em>w</em><br/>
+      Triangle TAD: angle at D = 30°, base = <em>w + 20</em>
+      <br/><button class="why-toggle" onclick="toggleWhy(this)">Why two triangles?</button>
+      <div class="why-content">Every angle of elevation creates a right triangle: the vertical tower, the horizontal ground, and the line of sight. Two observation points = two triangles, same tower height.</div>
+    </div>
+  </div>
+  <div class="step-card">
+    <div class="step-num">STEP 2 · EQUATION FROM B</div>
+    <div class="step-text">
+      From B: <span class="step-math">tan 60° = h/w</span><br/>
+      So: <span class="step-math">h = w · tan 60° = w√3</span> &nbsp;— equation (1)
+      <br/><button class="why-toggle" onclick="toggleWhy(this)">Why tan?</button>
+      <div class="why-content">In a right triangle: tan(angle) = opposite/adjacent. Here opposite = h (tower), adjacent = w (canal width). So tan 60° = h/w.</div>
+    </div>
+  </div>
+  <div class="step-card">
+    <div class="step-num">STEP 3 · EQUATION FROM D</div>
+    <div class="step-text">
+      From D: <span class="step-math">tan 30° = h/(w+20)</span><br/>
+      So: <span class="step-math">h = (w+20) · (1/√3)</span> &nbsp;— equation (2)
+      <br/><button class="why-toggle" onclick="toggleWhy(this)">Why w+20?</button>
+      <div class="why-content">D is 20m further from B, and B is directly across from the tower foot. So D is (w + 20) metres from the tower foot horizontally.</div>
+    </div>
+  </div>
+  <div class="step-card">
+    <div class="step-num">STEP 4 · SOLVE (key step)</div>
+    <div class="step-text">
+      Equate (1) and (2): &nbsp;<span class="step-math">w√3 = (w+20)/√3</span><br/>
+      Multiply both sides by √3:<br/>
+      <span class="step-math">3w = w + 20</span><br/>
+      <span class="step-math">2w = 20</span><br/>
+      <span class="step-math">w = 10 m ✓</span>
+      <br/><button class="why-toggle" onclick="toggleWhy(this)">Why multiply by √3?</button>
+      <div class="why-content">Multiplying both sides by √3 clears the denominator: (w+20)/√3 × √3 = w+20. And w√3 × √3 = 3w. So 3w = w + 20.</div>
+    </div>
+  </div>
+  <div class="step-card">
+    <div class="step-num">STEP 5 · FIND HEIGHT</div>
+    <div class="step-text">
+      Substitute w = 10 into equation (1):<br/>
+      <span class="step-math">h = 10√3 ≈ 17.32 m ✓</span>
+    </div>
+  </div>
+  <div class="answer-reveal">
+    <div style="font-size:13px;color:#5C5652;margin-bottom:6px">Final Answer</div>
+    <div class="big-ans">h = 10√3 m ≈ 17.32 m</div>
+    <div style="font-size:13px;color:#5C5652;margin-top:4px">w (canal width) = 10 m</div>
+  </div>`;
+}
+
+// ─ PHASE 4 ────────────────────────────────────────────────────
+function p4(c) {
+  sliderAngle1=60;sliderAngle2=30;sliderDist=20;
+  c.innerHTML=`
+  <div class="panel-section">
+    <div class="panel-title">Formula Revealed</div>
+  </div>
+  <div class="formula-reveal">
+    <div style="font-size:18px;margin-bottom:8px">
+      tan α = <sup>h</sup>&frasl;<sub>w</sub> &nbsp; and &nbsp; tan β = <sup>h</sup>&frasl;<sub>w+d</sub>
+    </div>
+    <div style="font-size:14px;color:#5C5652;margin-bottom:8px">⟹ Eliminating h:</div>
+    <div style="font-size:20px;font-weight:bold">
+      w = d · <sup>tan β</sup>&frasl;<sub>tan α − tan β</sub>
+    </div>
+    <div style="font-size:13px;color:#5C5652;margin-top:8px">
+      h = w · tan α
+    </div>
+  </div>
+  <div class="repr-bar">
+    <button class="repr-btn ${repr==='visual'?'active':''}" onclick="setRepr('visual')">Visual</button>
+    <button class="repr-btn ${repr==='numeric'?'active':''}" onclick="setRepr('numeric')">Numeric</button>
+    <button class="repr-btn ${repr==='algebraic'?'active':''}" onclick="setRepr('algebraic')">Algebraic</button>
+    <button class="repr-btn ${repr==='verbal'?'active':''}" onclick="setRepr('verbal')">Verbal</button>
+  </div>
+  <div id="reprContent4"></div>
+  <div id="did-you-know">
+    <strong>Did you know?</strong> Surveyors used exactly this two-observation technique to measure the height of inaccessible structures — long before GPS existed. The principle is identical to parallax used by astronomers to measure star distances.
+  </div>`;
+  renderRepr4();
+}
+
+function renderRepr4() {
+  const el=document.getElementById('reprContent4');
+  if(!el) return;
+  if(repr==='visual') {
+    el.innerHTML=`<div class="step-card"><p class="step-text">Watch the canvas — when the tower height reveals in <span style="color:#C25D2E">red</span> and canal width in <span style="color:#2A7A6B">green</span>, you can verify both answers from the diagram.</p></div>`;
+  } else if(repr==='numeric') {
+    el.innerHTML=`<div class="step-card"><p class="step-text">w = 20 × tan 30° / (tan 60° − tan 30°) = 20 × (1/√3) / (√3 − 1/√3) = 20/(√3·(√3−1/√3)) = 10 m<br/><br/>h = 10 × √3 = 10√3 ≈ <strong>17.32 m</strong></p></div>`;
+  } else if(repr==='algebraic') {
+    el.innerHTML=`<div class="formula-reveal" style="font-size:14px;text-align:left"><strong>General derivation:</strong><br/>h = w tan α &nbsp;(from B)<br/>h = (w+d) tan β &nbsp;(from D)<br/>∴ w tan α = (w+d) tan β<br/>w(tan α − tan β) = d tan β<br/>w = d tan β / (tan α − tan β)<br/>h = w tan α</div>`;
+  } else {
+    el.innerHTML=`<div class="step-card"><p class="step-text">From two viewing angles and the distance between them, you can find both the height of any inaccessible object and your distance from it — using only trigonometry and the fact that both triangles share the same height.</p></div>`;
+  }
+}
+
+// ─ PHASE 5 ────────────────────────────────────────────────────
+function p5(c) {
+  c.innerHTML=`
+  <div class="panel-section">
+    <div class="panel-title">Formal Proof <span class="badge badge-grade">Two-Column</span></div>
+    <div class="panel-body" style="font-size:13px;color:#5C5652;margin-bottom:10px">
+      Grade 10 · Deductive Reasoning
+    </div>
+  </div>
+  <div style="overflow-x:auto">
+  <table class="proof-table">
+    <tr><th>Statement</th><th>Reason</th></tr>
+    <tr><td>Let AB = w (canal width), BD = 20 m, AT = h (tower height)</td><td>Given; let variables</td></tr>
+    <tr><td>∠TBA = 60°, ∠TDA = 30°</td><td>Given angles of elevation</td></tr>
+    <tr><td>∠TAB = 90°</td><td>Tower stands vertical; ground is horizontal</td></tr>
+    <tr><td>tan 60° = h/w &rArr; h = w√3</td><td>tan = opposite/adjacent in △TAB</td></tr>
+    <tr><td>tan 30° = h/(w+20) &rArr; h=(w+20)/√3</td><td>tan = opp/adj in △TAD; DA = w+20</td></tr>
+    <tr><td>w√3 = (w+20)/√3</td><td>Both expressions equal h (substitution)</td></tr>
+    <tr><td>3w = w + 20</td><td>Multiply both sides by √3</td></tr>
+    <tr><td>w = 10 m</td><td>Simplify: 2w = 20</td></tr>
+    <tr><td>h = 10√3 m</td><td>Substitute w=10 into h=w√3</td></tr>
+    <tr><td>∴ Tower height = 10√3 m, Canal width = 10 m</td><td>Q.E.D.</td></tr>
+  </table>
+  </div>
+  <div class="proof-qed">∴ Q.E.D.</div>
+  <div style="margin-top:14px;font-size:12px;color:#5C5652">
+    <strong>Key insight:</strong> The two angles give two equations sharing <em>one unknown h</em>.
+    Eliminating h by equating both expressions reveals w — then h follows by substitution.
+  </div>`;
+}
+
+// ─ PHASE 6 ────────────────────────────────────────────────────
+function p6(c) {
+  c.innerHTML=`
+  <div class="panel-section">
+    <div class="panel-title">Master · Self-Test</div>
+  </div>
+
+  <div class="self-test-q">
+    <p><strong>Q1 (Scale):</strong> Same setup but BD = 40 m and angles remain 60° and 30°.<br/>
+    Find the canal width.</p>
+    <input type="text" id="q1in" placeholder="? m"/>
+    <button class="check-btn" onclick="checkQ(1,20,'m')">Check</button>
+    <span class="result-tag" id="q1r"></span>
+    <div class="hint-box" id="q1h">w = 40 × tan30° / (tan60°−tan30°) = 40/(3−1) × ... = 20 m</div>
+    <button class="why-toggle" onclick="document.getElementById('q1h').style.display='block'">Hint</button>
+  </div>
+
+  <div class="self-test-q">
+    <p><strong>Q2 (Inverse):</strong> Canal width = 10√3 m, elevation from B = 45°. Find tower height.</p>
+    <input type="text" id="q2in" placeholder="? m"/>
+    <button class="check-btn" onclick="checkQ(2,10*Math.sqrt(3),'m')">Check</button>
+    <span class="result-tag" id="q2r"></span>
+    <div class="hint-box" id="q2h">h = w × tan45° = 10√3 × 1 = 10√3 m ≈ 17.32 m</div>
+    <button class="why-toggle" onclick="document.getElementById('q2h').style.display='block'">Hint</button>
+  </div>
+
+  <div class="self-test-q">
+    <p><strong>Q3 (Context shift):</strong> A lighthouse stands 10m from shore. From a boat 10m offshore, elevation = 60°. Find lighthouse height.</p>
+    <input type="text" id="q3in" placeholder="? m"/>
+    <button class="check-btn" onclick="checkQ(3,10*Math.sqrt(3),'m')">Check</button>
+    <span class="result-tag" id="q3r"></span>
+    <div class="hint-box" id="q3h">Same formula: h = distance × tan(60°) = 10×√3 ≈ 17.32 m</div>
+    <button class="why-toggle" onclick="document.getElementById('q3h').style.display='block'">Hint</button>
+  </div>
+
+  <div class="cross-bridge">
+    <strong>📌 Cross-Topic Bridge</strong><br/>
+    <strong>Looking back:</strong> This used the tangent ratio from NCERT Ch.8 (Introduction to Trigonometry).<br/><br/>
+    <strong>Looking forward:</strong> In Class 11, you will use this same double-observation method with the Sine Rule and Cosine Rule for non-right-angle triangles — handling towers on slopes and buildings on hills.<br/><br/>
+    <strong>Real world:</strong> GPS satellites use a three-dimensional version of this exact technique (triangulation from multiple known points) to pinpoint your location to within 1 metre.
+  </div>`;
+}
+
+function checkQ(n,expected,unit) {
+  const val=parseFloat(document.getElementById('q'+n+'in').value);
+  const r=document.getElementById('q'+n+'r');
+  if(isNaN(val)){r.textContent='Enter a number';r.style.color='#A8A29E';return;}
+  const ok=Math.abs(val-expected)<expected*0.05+0.5;
+  if(ok){
+    r.textContent='✓ Correct!';r.style.color='#2A7A6B';studentModel.right++;
+  } else {
+    r.textContent=`✗ Got ${val.toFixed(2)}, expected ≈${expected.toFixed(2)}${unit}`;r.style.color='#C25D2E';studentModel.wrong++;
+    triggerMisconception(4);
+  }
+}
+
+// ── MISCONCEPTION TRIGGERS ─────────────────────────────────────
+function triggerMisconception(code) {
+  miscCode=code; miscActive=true; miscTimer=0;
+  const msg=document.getElementById('miscBanner');
+  if(msg) {msg.style.display='block'; setTimeout(()=>msg.style.display='none',4000);}
+}
+
+// ── WHY TOGGLE ─────────────────────────────────────────────────
+function toggleWhy(btn) {
+  const wc=btn.nextElementSibling;
+  if(!wc) return;
+  wc.style.display=wc.style.display==='none'?'block':'none';
+  btn.textContent=wc.style.display==='none'?'Why?':'Hide explanation';
+}
+
+// ── PROOF PANEL ────────────────────────────────────────────────
+function toggleProof() {
+  proofVisible=!proofVisible;
+  const pz=document.getElementById('proofZone');
+  pz.style.display=proofVisible?'block':'none';
+  if(proofVisible) buildProofPanel();
+}
+
+function buildProofPanel() {
+  const pc=document.getElementById('proofContent');
+  pc.innerHTML=`
+  <table class="proof-table">
+    <tr><th>Statement</th><th>Reason</th></tr>
+    <tr><td>AB = w (canal width), AT = h</td><td>Variable definitions</td></tr>
+    <tr><td>∠TBA = 60°</td><td>Given</td></tr>
+    <tr><td>∠TDA = 30°</td><td>Given</td></tr>
+    <tr><td>h = w√3</td><td>tan 60° = h/w; tan 60° = √3</td></tr>
+    <tr><td>h = (w+20)/√3</td><td>tan 30° = h/(w+20); tan 30°=1/√3</td></tr>
+    <tr><td>w√3 = (w+20)/√3</td><td>Equations equated (same h)</td></tr>
+    <tr><td>3w = w+20</td><td>Multiply by √3</td></tr>
+    <tr><td>w = 10 m, h = 10√3 m</td><td>Solve and substitute</td></tr>
+  </table>
+  <div class="proof-qed">∴ Q.E.D.</div>`;
+}
+
+// ── PHASE NAV ──────────────────────────────────────────────────
+function nextPhase() {if(phase<6){phase++;renderPanel();}}
+function prevPhase() {if(phase>0){phase--;renderPanel();}}
+function resetSim() {
+  phase=0;sliderAngle1=60;sliderAngle2=30;sliderDist=20;
+  phase3PredDone=false;phase3PredAnswer=null;repr='visual';proofVisible=false;
+  document.getElementById('proofZone').style.display='none';
+  renderPanel();
+}
+
+// ── KEYBOARD ───────────────────────────────────────────────────
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT') return;
+  const k=e.key;
+  if(k==='ArrowRight'||k==='n'||k==='N') nextPhase();
+  if(k==='ArrowLeft'||k==='p'||k==='P') prevPhase();
+  if(k==='r'||k==='R') resetSim();
+  if(k==='f'||k==='F') toggleProof();
+  if(k==='c'||k==='C') {constructionVisible=!constructionVisible;}
+  if(k==='g'||k==='G') {gridVisible=!gridVisible;}
+  if(k>='0'&&k<='6') {phase=+k;renderPanel();}
+});
+
+// ── INIT ───────────────────────────────────────────────────────
+window.addEventListener('resize',()=>{resizeCanvas();});
+resizeCanvas();
+renderPanel();
+requestAnimationFrame(ts=>{lastTime=ts;loop(ts);});
+</script>
+</body>
+</html>

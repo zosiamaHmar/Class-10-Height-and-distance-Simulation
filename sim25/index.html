@@ -1,0 +1,1522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APEX-EDU · Lighthouse Heights · Trigonometry</title>
+<style>
+:root {
+  --bg: #FAFAF5;
+  --ink: #1C1917;
+  --ink-light: #6B6560;
+  --accent: #3B5B8C;
+  --accent-warm: #C4622D;
+  --highlight: #D4A843;
+  --panel-bg: #F2EDE5;
+  --panel-border: #DDD5C8;
+  --success: #2A7C6F;
+  --font-body: Georgia, 'Times New Roman', serif;
+  --font-mono: 'Courier New', Courier, monospace;
+  --font-label: Verdana, Geneva, sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--ink);
+  overflow: hidden;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+#app { display: flex; flex: 1; overflow: hidden; }
+#canvas-container {
+  flex: 1;
+  position: relative;
+  background: var(--bg);
+  min-width: 0;
+}
+canvas { display: block; width: 100%; height: 100%; }
+#panel {
+  width: 380px;
+  min-width: 380px;
+  background: var(--panel-bg);
+  border-left: 2px solid var(--panel-border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: width 0.3s;
+}
+#panel-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--panel-border);
+  background: rgba(221,213,200,0.3);
+}
+#panel-header h1 {
+  font-size: 18px;
+  font-weight: bold;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+#panel-header .meta {
+  font-family: var(--font-label);
+  font-size: 11px;
+  color: var(--ink-light);
+}
+#progress-bar {
+  height: 3px;
+  background: var(--panel-border);
+  position: relative;
+}
+#progress-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.4s ease;
+  width: 0%;
+}
+#panel-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+.step-card {
+  background: #fff;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.step-card h3 {
+  font-size: 15px;
+  color: var(--accent);
+  margin-bottom: 12px;
+  font-weight: bold;
+}
+.step-card p, .step-card li {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+.step-card ul { padding-left: 20px; }
+.formula-box {
+  background: #f8f6f1;
+  border-left: 3px solid var(--accent);
+  padding: 12px 16px;
+  margin: 12px 0;
+  font-family: var(--font-mono);
+  font-size: 15px;
+  border-radius: 0 4px 4px 0;
+}
+.formula-box .fraction {
+  display: inline-block;
+  text-align: center;
+  vertical-align: middle;
+  margin: 0 4px;
+}
+.formula-box .fraction .num {
+  display: block;
+  border-bottom: 1px solid var(--ink);
+  padding: 0 4px;
+}
+.formula-box .fraction .den {
+  display: block;
+  padding: 0 4px;
+}
+.highlight-text { color: var(--accent); font-weight: bold; }
+.highlight-warm { color: var(--accent-warm); font-weight: bold; }
+.highlight-success { color: var(--success); font-weight: bold; }
+#panel-nav {
+  padding: 12px 20px;
+  border-top: 1px solid var(--panel-border);
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  background: rgba(221,213,200,0.2);
+}
+.btn {
+  padding: 8px 16px;
+  border: 1px solid var(--panel-border);
+  background: #fff;
+  color: var(--ink);
+  font-family: var(--font-label);
+  font-size: 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn:hover { background: var(--bg); border-color: var(--accent); }
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+.btn-primary:hover { background: #2d4a73; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+#prediction-widget {
+  background: #fff;
+  border: 2px solid var(--highlight);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+#prediction-widget h4 {
+  font-size: 14px;
+  color: var(--highlight);
+  margin-bottom: 12px;
+}
+.prediction-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0;
+}
+.prediction-input input {
+  width: 80px;
+  padding: 8px;
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  text-align: center;
+}
+.prediction-input span {
+  font-family: var(--font-label);
+  font-size: 13px;
+  color: var(--ink-light);
+}
+#challenge-card {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #fff;
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
+  padding: 16px 24px;
+  max-width: 500px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  z-index: 10;
+  text-align: center;
+}
+#challenge-card .badge {
+  display: inline-block;
+  background: var(--accent);
+  color: #fff;
+  font-family: var(--font-label);
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  margin-bottom: 8px;
+}
+#challenge-card p {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ink);
+}
+#challenge-card .difficulty {
+  font-family: var(--font-label);
+  font-size: 11px;
+  color: var(--ink-light);
+  margin-top: 8px;
+}
+#did-you-know {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  right: 396px;
+  font-style: italic;
+  font-size: 13px;
+  color: var(--ink-light);
+  background: rgba(250,250,245,0.9);
+  padding: 10px 16px;
+  border-radius: 6px;
+  border-left: 3px solid var(--highlight);
+  z-index: 5;
+}
+#controls-overlay {
+  position: absolute;
+  top: 80px;
+  right: 16px;
+  background: rgba(255,255,255,0.95);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 16px;
+  width: 200px;
+  z-index: 10;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+#controls-overlay h4 {
+  font-size: 13px;
+  color: var(--accent);
+  margin-bottom: 12px;
+  font-weight: bold;
+}
+.slider-control {
+  margin-bottom: 14px;
+}
+.slider-control label {
+  display: block;
+  font-family: var(--font-label);
+  font-size: 12px;
+  color: var(--ink-light);
+  margin-bottom: 6px;
+}
+.slider-control .slider-track {
+  position: relative;
+  height: 4px;
+  background: var(--panel-border);
+  border-radius: 2px;
+  cursor: pointer;
+}
+.slider-control .slider-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  pointer-events: none;
+}
+.slider-control .slider-thumb {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  cursor: grab;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+.slider-control .slider-thumb:active { cursor: grabbing; }
+.slider-control .value-display {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ink);
+  margin-top: 4px;
+  text-align: right;
+}
+#result-display {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--panel-border);
+}
+.result-line {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-label);
+  font-size: 12px;
+  padding: 3px 0;
+}
+.result-line .label { color: var(--ink-light); }
+.result-line .value { color: var(--ink); font-weight: bold; }
+#teacher-btn {
+  position: absolute;
+  bottom: 16px;
+  right: 396px;
+  z-index: 5;
+  font-family: var(--font-label);
+  font-size: 11px;
+  padding: 6px 12px;
+  background: rgba(255,255,255,0.9);
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--ink-light);
+}
+#teacher-btn:hover { color: var(--ink); border-color: var(--accent); }
+#teacher-modal {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.3);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+}
+#teacher-modal.active { display: flex; }
+#teacher-modal .modal-content {
+  background: #fff;
+  border-radius: 10px;
+  padding: 24px;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.15);
+}
+#teacher-modal h2 {
+  font-size: 18px;
+  margin-bottom: 16px;
+  color: var(--ink);
+}
+#teacher-modal h3 {
+  font-size: 14px;
+  color: var(--accent);
+  margin: 16px 0 8px;
+}
+#teacher-modal p, #teacher-modal li {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink-light);
+  margin-bottom: 6px;
+}
+#teacher-modal ul { padding-left: 20px; }
+.close-modal {
+  float: right;
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--ink-light);
+}
+.close-modal:hover { color: var(--ink); }
+.fill-blank {
+  display: inline-block;
+  min-width: 40px;
+  border-bottom: 2px solid var(--accent);
+  text-align: center;
+  font-family: var(--font-mono);
+  padding: 0 4px;
+  margin: 0 2px;
+}
+.fill-blank.correct { border-color: var(--success); color: var(--success); }
+.fill-blank.wrong { border-color: var(--accent-warm); color: var(--accent-warm); }
+.check-btn {
+  margin-top: 12px;
+  padding: 6px 14px;
+  background: var(--success);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-family: var(--font-label);
+  font-size: 12px;
+  cursor: pointer;
+}
+.check-btn:hover { background: #1f5e52; }
+.feedback {
+  margin-top: 8px;
+  font-size: 13px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  display: none;
+}
+.feedback.show { display: block; }
+.feedback.correct { background: rgba(42,124,111,0.1); color: var(--success); }
+.feedback.wrong { background: rgba(196,98,45,0.1); color: var(--accent-warm); }
+.prediction-result {
+  padding: 12px;
+  border-radius: 6px;
+  margin-top: 12px;
+  font-size: 14px;
+}
+.prediction-result.close { background: rgba(42,124,111,0.1); color: var(--success); }
+.prediction-result.far { background: rgba(196,98,45,0.1); color: var(--accent-warm); }
+@media (max-width: 900px) {
+  #app { flex-direction: column; }
+  #panel { width: 100%; min-width: auto; max-height: 40vh; border-left: none; border-top: 2px solid var(--panel-border); }
+  #canvas-container { height: 60vh; }
+  #did-you-know { right: 16px; }
+  #teacher-btn { right: 16px; }
+  #controls-overlay { width: 160px; padding: 10px; }
+}
+</style>
+<base target="_blank">
+</head>
+<body>
+
+<div id="app">
+  <div id="canvas-container">
+    <canvas id="mainCanvas"></canvas>
+    
+    <div id="challenge-card">
+      <span class="badge">🏆 CHALLENGE</span>
+      <p>Two ships are spotted from a lighthouse top. Angles of depression are <strong>45°</strong> and <strong>30°</strong>. The ships are <strong>200 m apart</strong> on the same side. Find the lighthouse height.</p>
+      <div class="difficulty">Difficulty: ●●●○○ · Class 10 · Trigonometry</div>
+    </div>
+    
+    <div id="controls-overlay">
+      <h4>CONTROLS</h4>
+      <div class="slider-control">
+        <label>Height of lighthouse (h)</label>
+        <div class="slider-track" id="slider-h-track">
+          <div class="slider-fill" id="slider-h-fill"></div>
+          <div class="slider-thumb" id="slider-h-thumb"></div>
+        </div>
+        <div class="value-display" id="slider-h-value">273.2 m</div>
+      </div>
+      <div class="slider-control">
+        <label>Angle A (closer ship)</label>
+        <div class="slider-track" id="slider-a1-track">
+          <div class="slider-fill" id="slider-a1-fill"></div>
+          <div class="slider-thumb" id="slider-a1-thumb"></div>
+        </div>
+        <div class="value-display" id="slider-a1-value">45°</div>
+      </div>
+      <div class="slider-control">
+        <label>Angle B (farther ship)</label>
+        <div class="slider-track" id="slider-a2-track">
+          <div class="slider-fill" id="slider-a2-fill"></div>
+          <div class="slider-thumb" id="slider-a2-thumb"></div>
+        </div>
+        <div class="value-display" id="slider-a2-value">30°</div>
+      </div>
+      <div class="slider-control">
+        <label>Ship separation</label>
+        <div class="slider-track" id="slider-d-track">
+          <div class="slider-fill" id="slider-d-fill"></div>
+          <div class="slider-thumb" id="slider-d-thumb"></div>
+        </div>
+        <div class="value-display" id="slider-d-value">200 m</div>
+      </div>
+      <div id="result-display">
+        <div class="result-line"><span class="label">Distance to ship A</span><span class="value" id="res-distA">273.2 m</span></div>
+        <div class="result-line"><span class="label">Distance to ship B</span><span class="value" id="res-distB">473.2 m</span></div>
+        <div class="result-line"><span class="label">tan(45°)</span><span class="value" id="res-tan1">1.000</span></div>
+        <div class="result-line"><span class="label">tan(30°)</span><span class="value" id="res-tan2">0.577</span></div>
+      </div>
+    </div>
+    
+    <div id="did-you-know">
+      💡 Did you know? The Pharos of Alexandria, one of the Seven Wonders of the Ancient World, stood over 100 m tall and used polished bronze mirrors to reflect sunlight — sailors used angle-of-elevation math just like this to estimate their distance from shore.
+    </div>
+    
+    <button id="teacher-btn" onclick="showTeacherModal()">📋 For Teachers</button>
+  </div>
+  
+  <div id="panel">
+    <div id="panel-header">
+      <h1>Lighthouse & Angles of Depression</h1>
+      <div class="meta">Trigonometry · Right Triangles · SOH CAH TOA · Grade 10</div>
+    </div>
+    <div id="progress-bar"><div id="progress-fill"></div></div>
+    <div id="panel-content">
+      <!-- Content injected by JS -->
+    </div>
+    <div id="panel-nav">
+      <button class="btn" id="btn-prev" onclick="prevStep()" disabled>← Back</button>
+      <button class="btn btn-primary" id="btn-next" onclick="nextStep()">Continue →</button>
+    </div>
+  </div>
+</div>
+
+<div id="teacher-modal">
+  <div class="modal-content">
+    <span class="close-modal" onclick="hideTeacherModal()">×</span>
+    <h2>Teacher & Parent Dashboard</h2>
+    <h3>Topic Alignment</h3>
+    <p>NCERT Class 10 Mathematics · Chapter 9: Some Applications of Trigonometry · Exercise 9.1 · Question 25</p>
+    <p>CBSE, ICSE, State Boards — Angle of Elevation/Depression Problems</p>
+    
+    <h3>Learning Objectives</h3>
+    <ul>
+      <li>Understand angle of depression as angle of elevation from the object's perspective</li>
+      <li>Set up right-triangle relationships using tangent function</li>
+      <li>Form and solve simultaneous equations from two observation points</li>
+      <li>Rationalize denominators involving surds (√3)</li>
+      <li>Verify answer by back-substitution into both triangles</li>
+    </ul>
+    
+    <h3>Common Errors to Watch</h3>
+    <ul>
+      <li>Confusing angle of depression with angle from the horizontal at the ship (not the lighthouse)</li>
+      <li>Adding angles instead of using tan separately for each triangle</li>
+      <li>Forgetting that both triangles share the same height h</li>
+      <li>Not rationalizing: leaving answer as 200/(√3−1) instead of 100(√3+1)</li>
+      <li>Using sin or cos instead of tan (wrong ratio for opposite/adjacent)</li>
+    </ul>
+    
+    <h3>Prerequisites Check</h3>
+    <ul>
+      <li>□ Can find tan(45°) and tan(30°) without calculator</li>
+      <li>□ Understands alternate interior angles (depression = elevation)</li>
+      <li>□ Can solve linear equations with one variable</li>
+      <li>□ Can rationalize denominators of form a/(√b − c)</li>
+    </ul>
+    
+    <h3>Extension Questions</h3>
+    <ul>
+      <li>What if the ships were on opposite sides of the lighthouse? (Sum of distances, not difference)</li>
+      <li>What if a third ship at 60° depression was spotted between them?</li>
+      <li>How would you find the height if you only knew the distance between ships and one angle?</li>
+    </ul>
+    
+    <h3>Real-World Connections</h3>
+    <ul>
+      <li>Coast guard radar stations calculating ship positions</li>
+      <li>Air traffic control determining aircraft altitude from ground angle</li>
+      <li>Surveyors measuring building heights with theodolites</li>
+      <li>Astronomers calculating distances to celestial objects (parallax method)</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+// ╔══════════════════════════════════════════╗
+// ║  STATE & CONFIGURATION                   ║
+// ╚══════════════════════════════════════════╝
+
+const state = {
+  currentStep: 0,
+  totalSteps: 7,
+  studentPrediction: null,
+  h: 100 * (Math.sqrt(3) + 1), // ~273.205 m
+  angle1: 45, // degrees (closer ship)
+  angle2: 30, // degrees (farther ship)
+  shipSeparation: 200,
+  phase: 'hook', // hook, explore, challenge, reveal, master
+  draggingSlider: null,
+  time: 0,
+  wavePhase: 0,
+  showConstructionLines: true,
+  showUnitCircle: true,
+  showCoordinates: true,
+  animationSpeed: 1,
+  lighthouseGlow: 0,
+  shipBobA: 0,
+  shipBobB: 0,
+  rayPulse: 0,
+  stepChecks: [false, false, false, false, false, false, false],
+  fillBlanks: {}
+};
+
+const steps = [
+  { title: "The Scene", desc: "Imagine standing at the top of a lighthouse..." },
+  { title: "The Question", desc: "What do we know? What do we need to find?" },
+  { title: "The Key Insight", desc: "Angle of depression = angle of elevation" },
+  { title: "Setting Up the Triangles", desc: "Two right triangles, one shared height" },
+  { title: "The Calculation", desc: "Solving for h using simultaneous equations" },
+  { title: "The Answer", desc: "Height of the lighthouse" },
+  { title: "The Bigger Picture", desc: "Where else does this math appear?" }
+];
+
+// ╔══════════════════════════════════════════╗
+// ║  CANVAS SETUP                           ║
+// ╚══════════════════════════════════════════╝
+
+const canvas = document.getElementById('mainCanvas');
+const ctx = canvas.getContext('2d');
+let canvasW, canvasH;
+
+function resizeCanvas() {
+  const container = document.getElementById('canvas-container');
+  canvasW = container.clientWidth;
+  canvasH = container.clientHeight;
+  canvas.width = canvasW * window.devicePixelRatio;
+  canvas.height = canvasH * window.devicePixelRatio;
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  canvasW = container.clientWidth;
+  canvasH = container.clientHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+// ╔══════════════════════════════════════════╗
+// ║  MATH UTILITIES                         ║
+// ╚══════════════════════════════════════════╝
+
+const toRad = deg => deg * Math.PI / 180;
+const toDeg = rad => rad * 180 / Math.PI;
+
+function getDistances() {
+  const h = state.h;
+  const a1 = toRad(state.angle1);
+  const a2 = toRad(state.angle2);
+  const dA = h / Math.tan(a1);
+  const dB = h / Math.tan(a2);
+  return { dA, dB, diff: dB - dA };
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  DRAWING PRIMITIVES                     ║
+// ╚══════════════════════════════════════════╝
+
+function drawGrid(originX, originY, scale) {
+  ctx.strokeStyle = 'rgba(28, 25, 23, 0.06)';
+  ctx.lineWidth = 1;
+  for (let x = originX % scale; x < canvasW; x += scale) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvasH); ctx.stroke();
+  }
+  for (let y = originY % scale; y < canvasH; y += scale) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvasW, y); ctx.stroke();
+  }
+  // Axes
+  ctx.strokeStyle = 'rgba(28, 25, 23, 0.2)';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(0, originY); ctx.lineTo(canvasW, originY); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(originX, 0); ctx.lineTo(originX, canvasH); ctx.stroke();
+  // Arrowheads
+  ctx.fillStyle = 'rgba(28, 25, 23, 0.3)';
+  ctx.beginPath();
+  ctx.moveTo(canvasW - 10, originY); ctx.lineTo(canvasW - 16, originY - 4); ctx.lineTo(canvasW - 16, originY + 4); ctx.closePath(); ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(originX, 10); ctx.lineTo(originX - 4, 16); ctx.lineTo(originX + 4, 16); ctx.closePath(); ctx.fill();
+  // Labels
+  ctx.fillStyle = '#6B6560';
+  ctx.font = '13px Georgia';
+  ctx.fillText('x (distance from lighthouse)', canvasW - 140, originY - 12);
+  ctx.fillText('y (height)', originX + 10, 18);
+}
+
+function drawArrow(ctx, fromX, fromY, toX, toY, color, width = 2) {
+  const dx = toX - fromX, dy = toY - fromY;
+  const len = Math.sqrt(dx*dx + dy*dy);
+  const ux = dx/len, uy = dy/len;
+  const perpX = -uy, perpY = ux;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  ctx.beginPath();
+  ctx.moveTo(fromX, fromY);
+  ctx.lineTo(toX, toY);
+  ctx.stroke();
+  // Arrowhead
+  const headLen = 10;
+  ctx.beginPath();
+  ctx.moveTo(toX, toY);
+  ctx.lineTo(toX - headLen*ux + 4*perpX, toY - headLen*uy + 4*perpY);
+  ctx.lineTo(toX - headLen*ux - 4*perpX, toY - headLen*uy - 4*perpY);
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.fill();
+}
+
+function drawDashedLine(x1, y1, x2, y2, color, width = 1.5, dash = [8, 4]) {
+  ctx.setLineDash(dash);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  ctx.beginPath();
+  ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function drawRightAngleMarker(x, y, size, color = 'rgba(59, 91, 140, 0.5)') {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(x, y - size); ctx.lineTo(x + size, y - size); ctx.lineTo(x + size, y); ctx.stroke();
+}
+
+function drawAngleArc(cx, cy, radius, startAngle, endAngle, color, label) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, startAngle, endAngle);
+  ctx.stroke();
+  // Label
+  const midAngle = (startAngle + endAngle) / 2;
+  const lx = cx + (radius + 18) * Math.cos(midAngle);
+  const ly = cy + (radius + 18) * Math.sin(midAngle);
+  ctx.fillStyle = color;
+  ctx.font = 'bold 14px Georgia';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(label, lx, ly);
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+}
+
+function drawDimensionLabel(x, y, text, color = '#1C1917', align = 'center') {
+  ctx.fillStyle = color;
+  ctx.font = '13px Georgia';
+  ctx.textAlign = align;
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, x, y);
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  SCENE DRAWING                          ║
+// ╚══════════════════════════════════════════╝
+
+function drawSky() {
+  // Gradient sky
+  const grad = ctx.createLinearGradient(0, 0, 0, canvasH);
+  grad.addColorStop(0, '#C5D8E8');
+  grad.addColorStop(0.4, '#D8E6F0');
+  grad.addColorStop(0.7, '#E8F0F5');
+  grad.addColorStop(1, '#F0F5F8');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, canvasW, canvasH);
+  
+  // Stars (subtle)
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  for (let i = 0; i < 30; i++) {
+    const sx = (i * 137.5) % canvasW;
+    const sy = (i * 73.3) % (canvasH * 0.4);
+    ctx.beginPath();
+    ctx.arc(sx, sy, 1.2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawOcean(groundY) {
+  // Water with animated waves
+  const t = state.time;
+  ctx.fillStyle = '#5B8FA8';
+  ctx.beginPath();
+  ctx.moveTo(0, groundY);
+  for (let x = 0; x <= canvasW; x += 3) {
+    const wave = Math.sin(x * 0.015 + t * 1.5) * 4 + Math.sin(x * 0.008 + t * 0.8) * 3;
+    ctx.lineTo(x, groundY + wave);
+  }
+  ctx.lineTo(canvasW, canvasH);
+  ctx.lineTo(0, canvasH);
+  ctx.closePath();
+  ctx.fill();
+  
+  // Water surface highlight
+  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(0, groundY);
+  for (let x = 0; x <= canvasW; x += 3) {
+    const wave = Math.sin(x * 0.015 + t * 1.5) * 4 + Math.sin(x * 0.008 + t * 0.8) * 3;
+    ctx.lineTo(x, groundY + wave - 2);
+  }
+  ctx.stroke();
+  
+  // Horizon line
+  ctx.strokeStyle = 'rgba(28,25,23,0.1)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, groundY);
+  ctx.lineTo(canvasW, groundY);
+  ctx.stroke();
+}
+
+function drawLighthouse(x, y, height, width) {
+  const baseW = width;
+  const topW = width * 0.55;
+  
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.08)';
+  ctx.beginPath();
+  ctx.ellipse(x + baseW/2 + 15, y, baseW * 0.8, 8, 0, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // Tower body (tapered)
+  const grad = ctx.createLinearGradient(x - baseW/2, y - height, x + baseW/2, y);
+  grad.addColorStop(0, '#D4C4A8');
+  grad.addColorStop(0.3, '#C4B498');
+  grad.addColorStop(0.7, '#B8A888');
+  grad.addColorStop(1, '#A89878');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.moveTo(x - baseW/2, y);
+  ctx.lineTo(x + baseW/2, y);
+  ctx.lineTo(x + topW/2, y - height);
+  ctx.lineTo(x - topW/2, y - height);
+  ctx.closePath();
+  ctx.fill();
+  
+  // Horizontal stripes (classic lighthouse pattern)
+  const stripeCount = 5;
+  for (let i = 0; i < stripeCount; i++) {
+    const sy = y - height * (i + 0.5) / stripeCount;
+    const sw = baseW - (baseW - topW) * (i + 0.5) / stripeCount;
+    ctx.fillStyle = i % 2 === 0 ? 'rgba(255,255,255,0.25)' : 'rgba(196,98,45,0.15)';
+    ctx.fillRect(x - sw/2, sy - 3, sw, 6);
+  }
+  
+  // Gallery/platform near top
+  const galleryY = y - height + 18;
+  const galleryW = topW + 16;
+  ctx.fillStyle = '#8B7355';
+  ctx.fillRect(x - galleryW/2, galleryY, galleryW, 6);
+  ctx.fillStyle = '#6B5344';
+  ctx.fillRect(x - galleryW/2, galleryY + 6, galleryW, 3);
+  
+  // Lantern room (glass)
+  const lanternH = 28;
+  const lanternW = topW + 8;
+  const lanternY = y - height - lanternH + 18;
+  ctx.fillStyle = 'rgba(200,220,240,0.4)';
+  ctx.strokeStyle = '#7A8A9A';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(x - lanternW/2, lanternY + lanternH);
+  ctx.lineTo(x + lanternW/2, lanternY + lanternH);
+  ctx.lineTo(x + lanternW/2, lanternY);
+  ctx.lineTo(x - lanternW/2, lanternY);
+  ctx.closePath();
+  ctx.fill(); ctx.stroke();
+  
+  // Roof (conical)
+  ctx.fillStyle = '#8B4513';
+  ctx.beginPath();
+  ctx.moveTo(x - lanternW/2 - 3, lanternY);
+  ctx.lineTo(x + lanternW/2 + 3, lanternY);
+  ctx.lineTo(x, lanternY - 14);
+  ctx.closePath();
+  ctx.fill();
+  
+  // Light source (glowing)
+  const glow = state.lighthouseGlow;
+  const lightColor = `rgba(255, 220, 100, ${0.6 + glow * 0.3})`;
+  ctx.fillStyle = lightColor;
+  ctx.beginPath();
+  ctx.arc(x, lanternY + lanternH/2, 6 + glow * 2, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // Light rays (rotating beams)
+  const rayAngle = t * 0.5;
+  for (let i = 0; i < 2; i++) {
+    const angle = rayAngle + i * Math.PI;
+    const rayLen = 60 + state.rayPulse * 10;
+    ctx.strokeStyle = `rgba(255, 220, 100, ${0.15 + state.rayPulse * 0.1})`;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(x, lanternY + lanternH/2);
+    ctx.lineTo(x + rayLen * Math.cos(angle), lanternY + lanternH/2 + rayLen * Math.sin(angle));
+    ctx.stroke();
+  }
+  
+  return { topX: x, topY: lanternY + lanternH/2 };
+}
+
+function drawShip(x, y, scale, color, bobOffset, label) {
+  const bob = bobOffset;
+  const sy = y + bob;
+  
+  // Hull
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(x - 20*scale, sy);
+  ctx.lineTo(x + 20*scale, sy);
+  ctx.lineTo(x + 14*scale, sy - 10*scale);
+  ctx.lineTo(x - 14*scale, sy - 10*scale);
+  ctx.closePath();
+  ctx.fill();
+  
+  // Deck
+  ctx.fillStyle = '#8B7355';
+  ctx.fillRect(x - 12*scale, sy - 10*scale, 24*scale, 3*scale);
+  
+  // Mast
+  ctx.strokeStyle = '#6B5344';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(x, sy - 10*scale);
+  ctx.lineTo(x, sy - 35*scale);
+  ctx.stroke();
+  
+  // Sail
+  ctx.fillStyle = 'rgba(240,240,235,0.9)';
+  ctx.beginPath();
+  ctx.moveTo(x + 2, sy - 32*scale);
+  ctx.lineTo(x + 18*scale, sy - 18*scale);
+  ctx.lineTo(x + 2, sy - 14*scale);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(200,200,195,0.5)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  
+  // Flag
+  ctx.fillStyle = '#C4622D';
+  ctx.beginPath();
+  ctx.moveTo(x, sy - 35*scale);
+  ctx.lineTo(x + 10*scale, sy - 31*scale);
+  ctx.lineTo(x, sy - 28*scale);
+  ctx.closePath();
+  ctx.fill();
+  
+  // Label
+  ctx.fillStyle = '#1C1917';
+  ctx.font = 'bold 12px Verdana';
+  ctx.textAlign = 'center';
+  ctx.fillText(label, x, sy + 16);
+  ctx.textAlign = 'left';
+}
+
+function drawUnitCircle(insetX, insetY, radius, angleDeg) {
+  const angle = toRad(angleDeg);
+  
+  // Background
+  ctx.fillStyle = 'rgba(250,250,245,0.9)';
+  ctx.strokeStyle = 'rgba(221,213,200,0.8)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(insetX, insetY, radius + 8, 0, Math.PI * 2);
+  ctx.fill(); ctx.stroke();
+  
+  // Circle
+  ctx.strokeStyle = 'rgba(28,25,23,0.2)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(insetX, insetY, radius, 0, Math.PI * 2);
+  ctx.stroke();
+  
+  // Axes
+  ctx.strokeStyle = 'rgba(28,25,23,0.15)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(insetX - radius - 5, insetY);
+  ctx.lineTo(insetX + radius + 5, insetY);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(insetX, insetY - radius - 5);
+  ctx.lineTo(insetX, insetY + radius + 5);
+  ctx.stroke();
+  
+  // Radius line
+  const endX = insetX + radius * Math.cos(angle);
+  const endY = insetY - radius * Math.sin(angle);
+  ctx.strokeStyle = '#3B5B8C';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(insetX, insetY);
+  ctx.lineTo(endX, endY);
+  ctx.stroke();
+  
+  // Vertical drop (sin)
+  ctx.setLineDash([4, 3]);
+  ctx.strokeStyle = '#C4622D';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(endX, endY);
+  ctx.lineTo(endX, insetY);
+  ctx.stroke();
+  
+  // Horizontal (cos)
+  ctx.strokeStyle = '#2A7C6F';
+  ctx.beginPath();
+  ctx.moveTo(insetX, insetY);
+  ctx.lineTo(endX, insetY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  
+  // Point
+  ctx.fillStyle = '#D4A843';
+  ctx.beginPath();
+  ctx.arc(endX, endY, 4, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // Labels
+  ctx.fillStyle = '#3B5B8C';
+  ctx.font = 'bold 11px Georgia';
+  ctx.textAlign = 'center';
+  ctx.fillText(`θ=${angleDeg.toFixed(0)}°`, insetX, insetY - radius - 14);
+  
+  ctx.fillStyle = '#2A7C6F';
+  ctx.font = '10px Verdana';
+  ctx.fillText(`cos=${Math.cos(angle).toFixed(2)}`, insetX + radius/2, insetY + 14);
+  
+  ctx.fillStyle = '#C4622D';
+  ctx.fillText(`sin=${Math.sin(angle).toFixed(2)}`, endX + 8, insetY - radius * Math.sin(angle)/2);
+  ctx.textAlign = 'left';
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  MAIN RENDER LOOP                       ║
+// ╚══════════════════════════════════════════╝
+
+const t = () => state.time;
+
+function render() {
+  state.time += 0.016 * state.animationSpeed;
+  state.wavePhase += 0.02;
+  state.lighthouseGlow = 0.5 + 0.5 * Math.sin(state.time * 2);
+  state.rayPulse = 0.5 + 0.5 * Math.sin(state.time * 1.5);
+  state.shipBobA = Math.sin(state.time * 1.2) * 3;
+  state.shipBobB = Math.sin(state.time * 1.2 + 1.5) * 3;
+  
+  ctx.clearRect(0, 0, canvasW, canvasH);
+  
+  // Scene layout
+  const groundY = canvasH * 0.72;
+  const originX = canvasW * 0.22;
+  const originY = groundY;
+  
+  // Sky & Ocean
+  drawSky();
+  drawOcean(groundY);
+  
+  // Coordinate system
+  if (state.showCoordinates) {
+    drawGrid(originX, originY, 40);
+  }
+  
+  // Lighthouse
+  const lhX = originX;
+  const lhHeight = 160;
+  const lhWidth = 36;
+  const lightPos = drawLighthouse(lhX, originY, lhHeight, lhWidth);
+  
+  // Scale: pixels per meter (visual scale, not exact)
+  const pxPerM = 0.6; // visual compression for the scene
+  
+  // Ship positions (scaled for visual layout)
+  const distA = state.h / Math.tan(toRad(state.angle1));
+  const distB = state.h / Math.tan(toRad(state.angle2));
+  
+  // Visual positions (compressed for canvas)
+  const shipAX = originX + distA * pxPerM * 0.3;
+  const shipBX = originX + distB * pxPerM * 0.3;
+  
+  // Ships
+  drawShip(shipAX, groundY, 1.2, '#3B5B8C', state.shipBobA, 'Ship A');
+  drawShip(shipBX, groundY, 1.0, '#C4622D', state.shipBobB, 'Ship B');
+  
+  // Construction lines - horizontal from lighthouse top to ships
+  if (state.showConstructionLines) {
+    // Horizontal reference line from lighthouse top
+    drawDashedLine(lightPos.topX, lightPos.topY, Math.max(shipBX + 40, canvasW - 40), lightPos.topY, 'rgba(59, 91, 140, 0.25)', 1, [6, 4]);
+    
+    // Vertical from lighthouse top to ground
+    drawDashedLine(lightPos.topX, lightPos.topY, lightPos.topX, originY, 'rgba(59, 91, 140, 0.25)', 1, [6, 4]);
+    
+    // Vertical from Ship A up to horizontal line
+    drawDashedLine(shipAX, originY, shipAX, lightPos.topY, 'rgba(42, 124, 111, 0.3)', 1, [4, 4]);
+    
+    // Vertical from Ship B up to horizontal line
+    drawDashedLine(shipBX, originY, shipBX, lightPos.topY, 'rgba(196, 98, 45, 0.3)', 1, [4, 4]);
+    
+    // Line of sight to Ship A
+    ctx.strokeStyle = 'rgba(59, 91, 140, 0.4)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([5, 3]);
+    ctx.beginPath();
+    ctx.moveTo(lightPos.topX, lightPos.topY);
+    ctx.lineTo(shipAX, originY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    
+    // Line of sight to Ship B
+    ctx.strokeStyle = 'rgba(196, 98, 45, 0.4)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([5, 3]);
+    ctx.beginPath();
+    ctx.moveTo(lightPos.topX, lightPos.topY);
+    ctx.lineTo(shipBX, originY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  
+  // Right angle markers
+  drawRightAngleMarker(originX, originY, 14, 'rgba(59, 91, 140, 0.4)');
+  drawRightAngleMarker(shipAX, originY, 10, 'rgba(42, 124, 111, 0.35)');
+  drawRightAngleMarker(shipBX, originY, 10, 'rgba(196, 98, 45, 0.35)');
+  
+  // Angle arcs
+  // Angle of depression to Ship A (from horizontal down)
+  const angleA = toRad(state.angle1);
+  drawAngleArc(lightPos.topX, lightPos.topY, 35, 0, angleA, '#3B5B8C', `${state.angle1}°`);
+  
+  // Angle of depression to Ship B (from horizontal down, larger arc)
+  const angleB = toRad(state.angle2);
+  drawAngleArc(lightPos.topX, lightPos.topY, 55, 0, angleB, '#C4622D', `${state.angle2}°`);
+  
+  // Alternate interior angle markers at ships (angle of elevation)
+  drawAngleArc(shipAX, originY, 25, Math.PI, Math.PI - angleA, '#3B5B8C', `${state.angle1}°`);
+  drawAngleArc(shipBX, originY, 25, Math.PI, Math.PI - angleB, '#C4622D', `${state.angle2}°`);
+  
+  // Dimension labels
+  // Height label
+  drawDimensionLabel(originX - 30, originY - lhHeight/2, `h = ${state.h.toFixed(1)} m`, '#1C1917', 'right');
+  
+  // Distance to Ship A
+  const midAX = (originX + shipAX) / 2;
+  drawDimensionLabel(midAX, originY + 18, `x = ${distA.toFixed(1)} m`, '#2A7C6F', 'center');
+  
+  // Distance to Ship B
+  const midBX = (originX + shipBX) / 2;
+  drawDimensionLabel(midBX, originY + 32, `x+200 = ${distB.toFixed(1)} m`, '#C4622D', 'center');
+  
+  // Separation label
+  const midSep = (shipAX + shipBX) / 2;
+  drawDimensionLabel(midSep, originY + 46, `200 m`, '#1C1917', 'center');
+  
+  // Double-arrow for separation
+  ctx.strokeStyle = '#1C1917';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(shipAX, originY + 40);
+  ctx.lineTo(shipBX, originY + 40);
+  ctx.stroke();
+  // Arrowheads
+  drawArrow(ctx, shipAX + 5, originY + 40, shipAX, originY + 40, '#1C1917', 1);
+  drawArrow(ctx, shipBX - 5, originY + 40, shipBX, originY + 40, '#1C1917', 1);
+  
+  // Unit circle inset (top right)
+  if (state.showUnitCircle) {
+    drawUnitCircle(canvasW - 100, 90, 50, state.angle1);
+    // Second small unit circle for angle 2
+    drawUnitCircle(canvasW - 100, 210, 40, state.angle2);
+  }
+  
+  // Triangle labels
+  ctx.fillStyle = '#3B5B8C';
+  ctx.font = '11px Verdana';
+  ctx.fillText('△ A (45°)', shipAX - 30, originY - 10);
+  ctx.fillStyle = '#C4622D';
+  ctx.fillText('△ B (30°)', shipBX - 30, originY - 10);
+  
+  requestAnimationFrame(render);
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  SLIDER SYSTEM                          ║
+// ╚══════════════════════════════════════════╝
+
+function initSliders() {
+  const sliders = [
+    { id: 'h', min: 100, max: 500, value: state.h, step: 1 },
+    { id: 'a1', min: 20, max: 70, value: state.angle1, step: 1 },
+    { id: 'a2', min: 15, max: 60, value: state.angle2, step: 1 },
+    { id: 'd', min: 50, max: 500, value: state.shipSeparation, step: 10 }
+  ];
+  
+  sliders.forEach(s => {
+    const track = document.getElementById(`slider-${s.id}-track`);
+    const fill = document.getElementById(`slider-${s.id}-fill`);
+    const thumb = document.getElementById(`slider-${s.id}-thumb`);
+    const valueDisplay = document.getElementById(`slider-${s.id}-value`);
+    
+    function updateSlider(val) {
+      const ratio = (val - s.min) / (s.max - s.min);
+      fill.style.width = `${ratio * 100}%`;
+      thumb.style.left = `${ratio * 100}%`;
+      
+      if (s.id === 'h') {
+        state.h = val;
+        valueDisplay.textContent = `${val.toFixed(1)} m`;
+      } else if (s.id === 'a1') {
+        state.angle1 = val;
+        valueDisplay.textContent = `${val.toFixed(0)}°`;
+      } else if (s.id === 'a2') {
+        state.angle2 = val;
+        valueDisplay.textContent = `${val.toFixed(0)}°`;
+      } else if (s.id === 'd') {
+        state.shipSeparation = val;
+        valueDisplay.textContent = `${val.toFixed(0)} m`;
+      }
+      updateResultDisplay();
+    }
+    
+    track.addEventListener('mousedown', (e) => {
+      state.draggingSlider = s.id;
+      const rect = track.getBoundingClientRect();
+      const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+      const val = s.min + ratio * (s.max - s.min);
+      updateSlider(val);
+    });
+    
+    thumb.addEventListener('mousedown', (e) => {
+      state.draggingSlider = s.id;
+      e.stopPropagation();
+    });
+    
+    // Touch support
+    track.addEventListener('touchstart', (e) => {
+      state.draggingSlider = s.id;
+      const rect = track.getBoundingClientRect();
+      const ratio = Math.max(0, Math.min(1, (e.touches[0].clientX - rect.left) / rect.width));
+      const val = s.min + ratio * (s.max - s.min);
+      updateSlider(val);
+    });
+    
+    updateSlider(s.value);
+  });
+  
+  document.addEventListener('mousemove', (e) => {
+    if (!state.draggingSlider) return;
+    const s = sliders.find(sl => sl.id === state.draggingSlider);
+    const track = document.getElementById(`slider-${s.id}-track`);
+    const rect = track.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const val = s.min + ratio * (s.max - s.min);
+    
+    if (s.id === 'a1' || s.id === 'a2') {
+      const rounded = Math.round(val);
+      document.getElementById(`slider-${s.id}-value`).textContent = `${rounded}°`;
+      if (s.id === 'a1') state.angle1 = rounded;
+      else state.angle2 = rounded;
+    } else if (s.id === 'd') {
+      const rounded = Math.round(val / 10) * 10;
+      state.shipSeparation = rounded;
+      document.getElementById(`slider-${s.id}-value`).textContent = `${rounded} m`;
+    } else {
+      state.h = val;
+      document.getElementById(`slider-${s.id}-value`).textContent = `${val.toFixed(1)} m`;
+    }
+    
+    const fill = document.getElementById(`slider-${s.id}-fill`);
+    const thumb = document.getElementById(`slider-${s.id}-thumb`);
+    const displayRatio = s.id === 'a1' || s.id === 'a2' ? (Math.round(val) - s.min) / (s.max - s.min) :
+                         s.id === 'd' ? (Math.round(val / 10) * 10 - s.min) / (s.max - s.min) :
+                         (val - s.min) / (s.max - s.min);
+    fill.style.width = `${displayRatio * 100}%`;
+    thumb.style.left = `${displayRatio * 100}%`;
+    updateResultDisplay();
+  });
+  
+  document.addEventListener('mouseup', () => { state.draggingSlider = null; });
+  document.addEventListener('touchend', () => { state.draggingSlider = null; });
+}
+
+function updateResultDisplay() {
+  const distA = state.h / Math.tan(toRad(state.angle1));
+  const distB = state.h / Math.tan(toRad(state.angle2));
+  document.getElementById('res-distA').textContent = `${distA.toFixed(1)} m`;
+  document.getElementById('res-distB').textContent = `${distB.toFixed(1)} m`;
+  document.getElementById('res-tan1').textContent = Math.tan(toRad(state.angle1)).toFixed(3);
+  document.getElementById('res-tan2').textContent = Math.tan(toRad(state.angle2)).toFixed(3);
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  STEP PANEL CONTENT                     ║
+// ╚══════════════════════════════════════════╝
+
+function renderStepPanel() {
+  const content = document.getElementById('panel-content');
+  const progress = ((state.currentStep + 1) / state.totalSteps) * 100;
+  document.getElementById('progress-fill').style.width = `${progress}%`;
+  document.getElementById('btn-prev').disabled = state.currentStep === 0;
+  document.getElementById('btn-next').textContent = state.currentStep === state.totalSteps - 1 ? 'Finish' : 'Continue →';
+  
+  let html = '';
+  
+  switch(state.currentStep) {
+    case 0: // HOOK - The Scene
+      html = `
+        <div class="step-card">
+          <h3>Step 1 · The Scene</h3>
+          <p>Imagine you are standing at the very top of a lighthouse, looking out over the dark sea. Two ships appear on the horizon — one closer, one farther away — both on the same side.</p>
+          <p>From your eye level, you measure the <strong>angle of depression</strong> to each ship: <span class="highlight-text">45°</span> to the closer one, <span class="highlight-warm">30°</span> to the farther one.</p>
+          <p>You also know the ships are exactly <strong>200 meters apart</strong>.</p>
+          <p style="margin-top:16px; font-style:italic; color:#6B6560;">💡 On the canvas: Drag the sliders to change the lighthouse height and angles. Watch how the ships move. The dashed lines show the invisible geometry that makes the math work.</p>
+        </div>
+      `;
+      break;
+      
+    case 1: // The Question + Prediction
+      html = `
+        <div class="step-card">
+          <h3>Step 2 · The Question</h3>
+          <p>We need to find: <strong>How tall is the lighthouse?</strong></p>
+          <p>What we know:</p>
+          <ul>
+            <li>Angle of depression to Ship A (closer) = <span class="highlight-text">45°</span></li>
+            <li>Angle of depression to Ship B (farther) = <span class="highlight-warm">30°</span></li>
+            <li>Distance between ships = <strong>200 m</strong></li>
+          </ul>
+          <p>What we don't know: the height <strong>h</strong> and the individual distances from the lighthouse base to each ship.</p>
+        </div>
+        <div id="prediction-widget">
+          <h4>🔮 Make Your Prediction</h4>
+          <p style="font-size:13px; color:#6B6560; margin-bottom:12px;">Before we solve — how tall do you think the lighthouse is? The angles are 45° and 30°, and the ships are 200 m apart.</p>
+          <div class="prediction-input">
+            <input type="number" id="pred-input" placeholder="?" min="50" max="1000" step="1">
+            <span>meters</span>
+          </div>
+          <button class="btn btn-primary" onclick="submitPrediction()">Submit Prediction</button>
+          ${state.studentPrediction !== null ? `
+            <div style="margin-top:12px; padding:8px; background:rgba(212,168,67,0.1); border-radius:4px; font-size:13px;">
+              You predicted: <strong>${state.studentPrediction} m</strong>
+            </div>
+          ` : ''}
+        </div>
+      `;
+      break;
+      
+    case 2: // Key Insight
+      html = `
+        <div class="step-card">
+          <h3>Step 3 · The Key Insight</h3>
+          <p><strong>Angle of depression = Angle of elevation</strong></p>
+          <p>Why? Because the horizontal line from the lighthouse top and the sea surface are <strong>parallel</strong>. The line of sight is a transversal. By the alternate interior angles theorem, the angle looking down from the lighthouse equals the angle looking up from the ship.</p>
+          <div class="formula-box">
+            <span class="highlight-text">∠ depression from top</span> = <span class="highlight-success">∠ elevation from ship</span>
+          </div>
+          <p>This means we can work with two ordinary right triangles, both sharing the same height <strong>h</strong>.</p>
+          <p style="margin-top:12px;">Look at the canvas: See how the 45° arc at the lighthouse top matches the 45° arc at Ship A? And the 30° arc at the top matches the 30° arc at Ship B? That's alternate interior angles in action.</p>
+        </div>
+      `;
+      break;
+      
+    case 3: // Setting Up Triangles
+      html = `
+        <div class="step-card">
+          <h3>Step 4 · Setting Up the Triangles</h3>
+          <p>Let <strong>h</strong> = height of the lighthouse (what we want).</p>
+          <p>Let <strong>x</strong> = distance from lighthouse base to Ship A (the closer ship).</p>
+          <p>Then distance to Ship B = <strong>x + 200</strong> (since they're 200 m apart).</p>
+          
+          <p style="margin-top:12px;"><strong>Triangle A (Ship A, 45°):</strong></p>
+          <div class="formula-box">
+            tan 45° = <span class="fraction"><span class="num">h</span><span class="den">x</span></span>
+            &nbsp;&nbsp;→&nbsp;&nbsp; 1 = <span class="fraction"><span class="num">h</span><span class="den">x</span></span>
+            &nbsp;&nbsp;→&nbsp;&nbsp; <span class="highlight-text">h = x</span>
+          </div>
+          
+          <p style="margin-top:12px;"><strong>Triangle B (Ship B, 30°):</strong></p>
+          <div class="formula-box">
+            tan 30° = <span class="fraction"><span class="num">h</span><span class="den">x + 200</span></span>
+            &nbsp;&nbsp;→&nbsp;&nbsp; <span class="fraction"><span class="num">1</span><span class="den">√3</span></span> = <span class="fraction"><span class="num">h</span><span class="den">x + 200</span></span>
+          </div>
+          
+          <p style="margin-top:12px; font-style:italic; color:#6B6560;">⚠️ Remember: tan 30° = 1/√3, not √3/3 (they're the same value, but 1/√3 is easier for substitution).</p>
+        </div>
+      `;
+      break;
+      
+    case 4: // The Calculation
+      const exactH = 100 * (Math.sqrt(3) + 1);
+      html = `
+        <div class="step-card">
+          <h3>Step 5 · The Calculation</h3>
+          <p>From Triangle A: <span class="highlight-text">h = x</span></p>
+          <p>Substitute into Triangle B's equation:</p>
+          <div class="formula-box">
+            <span class="fraction"><span class="num">1</span><span class="den">√3</span></span> = <span class="fraction"><span class="num">h</span><span class="den">h + 200</span></span>
+          </div>
+          <p>Cross-multiply:</p>
+          <div class="formula-box">
+            h + 200 = h√3
+          </div>
+          <p>Rearrange:</p>
+          <div class="formula-box">
+            200 = h√3 − h = h(√3 − 1)
+          </div>
+          <p>Solve for h:</p>
+          <div class="formula-box">
+            h = <span class="fraction"><span class="num">200</span><span class="den">√3 − 1</span></span>
+          </div>
+          <p>Rationalize the denominator (multiply top and bottom by √3 + 1):</p>
+          <div class="formula-box">
+            h = <span class="fraction"><span class="num">200(√3 + 1)</span><span class="den">(√3 − 1)(√3 + 1)</span></span> = <span class="fraction"><span class="num">200(√3 + 1)</span><span class="den">3 − 1</span></span> = <span class="fraction"><span class="num">200(√3 + 1)</span><span class="den">2</span></span>
+          </div>
+          <div class="formula-box" style="border-left-color:var(--success);">
+            <span class="highlight-success">h = 100(√3 + 1) meters</span>
+          </div>
+          <p style="margin-top:8px;">Using √3 ≈ 1.732:</p>
+          <div class="formula-box">
+            h ≈ 100 × (1.732 + 1) = 100 × 2.732 = <span class="highlight-success">273.2 m</span>
+          </div>
+        </div>
+      `;
+      break;
+      
+    case 5: // The Answer
+      const pred = state.studentPrediction;
+      const actual = 100 * (Math.sqrt(3) + 1);
+      const diff = pred ? Math.abs(pred - actual) : null;
+      const close = diff !== null && diff < actual * 0.2;
+      html = `
+        <div class="step-card">
+          <h3>Step 6 · The Answer</h3>
+          <div class="formula-box" style="background:rgba(42,124,111,0.08); border-left-color:var(--success); font-size:18px; text-align:center;">
+            <span class="highlight-success">Height = 100(√3 + 1) m ≈ 273.2 m</span>
+          </div>
+          ${pred !== null ? `
+            <div class="prediction-result ${close ? 'close' : 'far'}">
+              You predicted: <strong>${pred} m</strong><br>
+              Actual answer: <strong>${actual.toFixed(1)} m</strong><br>
+              ${close ? 'Great intuition! You were within 20%.' : `Difference: ${diff.toFixed(1)} m — now you see why the math matters!`}
+            </div>
+          ` : '<p style="font-style:italic; color:#6B6560; margin-top:8px;">(You skipped the prediction — try dragging the height slider on the canvas to 273.2 m and see the scene match.)</p>'}
+          
+          <p style="margin-top:16px;"><strong>Verification:</strong></p>
+          <ul>
+            <li>If h = 273.2 m and angle = 45°, then distance = h/tan(45°) = 273.2/1 = <strong>273.2 m</strong> ✓</li>
+            <li>If h = 273.2 m and angle = 30°, then distance = h/tan(30°) = 273.2/(1/√3) = 273.2 × 1.732 = <strong>473.2 m</strong> ✓</li>
+            <li>Difference: 473.2 − 273.2 = <strong>200 m</strong> ✓ (matches given separation)</li>
+          </ul>
+        </div>
+      `;
+      break;
+      
+    case 6: // Bigger Picture
+      html = `
+        <div class="step-card">
+          <h3>Step 7 · The Bigger Picture</h3>
+          <p>This same mathematics powers:</p>
+          <ul>
+            <li><strong>Coast Guard radar:</strong> Calculating ship positions from observation towers</li>
+            <li><strong>Air traffic control:</strong> Determining aircraft altitude from ground-based angle measurements</li>
+            <li><strong>Surveying:</strong> Theodolites measure angles to find building heights without climbing them</li>
+            <li><strong>Astronomy:</strong> Parallax method uses exactly this triangle geometry to measure distances to stars</li>
+          </ul>
+          
+          <p style="margin-top:16px;"><strong>Self-Test Variants:</strong></p>
+          <div style="background:#f8f6f1; padding:12px; border-radius:6px; margin-top:8px;">
+            <p style="font-size:13px; margin-bottom:8px;"><strong>1.</strong> If the angles were 60° and 30° with 200 m separation, what would h be?</p>
+            <p style="font-size:13px; margin-bottom:8px;"><strong>2.</strong> If the lighthouse is 100 m tall and angles are 45° and 30°, how far apart are the ships?</p>
+            <p style="font-size:13px;"><strong>3.</strong> What if the ships were on <em>opposite</em> sides of the lighthouse? (Hint: distances add, not subtract.)</p>
+          </div>
+          
+          <p style="margin-top:16px; font-style:italic; color:#6B6560; font-size:13px;">
+            💡 Did you know? The method you just used — measuring angles from two points to find an unknown height — is called <strong>triangulation</strong>. It was used to measure the height of Mount Everest and the distance to the Moon.
+          </p>
+        </div>
+      `;
+      break;
+  }
+  
+  content.innerHTML = html;
+}
+
+function submitPrediction() {
+  const input = document.getElementById('pred-input');
+  const val = parseFloat(input.value);
+  if (!isNaN(val) && val > 0) {
+    state.studentPrediction = val;
+    renderStepPanel();
+  }
+}
+
+function nextStep() {
+  if (state.currentStep < state.totalSteps - 1) {
+    state.currentStep++;
+    renderStepPanel();
+  }
+}
+
+function prevStep() {
+  if (state.currentStep > 0) {
+    state.currentStep--;
+    renderStepPanel();
+  }
+}
+
+function showTeacherModal() {
+  document.getElementById('teacher-modal').classList.add('active');
+}
+
+function hideTeacherModal() {
+  document.getElementById('teacher-modal').classList.remove('active');
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  KEYBOARD SHORTCUTS                     ║
+// ╚══════════════════════════════════════════╝
+
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT') return;
+  switch(e.key) {
+    case 'ArrowRight': case 'n': nextStep(); break;
+    case 'ArrowLeft': case 'p': prevStep(); break;
+    case 'r': 
+      state.h = 100 * (Math.sqrt(3) + 1);
+      state.angle1 = 45; state.angle2 = 30; state.shipSeparation = 200;
+      initSliders(); updateResultDisplay();
+      break;
+    case 't': showTeacherModal(); break;
+    case 'Escape': hideTeacherModal(); break;
+  }
+});
+
+// ╔══════════════════════════════════════════╗
+// ║  INITIALIZATION                         ║
+// ╚══════════════════════════════════════════╝
+
+initSliders();
+updateResultDisplay();
+renderStepPanel();
+render();
+
+</script>
+</body>
+</html>

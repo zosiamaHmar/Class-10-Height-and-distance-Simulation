@@ -1,0 +1,1544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APEX-EDU · Chimney Height · Interactive Trigonometry</title>
+<style>
+/* ╔══════════════════════════════════════════╗
+   ║  CSS VARIABLES & RESET                   ║
+   ╚══════════════════════════════════════════╝ */
+:root {
+  --bg:          #FAFAF5;
+  --ink:         #1C1917;
+  --ink-light:   #6B6560;
+  --accent:      #3B5B8C;
+  --accent-warm: #C4622D;
+  --highlight:   #D4A843;
+  --panel-bg:    #F2EDE5;
+  --panel-border:#DDD5C8;
+  --success:     #2A7C6F;
+  --canvas-bg:   #E8E4DC;
+  --sky-day:     #B8D4E3;
+  --sky-dusk:    #E8C8A0;
+  --ground:      #8B7355;
+  --tower:       #6B6560;
+  --shadow:      #3A3530;
+  --sun:         #F4D03F;
+  --sun-glow:    #F9E79F;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: Georgia, 'Times New Roman', serif;
+  background: var(--bg);
+  color: var(--ink);
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* ╔══════════════════════════════════════════╗
+   ║  LAYOUT                                  ║
+   ╚══════════════════════════════════════════╝ */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.header-bar {
+  background: var(--ink);
+  color: var(--bg);
+  padding: 8px 20px;
+  font-size: 13px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-bar .topic-tag {
+  color: var(--highlight);
+  font-weight: bold;
+}
+
+.main-stage {
+  display: flex;
+  flex: 1;
+  position: relative;
+}
+
+/* Canvas area */
+.canvas-wrapper {
+  flex: 1;
+  position: relative;
+  background: var(--canvas-bg);
+  min-height: 500px;
+  overflow: hidden;
+}
+
+#simCanvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Solution Panel */
+.solution-panel {
+  width: 380px;
+  background: var(--panel-bg);
+  border-left: 2px solid var(--panel-border);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  max-height: calc(100vh - 40px);
+}
+
+.panel-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--panel-border);
+  background: linear-gradient(135deg, var(--panel-bg) 0%, #E8E0D4 100%);
+}
+
+.panel-header h2 {
+  font-size: 18px;
+  margin-bottom: 4px;
+  color: var(--ink);
+}
+
+.panel-header .meta {
+  font-size: 12px;
+  color: var(--ink-light);
+  font-family: Verdana, Geneva, sans-serif;
+}
+
+.progress-track {
+  padding: 12px 20px;
+  background: rgba(0,0,0,0.03);
+}
+
+.progress-bar {
+  height: 4px;
+  background: var(--panel-border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  width: 0%;
+  transition: width 0.6s ease;
+}
+
+.step-label {
+  font-size: 11px;
+  color: var(--ink-light);
+  margin-top: 6px;
+  font-family: Verdana, Geneva, sans-serif;
+}
+
+/* Step Cards */
+.step-content {
+  flex: 1;
+  padding: 0;
+}
+
+.step-card {
+  padding: 20px;
+  border-bottom: 1px solid var(--panel-border);
+  display: none;
+  animation: fadeIn 0.4s ease;
+}
+
+.step-card.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.step-number {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--accent);
+  font-weight: bold;
+  margin-bottom: 12px;
+  font-family: Verdana, Geneva, sans-serif;
+}
+
+.step-title {
+  font-size: 20px;
+  margin-bottom: 16px;
+  line-height: 1.3;
+}
+
+.step-body {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--ink);
+}
+
+.step-body p {
+  margin-bottom: 14px;
+}
+
+.formula-box {
+  background: var(--bg);
+  border: 2px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin: 16px 0;
+  text-align: center;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 18px;
+  position: relative;
+}
+
+.formula-box .formula-label {
+  position: absolute;
+  top: -10px;
+  left: 16px;
+  background: var(--panel-bg);
+  padding: 0 8px;
+  font-size: 11px;
+  color: var(--ink-light);
+  font-family: Verdana, Geneva, sans-serif;
+}
+
+.inline-formula {
+  font-family: 'Courier New', Courier, monospace;
+  background: rgba(59,91,140,0.08);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.95em;
+}
+
+/* Interactive Elements */
+.prediction-widget {
+  background: var(--bg);
+  border: 2px solid var(--highlight);
+  border-radius: 10px;
+  padding: 20px;
+  margin: 16px 0;
+}
+
+.prediction-widget h4 {
+  font-size: 14px;
+  margin-bottom: 12px;
+  color: var(--ink);
+}
+
+.slider-container {
+  margin: 12px 0;
+}
+
+.slider-container input[type="range"] {
+  width: 100%;
+  height: 6px;
+  -webkit-appearance: none;
+  background: var(--panel-border);
+  border-radius: 3px;
+  outline: none;
+}
+
+.slider-container input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  background: var(--highlight);
+  border-radius: 50%;
+  cursor: pointer;
+  border: 3px solid var(--bg);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+.slider-value {
+  text-align: center;
+  font-size: 24px;
+  font-weight: bold;
+  color: var(--accent);
+  margin-top: 8px;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.btn {
+  display: inline-block;
+  padding: 10px 24px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: Georgia, serif;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 12px;
+}
+
+.btn:hover {
+  background: #2A4A6E;
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: var(--ink-light);
+  margin-left: 8px;
+}
+
+.btn-secondary:hover {
+  background: var(--ink);
+}
+
+/* Challenge Card */
+.challenge-card {
+  background: linear-gradient(135deg, var(--accent) 0%, #2A4A6E 100%);
+  color: white;
+  padding: 20px;
+  border-radius: 10px;
+  margin: 16px 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.challenge-card::before {
+  content: "🏆";
+  position: absolute;
+  top: 10px;
+  right: 16px;
+  font-size: 28px;
+  opacity: 0.3;
+}
+
+.challenge-card h3 {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 10px;
+  opacity: 0.9;
+}
+
+.challenge-card p {
+  font-size: 15px;
+  line-height: 1.6;
+  font-style: italic;
+}
+
+.challenge-card .difficulty {
+  margin-top: 12px;
+  font-size: 12px;
+  font-family: Verdana, Geneva, sans-serif;
+}
+
+/* Watch on Canvas button */
+.watch-canvas {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--accent);
+  font-size: 13px;
+  cursor: pointer;
+  margin-top: 12px;
+  font-family: Verdana, Geneva, sans-serif;
+}
+
+.watch-canvas:hover {
+  color: var(--highlight);
+}
+
+/* Warning/Note */
+.warning-box {
+  background: rgba(196,98,45,0.08);
+  border-left: 3px solid var(--accent-warm);
+  padding: 12px 16px;
+  margin: 14px 0;
+  font-size: 14px;
+  border-radius: 0 6px 6px 0;
+}
+
+.warning-box::before {
+  content: "⚠ ";
+  color: var(--accent-warm);
+  font-weight: bold;
+}
+
+/* Answer reveal */
+.answer-reveal {
+  background: linear-gradient(135deg, var(--success) 0%, #1E5C50 100%);
+  color: white;
+  padding: 20px;
+  border-radius: 10px;
+  margin: 16px 0;
+  text-align: center;
+}
+
+.answer-reveal .big-answer {
+  font-size: 32px;
+  font-weight: bold;
+  margin: 8px 0;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.answer-reveal .prediction-compare {
+  font-size: 13px;
+  opacity: 0.9;
+  margin-top: 8px;
+}
+
+/* Navigation */
+.panel-nav {
+  padding: 16px 20px;
+  border-top: 1px solid var(--panel-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--panel-bg);
+  position: sticky;
+  bottom: 0;
+}
+
+.nav-btn {
+  padding: 8px 16px;
+  background: var(--bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: Georgia, serif;
+  transition: all 0.2s;
+}
+
+.nav-btn:hover:not(:disabled) {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.nav-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Teacher Dashboard Toggle */
+.teacher-toggle {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 44px;
+  height: 44px;
+  background: var(--ink);
+  color: var(--bg);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  z-index: 100;
+  transition: transform 0.2s;
+}
+
+.teacher-toggle:hover {
+  transform: scale(1.1);
+}
+
+/* Teacher Dashboard */
+.teacher-dashboard {
+  display: none;
+  position: fixed;
+  bottom: 70px;
+  right: 20px;
+  width: 340px;
+  max-height: 500px;
+  background: white;
+  border: 2px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+  z-index: 99;
+  overflow-y: auto;
+}
+
+.teacher-dashboard.visible {
+  display: block;
+}
+
+.teacher-dashboard h3 {
+  font-size: 14px;
+  margin-bottom: 12px;
+  color: var(--ink);
+  border-bottom: 1px solid var(--panel-border);
+  padding-bottom: 8px;
+}
+
+.teacher-dashboard ul {
+  list-style: none;
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.teacher-dashboard li::before {
+  content: "✓ ";
+  color: var(--success);
+  font-weight: bold;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .main-stage { flex-direction: column; }
+  .solution-panel { width: 100%; max-height: none; border-left: none; border-top: 2px solid var(--panel-border); }
+  .canvas-wrapper { min-height: 400px; }
+}
+
+/* Achievement toast */
+.achievement-toast {
+  position: fixed;
+  top: 60px;
+  right: 20px;
+  background: var(--ink);
+  color: var(--bg);
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  display: none;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  z-index: 200;
+  animation: slideIn 0.4s ease;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* Controls overlay on canvas */
+.canvas-controls {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  display: flex;
+  gap: 8px;
+  z-index: 10;
+  flex-wrap: wrap;
+}
+
+.canvas-control-btn {
+  background: rgba(28,25,23,0.8);
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: Verdana, Geneva, sans-serif;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.canvas-control-btn:hover {
+  background: var(--accent);
+}
+
+/* Did You Know */
+.did-you-know {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  max-width: 280px;
+  background: rgba(250,250,245,0.95);
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-style: italic;
+  color: var(--ink-light);
+  border: 1px solid var(--panel-border);
+  line-height: 1.5;
+  z-index: 10;
+}
+
+/* Hint system */
+.hint-box {
+  background: rgba(212,168,67,0.1);
+  border: 1px dashed var(--highlight);
+  padding: 12px;
+  border-radius: 6px;
+  margin: 12px 0;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.hint-box .hint-content {
+  display: none;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--highlight);
+}
+
+.hint-box.expanded .hint-content {
+  display: block;
+}
+
+/* Score display */
+.score-display {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(28,25,23,0.85);
+  color: white;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: Verdana, Geneva, sans-serif;
+  z-index: 10;
+}
+</style>
+<base target="_blank">
+</head>
+<body>
+
+<div class="app-container">
+  <div class="header-bar">
+    <div><span class="topic-tag">APEX-EDU</span> · Trigonometry · Height & Distance</div>
+    <div style="font-size:11px;opacity:0.7;">Class 10 · NCERT Ch.8</div>
+  </div>
+
+  <div class="main-stage">
+    <!-- CANVAS AREA -->
+    <div class="canvas-wrapper">
+      <canvas id="simCanvas"></canvas>
+
+      <div class="canvas-controls">
+        <button class="canvas-control-btn" onclick="sim.togglePlay()">⏯ Play/Pause</button>
+        <button class="canvas-control-btn" onclick="sim.reset()">↺ Reset</button>
+        <button class="canvas-control-btn" onclick="sim.setAngle(30)">30°</button>
+        <button class="canvas-control-btn" onclick="sim.setAngle(45)">45°</button>
+        <button class="canvas-control-btn" onclick="sim.setAngle(60)">60°</button>
+        <button class="canvas-control-btn" onclick="sim.animateLookUp()">👁 Look Up!</button>
+      </div>
+
+      <div class="score-display" id="scoreDisplay">
+        ✓ <span id="correctCount">0</span> correct | streak: <span id="streakCount">0</span>
+      </div>
+
+      <div class="did-you-know" id="didYouKnow">
+        💡 The tallest chimney in the world is in Kazakhstan — over 420 metres high! Surveyors use exactly this trigonometry to verify its height without climbing it.
+      </div>
+    </div>
+
+    <!-- SOLUTION PANEL -->
+    <div class="solution-panel">
+      <div class="panel-header">
+        <h2>🏭 The Chimney's Height</h2>
+        <div class="meta">Mathematics · Applications of Trigonometry · Class 10</div>
+      </div>
+
+      <div class="progress-track">
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="step-label" id="stepLabel">Step 1 of 7</div>
+      </div>
+
+      <div class="step-content" id="stepContent">
+
+        <!-- STEP 1: HOOK -->
+        <div class="step-card active" data-step="1">
+          <div class="step-number">Phase 1 · The Hook</div>
+          <div class="step-title">How Tall Is That Chimney?</div>
+          <div class="step-body">
+            <p>You stand <strong>28.5 metres</strong> away from a tall brick chimney. You are <strong>1.5 metres</strong> tall. You tilt your head up — the angle from your eyes to the very top is exactly <strong>45°</strong>.</p>
+            <p><strong>The question:</strong> How high is that chimney?</p>
+            <p>At 45°, something special happens — the height above your eyes equals the distance from the chimney. Can you see why?</p>
+
+            <div class="watch-canvas" onclick="sim.highlightScene()">
+              👁 Explore the scene on canvas →
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 2: EXPLORE -->
+        <div class="step-card" data-step="2">
+          <div class="step-number">Phase 2 · Explore</div>
+          <div class="step-title">Play with the Angle Slider</div>
+          <div class="step-body">
+            <p>Drag the slider to change the viewing angle. Watch how the chimney height changes — even though you stay at the same distance!</p>
+            <p>Notice: at <strong>45°</strong>, the height above your eyes exactly equals your distance from the chimney.</p>
+
+            <div class="slider-container">
+              <label style="font-size:12px;color:var(--ink-light);">Angle of Elevation (θ)</label>
+              <input type="range" id="angleSlider" min="15" max="75" value="45" oninput="sim.setAngle(this.value)">
+              <div class="slider-value"><span id="angleValue">45</span>°</div>
+            </div>
+
+            <div style="margin-top:12px;padding:12px;background:var(--bg);border-radius:8px;">
+              <div style="font-size:12px;color:var(--ink-light);margin-bottom:6px;">Live Measurements:</div>
+              <div style="font-size:14px;line-height:2;">
+                Height above eyes: <span id="heightAboveEyes" class="inline-formula">28.50</span> m<br>
+                Total chimney height: <span id="totalHeight" class="inline-formula">30.00</span> m<br>
+                Your distance: <span class="inline-formula">28.5</span> m (fixed)<br>
+                Your height: <span class="inline-formula">1.5</span> m (fixed)
+              </div>
+            </div>
+
+            <p style="margin-top:16px;"><em>At 45°: height above eyes = distance. At 60°: it's much taller!</em></p>
+
+            <button class="btn" onclick="advanceToStep(3)">I'm Ready →</button>
+          </div>
+        </div>
+
+        <!-- STEP 3: CHALLENGE -->
+        <div class="step-card" data-step="3">
+          <div class="step-number">Phase 3 · Challenge</div>
+          <div class="step-title">The Exam Problem</div>
+          <div class="step-body">
+            <div class="challenge-card">
+              <h3>🏆 Challenge</h3>
+              <p>"An observer <strong>1.5 m</strong> tall is <strong>28.5 m</strong> away from a chimney. The angle of elevation at the top of the chimney from <strong>her eyes</strong> is <strong>45°</strong>. What is the height of the chimney?"</p>
+              <div class="difficulty">Difficulty: ●●○○○ · Class 10 · CBSE/NCERT</div>
+            </div>
+
+            <div class="prediction-widget">
+              <h4>🔮 Make Your Prediction</h4>
+              <p style="font-size:13px;margin-bottom:8px;">Before solving — how tall is the chimney?</p>
+              <div class="slider-container">
+                <input type="range" id="predictionSlider" min="20" max="50" value="30" oninput="updatePrediction(this.value)">
+                <div class="slider-value"><span id="predictionValue">30</span> m</div>
+              </div>
+              <button class="btn" onclick="submitPrediction()">Lock Prediction & Solve</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 4: THE SCENE -->
+        <div class="step-card" data-step="4">
+          <div class="step-number">Step 1 · The Scene</div>
+          <div class="step-title">Setting Up the Right Triangle</div>
+          <div class="step-body">
+            <p>Let <strong>A</strong> be the observer's eye level (1.5 m above ground).</p>
+            <p>Let <strong>B</strong> be the point on the chimney at the same height as the observer's eyes.</p>
+            <p>Let <strong>C</strong> be the top of the chimney.</p>
+
+            <div class="formula-box">
+              <div class="formula-label">Right Triangle ABC</div>
+              AB = horizontal distance = <strong>28.5 m</strong><br>
+              BC = height above eyes = <strong>?</strong><br>
+              ∠BAC = angle of elevation = <strong>45°</strong><br>
+              <span style="font-size:13px;color:var(--ink-light);">The chimney's total height = BC + 1.5 m</span>
+            </div>
+
+            <div class="watch-canvas" onclick="sim.showTriangle()">
+              👁 Highlight the triangle on canvas →
+            </div>
+
+            <button class="btn" onclick="advanceToStep(5)">Continue →</button>
+          </div>
+        </div>
+
+        <!-- STEP 5: THE KEY INSIGHT -->
+        <div class="step-card" data-step="5">
+          <div class="step-number">Step 2 · The Key Insight</div>
+          <div class="step-title">Why Tangent? The 45° Special Case</div>
+          <div class="step-body">
+            <p>We know:</p>
+            <ul style="margin-left:20px;line-height:2;">
+              <li><strong>Angle</strong> from eyes = 45°</li>
+              <li><strong>Adjacent</strong> side = distance = 28.5 m</li>
+              <li><strong>Opposite</strong> side = height above eyes (unknown)</li>
+            </ul>
+
+            <p>The ratio connecting <span class="inline-formula">opposite</span> and <span class="inline-formula">adjacent</span> is <strong>tangent</strong>:</p>
+
+            <div class="formula-box">
+              <div class="formula-label">The Key Formula</div>
+              tan(θ) = opposite / adjacent<br>
+              tan(45°) = BC / AB = BC / 28.5
+            </div>
+
+            <div class="hint-box" onclick="this.classList.toggle('expanded')">
+              💡 Why is this a special case at 45°? Click to see.
+              <div class="hint-content">
+                At 45°, tan(45°) = 1. This means opposite = adjacent — the height above your eyes exactly equals your distance from the chimney! This only happens at 45°.
+              </div>
+            </div>
+
+            <button class="btn" onclick="advanceToStep(6)">Continue →</button>
+          </div>
+        </div>
+
+        <!-- STEP 6: THE CALCULATION -->
+        <div class="step-card" data-step="6">
+          <div class="step-number">Step 3 · The Calculation</div>
+          <div class="step-title">Solving for Chimney Height</div>
+          <div class="step-body">
+            <p>From tan(45°) = BC / 28.5:</p>
+
+            <div class="formula-box">
+              <div class="formula-label">Rearrange for BC</div>
+              BC = 28.5 × tan(45°)
+            </div>
+
+            <p>We know <span class="inline-formula">tan(45°) = 1</span>:</p>
+            <div class="formula-box">
+              BC = 28.5 × 1<br>
+              BC = <span class="inline-formula">28.5</span> metres
+            </div>
+
+            <p>But this is only the height <strong>above the observer's eyes</strong>! The total chimney height includes the observer's eye level:</p>
+
+            <div class="formula-box" style="border-color:var(--success);">
+              <div class="formula-label" style="color:var(--success);">Final Answer</div>
+              Total height = BC + observer's eye height<br>
+              Total height = 28.5 + 1.5<br>
+              <strong>Total height = 30 metres</strong>
+            </div>
+
+            <div class="warning-box">
+              Do NOT forget to add the observer's height! The angle is measured FROM her eyes, not from the ground. Many students stop at 28.5 m — that's only the height above eye level!
+            </div>
+
+            <button class="btn" onclick="advanceToStep(7)">Verify Answer →</button>
+          </div>
+        </div>
+
+        <!-- STEP 7: VERIFICATION -->
+        <div class="step-card" data-step="7">
+          <div class="step-number">Step 4 · Verification</div>
+          <div class="step-title">Does 30 Metres Make Sense?</div>
+          <div class="step-body">
+            <div class="answer-reveal">
+              <div style="font-size:13px;opacity:0.9;">Height of Chimney</div>
+              <div class="big-answer">30 m</div>
+              <div class="prediction-compare" id="predictionCompare">
+                You guessed: -- · Actual: 30 m
+              </div>
+            </div>
+
+            <p><strong>Check:</strong></p>
+            <ul style="margin-left:20px;line-height:2;">
+              <li>Height above eyes: <span class="inline-formula">30 − 1.5 = 28.5 m</span></li>
+              <li>Distance from chimney: <span class="inline-formula">28.5 m</span></li>
+              <li>tan(45°) = 28.5 / 28.5 = <span class="inline-formula">1</span> ✓</li>
+              <li>And tan(45°) = 1 ✓</li>
+            </ul>
+
+            <div class="watch-canvas" onclick="sim.animateVerification()">
+              👁 Watch the verification on canvas →
+            </div>
+
+            <button class="btn" onclick="advanceToStep(8)">Master Phase →</button>
+          </div>
+        </div>
+
+        <!-- STEP 8: MASTER -->
+        <div class="step-card" data-step="8">
+          <div class="step-number">Phase 5 · Master</div>
+          <div class="step-title">Three Variants to Test Yourself</div>
+          <div class="step-body">
+
+            <div style="background:var(--bg);border:1px solid var(--panel-border);border-radius:8px;padding:16px;margin-bottom:12px;">
+              <div style="font-size:12px;color:var(--accent);font-weight:bold;margin-bottom:8px;">Variant 1 · Different Angle</div>
+              <p style="font-size:14px;">Same observer (1.5 m), same distance (28.5 m), but angle = 60°. Find chimney height.</p>
+              <div class="hint-box" onclick="this.classList.toggle('expanded')">
+                💡 Show solution
+                <div class="hint-content">
+                  Height above eyes = 28.5 × tan(60°) = 28.5√3 ≈ 49.36 m. Total = 49.36 + 1.5 = 50.86 m
+                </div>
+              </div>
+            </div>
+
+            <div style="background:var(--bg);border:1px solid var(--panel-border);border-radius:8px;padding:16px;margin-bottom:12px;">
+              <div style="font-size:12px;color:var(--accent);font-weight:bold;margin-bottom:8px;">Variant 2 · Different Distance</div>
+              <p style="font-size:14px;">Observer 1.5 m tall, angle = 45°, chimney height = 40 m. How far is she standing?</p>
+              <div class="hint-box" onclick="this.classList.toggle('expanded')">
+                💡 Show solution
+                <div class="hint-content">
+                  Height above eyes = 40 − 1.5 = 38.5 m. At 45°, distance = height above eyes = 38.5 m
+                </div>
+              </div>
+            </div>
+
+            <div style="background:var(--bg);border:1px solid var(--panel-border);border-radius:8px;padding:16px;margin-bottom:12px;">
+              <div style="font-size:12px;color:var(--accent);font-weight:bold;margin-bottom:8px;">Variant 3 · Real World</div>
+              <p style="font-size:14px;">A surveyor 1.7 m tall stands 50 m from a building. The angle to the roof is 55°. How tall is the building?</p>
+              <div class="hint-box" onclick="this.classList.toggle('expanded')">
+                💡 Show answer
+                <div class="hint-content">
+                  Height above eyes = 50 × tan(55°) ≈ 50 × 1.428 = 71.4 m. Total = 71.4 + 1.7 = 73.1 m
+                </div>
+              </div>
+            </div>
+
+            <button class="btn" onclick="sim.reset();advanceToStep(1)">↺ Start Over</button>
+            <button class="btn btn-secondary" onclick="window.print()">🖨 Print Summary</button>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="panel-nav">
+        <button class="nav-btn" id="btnPrev" onclick="prevStep()">← Back</button>
+        <button class="nav-btn" id="btnNext" onclick="nextStep()">Next →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Achievement Toast -->
+<div class="achievement-toast" id="achievementToast">
+  <span id="achievementIcon">🏅</span>
+  <span id="achievementText">Achievement Unlocked!</span>
+</div>
+
+<!-- Teacher Dashboard -->
+<button class="teacher-toggle" onclick="toggleTeacher()" title="Teacher & Parent Dashboard">📋</button>
+<div class="teacher-dashboard" id="teacherDashboard">
+  <h3>📋 For Teachers & Parents</h3>
+  <p style="font-size:12px;color:var(--ink-light);margin-bottom:12px;">Topic: Height & Distance — Chimney Problem (Class 10 Mathematics)<br>Curriculum: NCERT Ch.8, CBSE, ICSE</p>
+
+  <h3>Learning Objectives</h3>
+  <ul>
+    <li>Understand that angle is measured from eye level, not ground</li>
+    <li>Apply tan(θ) = opposite/adjacent correctly</li>
+    <li>Add observer's height to get total object height</li>
+    <li>Recognize the special property of 45° (tan = 1)</li>
+    <li>Verify answer by back-substitution</li>
+  </ul>
+
+  <h3>Common Errors</h3>
+  <ul style="margin-bottom:12px;">
+    <li style="color:var(--accent-warm);"><span style="color:var(--accent-warm);">✗</span> Forgetting to add observer's height (stopping at 28.5 m)</li>
+    <li style="color:var(--accent-warm);"><span style="color:var(--accent-warm);">✗</span> Using sin or cos instead of tan</li>
+    <li style="color:var(--accent-warm);"><span style="color:var(--accent-warm);">✗</span> Thinking tan(45°) = √3/2 (that's sin 60°!)</li>
+  </ul>
+
+  <h3>Extension Activities</h3>
+  <ul>
+    <li>Measure a real building's height using a protractor and tape measure</li>
+    <li>Verify: at 45°, distance = height above eye level</li>
+    <li>Research: How do surveyors use clinometers in the field?</li>
+  </ul>
+</div>
+
+<script>
+// ╔══════════════════════════════════════════╗
+// ║  SIMULATION ENGINE                       ║
+// ╚══════════════════════════════════════════╝
+
+class ChimneySimulation {
+  constructor() {
+    this.canvas = document.getElementById('simCanvas');
+    this.ctx = this.canvas.getContext('2d');
+    this.angle = 45; // angle of elevation in degrees
+    this.targetAngle = 45;
+    this.observerHeight = 1.5; // metres
+    this.distance = 28.5; // metres from chimney
+    this.isPlaying = true;
+    this.animationId = null;
+    this.time = 0;
+    this.showTriangle = false;
+    this.verificationMode = false;
+    this.smokeParticles = [];
+    this.clouds = [];
+
+    this.resize();
+    window.addEventListener('resize', () => this.resize());
+
+    this.initClouds();
+    this.initSmoke();
+    this.gameLoop();
+  }
+
+  resize() {
+    const rect = this.canvas.parentElement.getBoundingClientRect();
+    this.canvas.width = rect.width;
+    this.canvas.height = rect.height;
+    this.groundY = this.canvas.height * 0.78;
+    this.observerX = this.canvas.width * 0.2;
+    this.chimneyX = this.canvas.width * 0.75;
+    this.scale = Math.min(this.canvas.width, this.canvas.height) / 120; // pixels per metre
+  }
+
+  initClouds() {
+    for (let i = 0; i < 4; i++) {
+      this.clouds.push({
+        x: Math.random() * 0.8 + 0.1,
+        y: Math.random() * 0.15 + 0.05,
+        size: Math.random() * 25 + 15,
+        speed: Math.random() * 0.0002 + 0.0001
+      });
+    }
+  }
+
+  initSmoke() {
+    for (let i = 0; i < 20; i++) {
+      this.smokeParticles.push({
+        x: 0,
+        y: 0,
+        vx: Math.random() * 0.5 - 0.2,
+        vy: -Math.random() * 1 - 0.5,
+        size: Math.random() * 4 + 2,
+        life: Math.random() * 100,
+        maxLife: 100 + Math.random() * 50
+      });
+    }
+  }
+
+  setAngle(deg) {
+    this.targetAngle = parseFloat(deg);
+    document.getElementById('angleSlider').value = this.targetAngle;
+    document.getElementById('angleValue').textContent = Math.round(this.targetAngle);
+    this.updateMeasurements();
+  }
+
+  updateMeasurements() {
+    const rad = this.targetAngle * Math.PI / 180;
+    const heightAboveEyes = this.distance * Math.tan(rad);
+    const totalHeight = heightAboveEyes + this.observerHeight;
+    document.getElementById('heightAboveEyes').textContent = heightAboveEyes.toFixed(2);
+    document.getElementById('totalHeight').textContent = totalHeight.toFixed(2);
+  }
+
+  togglePlay() {
+    this.isPlaying = !this.isPlaying;
+  }
+
+  reset() {
+    this.angle = 45;
+    this.targetAngle = 45;
+    this.showTriangle = false;
+    this.verificationMode = false;
+    this.setAngle(45);
+  }
+
+  animateLookUp() {
+    let startAngle = 15;
+    let endAngle = 45;
+    let duration = 2000;
+    let startTime = null;
+
+    const animate = (timestamp) => {
+      if (!startTime) startTime = timestamp;
+      let progress = Math.min((timestamp - startTime) / duration, 1);
+      progress = 1 - Math.pow(1 - progress, 3);
+      this.angle = startAngle + (endAngle - startAngle) * progress;
+      this.targetAngle = this.angle;
+      document.getElementById('angleSlider').value = this.angle;
+      document.getElementById('angleValue').textContent = Math.round(this.angle);
+      this.updateMeasurements();
+
+      if (progress < 1) requestAnimationFrame(animate);
+    };
+    requestAnimationFrame(animate);
+  }
+
+  highlightScene() {
+    this.highlightTimer = 90;
+  }
+
+  showTriangle() {
+    this.showTriangle = true;
+  }
+
+  animateVerification() {
+    this.verificationMode = true;
+    this.verificationTimer = 0;
+  }
+
+  gameLoop() {
+    if (this.isPlaying) {
+      this.time += 0.016;
+
+      // Smooth angle transition
+      const diff = this.targetAngle - this.angle;
+      if (Math.abs(diff) > 0.1) {
+        this.angle += diff * 0.08;
+      }
+
+      // Update smoke
+      this.smokeParticles.forEach(p => {
+        p.life++;
+        if (p.life > p.maxLife) {
+          p.life = 0;
+          p.x = 0;
+          p.y = 0;
+        }
+        p.x += p.vx + Math.sin(this.time + p.life * 0.05) * 0.3;
+        p.y += p.vy;
+      });
+
+      if (this.highlightTimer > 0) this.highlightTimer--;
+      if (this.verificationMode) this.verificationTimer++;
+
+      this.draw();
+    }
+    this.animationId = requestAnimationFrame(() => this.gameLoop());
+  }
+
+  draw() {
+    const ctx = this.ctx;
+    const w = this.canvas.width;
+    const h = this.canvas.height;
+    const s = this.scale;
+
+    // Sky gradient
+    const skyGrad = ctx.createLinearGradient(0, 0, 0, this.groundY);
+    skyGrad.addColorStop(0, '#B8D4E3');
+    skyGrad.addColorStop(0.5, '#C8DCE8');
+    skyGrad.addColorStop(1, '#D8E4EC');
+    ctx.fillStyle = skyGrad;
+    ctx.fillRect(0, 0, w, this.groundY);
+
+    // Sun
+    const sunX = w * 0.88;
+    const sunY = h * 0.12;
+    const sunGlow = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, 40);
+    sunGlow.addColorStop(0, 'rgba(244,208,63,0.4)');
+    sunGlow.addColorStop(1, 'rgba(244,208,63,0)');
+    ctx.fillStyle = sunGlow;
+    ctx.beginPath();
+    ctx.arc(sunX, sunY, 40, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#F4D03F';
+    ctx.beginPath();
+    ctx.arc(sunX, sunY, 18, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Clouds
+    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+    this.clouds.forEach(cloud => {
+      const cx = (cloud.x + this.time * cloud.speed) % 1.2 - 0.1;
+      const cy = cloud.y;
+      ctx.beginPath();
+      ctx.arc(cx * w, cy * h, cloud.size, 0, Math.PI * 2);
+      ctx.arc(cx * w + cloud.size * 0.5, cy * h + 5, cloud.size * 0.7, 0, Math.PI * 2);
+      ctx.arc(cx * w - cloud.size * 0.4, cy * h + 8, cloud.size * 0.6, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    // GROUND
+    ctx.fillStyle = '#8B7355';
+    ctx.fillRect(0, this.groundY, w, h - this.groundY);
+
+    // Ground texture
+    ctx.strokeStyle = '#7A6548';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < w; i += 30) {
+      ctx.beginPath();
+      ctx.moveTo(i, this.groundY);
+      ctx.lineTo(i + 5, this.groundY - 6);
+      ctx.lineTo(i + 10, this.groundY);
+      ctx.stroke();
+    }
+
+    // CHIMNEY
+    const chimneyWidth = 40;
+    const chimneyHeightPx = 30 * s; // 30 m total height
+    const chimneyBaseY = this.groundY;
+    const chimneyTopY = chimneyBaseY - chimneyHeightPx;
+
+    // Chimney body (brick pattern)
+    ctx.fillStyle = '#A0522D';
+    ctx.fillRect(this.chimneyX - chimneyWidth/2, chimneyTopY, chimneyWidth, chimneyHeightPx);
+
+    // Brick lines
+    ctx.strokeStyle = 'rgba(80,40,20,0.4)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < chimneyHeightPx; i += 12) {
+      ctx.beginPath();
+      ctx.moveTo(this.chimneyX - chimneyWidth/2, chimneyTopY + i);
+      ctx.lineTo(this.chimneyX + chimneyWidth/2, chimneyTopY + i);
+      ctx.stroke();
+    }
+    // Vertical brick lines (staggered)
+    for (let i = 0; i < chimneyHeightPx; i += 24) {
+      ctx.beginPath();
+      ctx.moveTo(this.chimneyX, chimneyTopY + i);
+      ctx.lineTo(this.chimneyX, chimneyTopY + i + 12);
+      ctx.stroke();
+    }
+    for (let i = 12; i < chimneyHeightPx; i += 24) {
+      ctx.beginPath();
+      ctx.moveTo(this.chimneyX - chimneyWidth/4, chimneyTopY + i);
+      ctx.lineTo(this.chimneyX - chimneyWidth/4, chimneyTopY + i + 12);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(this.chimneyX + chimneyWidth/4, chimneyTopY + i);
+      ctx.lineTo(this.chimneyX + chimneyWidth/4, chimneyTopY + i + 12);
+      ctx.stroke();
+    }
+
+    // Chimney top rim
+    ctx.fillStyle = '#8B4513';
+    ctx.fillRect(this.chimneyX - chimneyWidth/2 - 3, chimneyTopY - 6, chimneyWidth + 6, 6);
+
+    // Smoke particles
+    ctx.fillStyle = 'rgba(180,180,180,0.4)';
+    this.smokeParticles.forEach(p => {
+      const alpha = 1 - p.life / p.maxLife;
+      ctx.globalAlpha = alpha * 0.5;
+      ctx.beginPath();
+      ctx.arc(
+        this.chimneyX + p.x,
+        chimneyTopY - 8 + p.y,
+        p.size * (1 + p.life / p.maxLife),
+        0, Math.PI * 2
+      );
+      ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+
+    // Chimney label
+    ctx.fillStyle = '#5A3A2A';
+    ctx.font = 'bold 13px Georgia';
+    ctx.textAlign = 'center';
+    ctx.fillText('Chimney', this.chimneyX, chimneyTopY - 20);
+    ctx.font = '11px Georgia';
+    ctx.fillText('h = ?', this.chimneyX, chimneyTopY - 35);
+
+    // OBSERVER
+    const observerY = this.groundY - this.observerHeight * s;
+
+    // Body
+    ctx.fillStyle = '#3B5B8C';
+    ctx.fillRect(this.observerX - 8, observerY - 50, 16, 35);
+    // Head
+    ctx.beginPath();
+    ctx.arc(this.observerX, observerY - 60, 10, 0, Math.PI * 2);
+    ctx.fill();
+    // Arms
+    ctx.strokeStyle = '#3B5B8C';
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(this.observerX - 5, observerY - 45);
+    ctx.lineTo(this.observerX + 20, observerY - 55);
+    ctx.stroke();
+    // Legs
+    ctx.beginPath();
+    ctx.moveTo(this.observerX - 5, observerY - 15);
+    ctx.lineTo(this.observerX - 8, observerY);
+    ctx.moveTo(this.observerX + 5, observerY - 15);
+    ctx.lineTo(this.observerX + 8, observerY);
+    ctx.stroke();
+
+    // Observer label
+    ctx.fillStyle = '#1C1917';
+    ctx.font = 'bold 12px Georgia';
+    ctx.textAlign = 'center';
+    ctx.fillText('Observer', this.observerX, observerY + 18);
+    ctx.font = '11px Georgia';
+    ctx.fillText('1.5 m tall', this.observerX, observerY + 32);
+
+    // Observer height line
+    ctx.strokeStyle = 'rgba(59,91,140,0.5)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    ctx.moveTo(this.observerX - 25, this.groundY);
+    ctx.lineTo(this.observerX - 25, observerY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = '#3B5B8C';
+    ctx.font = '10px Georgia';
+    ctx.textAlign = 'right';
+    ctx.fillText('1.5m', this.observerX - 30, (this.groundY + observerY) / 2 + 4);
+
+    // EYES level (horizontal line from observer)
+    ctx.strokeStyle = 'rgba(59,91,140,0.3)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.moveTo(this.observerX, observerY - 60);
+    ctx.lineTo(this.chimneyX, observerY - 60);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Eye level label
+    ctx.fillStyle = 'rgba(59,91,140,0.7)';
+    ctx.font = '10px Georgia';
+    ctx.textAlign = 'center';
+    ctx.fillText('Eye level', (this.observerX + this.chimneyX) / 2, observerY - 68);
+
+    // DISTANCE line (ground)
+    ctx.strokeStyle = 'rgba(59,91,140,0.6)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 4]);
+    ctx.beginPath();
+    ctx.moveTo(this.observerX, this.groundY + 15);
+    ctx.lineTo(this.chimneyX, this.groundY + 15);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = '#3B5B8C';
+    ctx.font = '12px Georgia';
+    ctx.textAlign = 'center';
+    ctx.fillText('28.5 m', (this.observerX + this.chimneyX) / 2, this.groundY + 30);
+
+    // LINE OF SIGHT (from eyes to chimney top)
+    const rad = this.angle * Math.PI / 180;
+    const heightAboveEyes = this.distance * Math.tan(rad);
+    const chimneyTopFromEyes = observerY - 60 - heightAboveEyes * s;
+
+    ctx.strokeStyle = 'rgba(196,98,45,0.9)';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(this.observerX, observerY - 60);
+    ctx.lineTo(this.chimneyX, chimneyTopFromEyes);
+    ctx.stroke();
+
+    // Angle arc at observer's eyes
+    const arcRadius = 35;
+    ctx.strokeStyle = '#C4622D';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(this.observerX, observerY - 60, arcRadius, -rad, 0, false);
+    ctx.stroke();
+
+    // Angle label
+    ctx.fillStyle = '#C4622D';
+    ctx.font = 'bold 13px Georgia';
+    ctx.textAlign = 'left';
+    ctx.fillText(`${this.angle.toFixed(0)}°`, this.observerX + 10, observerY - 75);
+
+    // Height above eyes (vertical)
+    ctx.strokeStyle = 'rgba(59,91,140,0.5)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(this.chimneyX + 25, observerY - 60);
+    ctx.lineTo(this.chimneyX + 25, chimneyTopFromEyes);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = '#3B5B8C';
+    ctx.font = '11px Georgia';
+    ctx.textAlign = 'left';
+    const hAbove = this.distance * Math.tan(rad);
+    ctx.fillText(`${hAbove.toFixed(1)}m`, this.chimneyX + 30, (observerY - 60 + chimneyTopFromEyes) / 2);
+
+    // TOTAL HEIGHT label
+    ctx.fillStyle = '#2A7C6F';
+    ctx.font = 'bold 12px Georgia';
+    ctx.textAlign = 'left';
+    const totalH = hAbove + this.observerHeight;
+    ctx.fillText(`Total: ${totalH.toFixed(1)}m`, this.chimneyX + chimneyWidth/2 + 5, chimneyTopFromEyes - 5);
+
+    // RIGHT TRIANGLE overlay
+    if (this.showTriangle) {
+      ctx.strokeStyle = 'rgba(59,91,140,0.6)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(this.observerX, observerY - 60);
+      ctx.lineTo(this.chimneyX, chimneyTopFromEyes);
+      ctx.lineTo(this.chimneyX, observerY - 60);
+      ctx.closePath();
+      ctx.stroke();
+
+      ctx.fillStyle = 'rgba(59,91,140,0.08)';
+      ctx.fill();
+
+      // Right angle marker
+      ctx.strokeStyle = '#3B5B8C';
+      ctx.lineWidth = 1.5;
+      const rSize = 10;
+      ctx.beginPath();
+      ctx.moveTo(this.chimneyX - rSize, observerY - 60);
+      ctx.lineTo(this.chimneyX - rSize, observerY - 60 + rSize);
+      ctx.lineTo(this.chimneyX, observerY - 60 + rSize);
+      ctx.stroke();
+
+      // Labels
+      ctx.fillStyle = '#3B5B8C';
+      ctx.font = 'bold 10px Verdana';
+      ctx.textAlign = 'center';
+      ctx.fillText('ADJACENT', (this.observerX + this.chimneyX) / 2, observerY - 45);
+      ctx.fillText('(28.5 m)', (this.observerX + this.chimneyX) / 2, observerY - 35);
+
+      ctx.fillStyle = '#C4622D';
+      ctx.font = 'bold 10px Verdana';
+      ctx.textAlign = 'left';
+      ctx.fillText('OPPOSITE', this.chimneyX + 5, (observerY - 60 + chimneyTopFromEyes) / 2 - 10);
+      ctx.fillText('(height', this.chimneyX + 5, (observerY - 60 + chimneyTopFromEyes) / 2);
+      ctx.fillText('above eyes)', this.chimneyX + 5, (observerY - 60 + chimneyTopFromEyes) / 2 + 10);
+    }
+
+    // Verification overlay
+    if (this.verificationMode && this.verificationTimer < 250) {
+      this.drawVerification(ctx, w, h);
+    }
+
+    // Highlight effect
+    if (this.highlightTimer > 0) {
+      ctx.strokeStyle = `rgba(212,168,67,${this.highlightTimer/90})`;
+      ctx.lineWidth = 4;
+      ctx.strokeRect(this.observerX - 25, observerY - 70, 50, 80);
+      ctx.strokeRect(this.chimneyX - chimneyWidth/2 - 5, chimneyTopY - 5, chimneyWidth + 10, chimneyHeightPx + 5);
+    }
+
+    // Ground label
+    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+    ctx.font = '11px Verdana';
+    ctx.textAlign = 'left';
+    ctx.fillText('Ground level', 20, this.groundY + 20);
+  }
+
+  drawVerification(ctx, w, h) {
+    const progress = Math.min(this.verificationTimer / 180, 1);
+
+    const yStart = h * 0.08;
+    const panelWidth = 300;
+    const panelX = (w - panelWidth) / 2;
+
+    // Background panel
+    ctx.fillStyle = 'rgba(250,250,245,0.95)';
+    ctx.strokeStyle = 'rgba(42,124,111,0.5)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(panelX, yStart - 10, panelWidth, 110, 10);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#2A7C6F';
+    ctx.font = 'bold 15px Georgia';
+    ctx.textAlign = 'center';
+
+    if (progress > 0.2) {
+      ctx.fillText('✓ Height above eyes = 28.5 × tan(45°)', w/2, yStart + 20);
+    }
+    if (progress > 0.5) {
+      ctx.fillText('✓ = 28.5 × 1 = 28.5 m', w/2, yStart + 48);
+    }
+    if (progress > 0.8) {
+      ctx.font = 'bold 17px Georgia';
+      ctx.fillText('✓ Total = 28.5 + 1.5 = 30 m', w/2, yStart + 80);
+    }
+  }
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  STEP MANAGEMENT                         ║
+// ╚══════════════════════════════════════════╝
+
+let currentStep = 1;
+const totalSteps = 8;
+let studentPrediction = null;
+let correctCount = 0;
+let streakCount = 0;
+
+function updateProgress() {
+  const pct = (currentStep / totalSteps) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('stepLabel').textContent = `Step ${Math.min(currentStep, 7)} of 7`;
+
+  document.getElementById('btnPrev').disabled = currentStep === 1;
+  document.getElementById('btnNext').disabled = currentStep === totalSteps;
+
+  document.querySelectorAll('.step-card').forEach(card => {
+    card.classList.remove('active');
+    if (parseInt(card.dataset.step) === currentStep) {
+      card.classList.add('active');
+    }
+  });
+}
+
+function advanceToStep(n) {
+  currentStep = n;
+  updateProgress();
+
+  if (n === 2) sim.setAngle(45);
+  if (n === 4) sim.showTriangle = true;
+  if (n === 7) sim.animateVerification();
+}
+
+function nextStep() {
+  if (currentStep < totalSteps) {
+    advanceToStep(currentStep + 1);
+  }
+}
+
+function prevStep() {
+  if (currentStep > 1) {
+    advanceToStep(currentStep - 1);
+  }
+}
+
+function updatePrediction(val) {
+  document.getElementById('predictionValue').textContent = val;
+}
+
+function submitPrediction() {
+  studentPrediction = parseFloat(document.getElementById('predictionSlider').value);
+  const actual = 30;
+  const diff = Math.abs(studentPrediction - actual);
+  const pctOff = (diff / actual) * 100;
+
+  let message = '';
+  let icon = '🏅';
+
+  if (pctOff < 10) {
+    message = 'Sharp Eye! Within 10%!';
+    icon = '👁';
+    correctCount++;
+    streakCount++;
+    showAchievement(icon, message);
+  } else if (pctOff < 25) {
+    message = 'Good intuition! Close guess.';
+    icon = '⭐';
+    streakCount++;
+    showAchievement(icon, message);
+  } else {
+    message = 'Interesting guess — remember the 45° special case!';
+    streakCount = 0;
+  }
+
+  document.getElementById('correctCount').textContent = correctCount;
+  document.getElementById('streakCount').textContent = streakCount;
+
+  document.getElementById('predictionCompare').innerHTML = 
+    `You guessed: ${studentPrediction}m · Actual: 30m · Off by ${pctOff.toFixed(1)}%`;
+
+  advanceToStep(4);
+}
+
+function showAchievement(icon, text) {
+  const toast = document.getElementById('achievementToast');
+  document.getElementById('achievementIcon').textContent = icon;
+  document.getElementById('achievementText').textContent = text;
+  toast.style.display = 'flex';
+  setTimeout(() => {
+    toast.style.display = 'none';
+  }, 3000);
+}
+
+function toggleTeacher() {
+  document.getElementById('teacherDashboard').classList.toggle('visible');
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  KEYBOARD SHORTCUTS                      ║
+// ╚══════════════════════════════════════════╝
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === ' ') { e.preventDefault(); sim.togglePlay(); }
+  if (e.key === 'r' || e.key === 'R') sim.reset();
+  if (e.key === 'n' || e.key === 'N') nextStep();
+  if (e.key === 'p' || e.key === 'P') prevStep();
+  if (e.key === 't' || e.key === 'T') toggleTeacher();
+});
+
+// ╔══════════════════════════════════════════╗
+// ║  INITIALIZATION                          ║
+// ╚══════════════════════════════════════════╝
+
+const sim = new ChimneySimulation();
+updateProgress();
+</script>
+
+</body>
+</html>

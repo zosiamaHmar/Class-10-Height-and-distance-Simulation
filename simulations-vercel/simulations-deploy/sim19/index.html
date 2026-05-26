@@ -1,0 +1,1599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APEX-EDU v3 — Two Pillars & Angles of Elevation</title>
+<style>
+:root {
+  --bg: #FAFAF5;
+  --ink: #1C1917;
+  --ink-light: #6B6560;
+  --accent: #3B5B8C;
+  --accent-warm: #C4622D;
+  --highlight: #D4A843;
+  --panel-bg: #F2EDE5;
+  --panel-border: #DDD5C8;
+  --success: #2A7C6F;
+  --font-body: Georgia, 'Times New Roman', serif;
+  --font-mono: 'Courier New', Courier, monospace;
+  --font-label: Verdana, Geneva, sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  overflow: hidden;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+#app {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+}
+
+/* Canvas Area */
+#canvas-container {
+  flex: 1;
+  position: relative;
+  background: var(--bg);
+  overflow: hidden;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Right Panel */
+#panel {
+  width: 380px;
+  background: var(--panel-bg);
+  border-left: 1px solid var(--panel-border);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 0;
+  font-family: var(--font-body);
+}
+
+.panel-header {
+  padding: 20px 24px 12px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.panel-header h1 {
+  font-size: 18px;
+  font-weight: normal;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+
+.panel-header .meta {
+  font-size: 12px;
+  color: var(--ink-light);
+  font-family: var(--font-label);
+}
+
+/* Progress Bar */
+.progress-container {
+  padding: 0 24px 16px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.progress-bar {
+  height: 4px;
+  background: rgba(28,25,23,0.1);
+  border-radius: 2px;
+  margin-top: 12px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 0.5s ease;
+  width: 0%;
+}
+
+.progress-text {
+  font-size: 11px;
+  color: var(--ink-light);
+  font-family: var(--font-label);
+  margin-top: 6px;
+}
+
+/* Phase Content */
+.phase-content {
+  padding: 20px 24px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.phase-title {
+  font-size: 16px;
+  font-weight: bold;
+  color: var(--accent);
+  margin-bottom: 12px;
+  font-family: var(--font-label);
+}
+
+.phase-text {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--ink);
+  margin-bottom: 16px;
+}
+
+.phase-text em {
+  color: var(--accent-warm);
+  font-style: italic;
+}
+
+/* Challenge Card */
+.challenge-card {
+  background: white;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 16px;
+  margin: 16px 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.challenge-card .badge {
+  display: inline-block;
+  background: var(--accent);
+  color: white;
+  font-size: 10px;
+  font-family: var(--font-label);
+  padding: 3px 10px;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.challenge-card p {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink);
+}
+
+/* Prediction Widget */
+.prediction-widget {
+  background: white;
+  border: 2px solid var(--highlight);
+  border-radius: 8px;
+  padding: 16px;
+  margin: 16px 0;
+}
+
+.prediction-widget label {
+  display: block;
+  font-size: 13px;
+  color: var(--ink-light);
+  margin-bottom: 8px;
+  font-family: var(--font-label);
+}
+
+.prediction-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  font-size: 16px;
+  font-family: var(--font-mono);
+  color: var(--ink);
+  margin-bottom: 10px;
+}
+
+.prediction-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.prediction-btn {
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: var(--font-label);
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.2s;
+}
+
+.prediction-btn:hover {
+  background: #2d4a70;
+}
+
+/* Step Cards */
+.step-card {
+  background: white;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 16px;
+  margin: 12px 0;
+  position: relative;
+}
+
+.step-card .step-num {
+  position: absolute;
+  top: -8px;
+  left: 16px;
+  background: var(--accent);
+  color: white;
+  font-size: 11px;
+  font-family: var(--font-label);
+  padding: 2px 10px;
+  border-radius: 10px;
+}
+
+.step-card h3 {
+  font-size: 14px;
+  margin-top: 8px;
+  margin-bottom: 10px;
+  color: var(--ink);
+}
+
+.step-card p {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink);
+  margin-bottom: 10px;
+}
+
+/* Formula Box */
+.formula-box {
+  background: #f8f6f1;
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin: 10px 0;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  text-align: center;
+  color: var(--ink);
+}
+
+/* Fill-in-the-blank */
+.fill-blank {
+  display: inline-block;
+  border-bottom: 2px solid var(--accent);
+  min-width: 40px;
+  text-align: center;
+  font-family: var(--font-mono);
+  color: var(--accent);
+  font-weight: bold;
+}
+
+.fill-blank.correct {
+  border-color: var(--success);
+  color: var(--success);
+}
+
+.fill-blank.wrong {
+  border-color: var(--accent-warm);
+  color: var(--accent-warm);
+}
+
+/* SLIDER STYLES — ALWAYS VISIBLE */
+.controls-area {
+  padding: 16px 24px;
+  border-top: 1px solid var(--panel-border);
+  background: rgba(255,255,255,0.5);
+}
+
+.control-group {
+  margin-bottom: 18px;
+}
+
+.control-group label {
+  display: block;
+  font-size: 12px;
+  color: var(--ink-light);
+  font-family: var(--font-label);
+  margin-bottom: 8px;
+}
+
+.slider-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+}
+
+.slider-track {
+  flex: 1;
+  height: 8px;
+  background: rgba(28,25,23,0.1);
+  border-radius: 4px;
+  position: relative;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.slider-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 4px;
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+}
+
+.slider-thumb {
+  width: 22px;
+  height: 22px;
+  background: var(--bg);
+  border: 3px solid var(--accent);
+  border-radius: 50%;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  cursor: grab;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  z-index: 2;
+  touch-action: none;
+}
+
+.slider-thumb:active, .slider-thumb.dragging {
+  cursor: grabbing;
+  border-color: var(--highlight);
+  transform: translate(-50%, -50%) scale(1.15);
+}
+
+.slider-value {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--accent);
+  min-width: 60px;
+  text-align: right;
+  font-weight: bold;
+}
+
+/* Buttons */
+.btn-group {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.btn {
+  flex: 1;
+  padding: 10px 16px;
+  border: 1px solid var(--panel-border);
+  background: white;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: var(--font-label);
+  cursor: pointer;
+  color: var(--ink);
+  transition: all 0.2s;
+}
+
+.btn:hover {
+  background: var(--bg);
+}
+
+.btn.primary {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.btn.primary:hover {
+  background: #2d4a70;
+}
+
+/* Results */
+.result-box {
+  background: white;
+  border: 2px solid var(--success);
+  border-radius: 8px;
+  padding: 16px;
+  margin: 16px 0;
+  text-align: center;
+}
+
+.result-box .big-answer {
+  font-size: 28px;
+  font-weight: bold;
+  color: var(--success);
+  font-family: var(--font-mono);
+}
+
+.result-box .result-label {
+  font-size: 12px;
+  color: var(--ink-light);
+  margin-top: 4px;
+}
+
+/* Prediction Result */
+.prediction-result {
+  padding: 12px;
+  border-radius: 6px;
+  margin: 10px 0;
+  font-size: 13px;
+}
+
+.prediction-result.good {
+  background: rgba(42,124,111,0.1);
+  color: var(--success);
+}
+
+.prediction-result.close {
+  background: rgba(212,168,67,0.1);
+  color: var(--highlight);
+}
+
+.prediction-result.off {
+  background: rgba(196,98,45,0.1);
+  color: var(--accent-warm);
+}
+
+/* Did You Know */
+.did-you-know {
+  font-style: italic;
+  font-size: 12px;
+  color: var(--ink-light);
+  border-left: 3px solid var(--highlight);
+  padding-left: 12px;
+  margin: 16px 0;
+  line-height: 1.5;
+}
+
+/* Hide/Show */
+.hidden { display: none !important; }
+
+/* Mobile */
+@media (max-width: 768px) {
+  #app { flex-direction: column; }
+  #panel { width: 100%; height: 45%; border-left: none; border-top: 1px solid var(--panel-border); }
+  #canvas-container { height: 55%; }
+}
+
+/* Teacher Dashboard */
+.teacher-toggle {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(255,255,255,0.9);
+  border: 1px solid var(--panel-border);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-family: var(--font-label);
+  cursor: pointer;
+  z-index: 100;
+  color: var(--ink-light);
+}
+
+.teacher-dashboard {
+  position: absolute;
+  top: 40px;
+  right: 10px;
+  width: 320px;
+  max-height: 80vh;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  z-index: 100;
+  font-size: 12px;
+  line-height: 1.6;
+  display: none;
+}
+
+.teacher-dashboard h4 {
+  font-size: 13px;
+  margin-bottom: 10px;
+  color: var(--ink);
+  border-bottom: 1px solid var(--panel-border);
+  padding-bottom: 6px;
+}
+
+.teacher-dashboard ul {
+  margin-left: 16px;
+  margin-bottom: 10px;
+}
+
+.teacher-dashboard li {
+  margin-bottom: 4px;
+}
+
+/* Slider instruction text */
+.slider-hint {
+  font-size: 11px;
+  color: var(--ink-light);
+  margin-top: 4px;
+  font-style: italic;
+}
+</style>
+<base target="_blank">
+</head>
+<body>
+
+<div id="app">
+  <div id="canvas-container">
+    <canvas id="mainCanvas"></canvas>
+    <button class="teacher-toggle" onclick="toggleTeacher()">📋 For Teachers</button>
+    <div class="teacher-dashboard" id="teacherDash">
+      <h4>Teacher & Parent Notes</h4>
+      <p><strong>Topic:</strong> Heights & Distances (Class 10)<br>
+      <strong>NCERT:</strong> Ch. 9, Exercise 9.1<br>
+      <strong>Concepts:</strong> Angle of elevation, tangent ratios, simultaneous equations</p>
+      <h4>Learning Objectives</h4>
+      <ul>
+        <li>Visualize angle of elevation from a real-world scenario</li>
+        <li>Apply tan θ = opposite/adjacent in two right triangles</li>
+        <li>Set up and solve simultaneous equations from equal heights</li>
+        <li>Verify solution using back-substitution</li>
+      </ul>
+      <h4>Common Errors</h4>
+      <ul>
+        <li>Adding angles (60° + 30° = 90°) instead of using tan ratios</li>
+        <li>Using sin or cos instead of tan for elevation problems</li>
+        <li>Forgetting that both pillars have EQUAL height</li>
+        <li>Incorrectly assigning x to the wrong pillar</li>
+      </ul>
+      <h4>Prerequisites</h4>
+      <ul>
+        <li>Values of tan 30°, tan 45°, tan 60°</li>
+        <li>Solving linear equations in one variable</li>
+        <li>Understanding of similar triangles</li>
+      </ul>
+    </div>
+  </div>
+  
+  <div id="panel">
+    <div class="panel-header">
+      <h1>Two Pillars & Angles of Elevation</h1>
+      <div class="meta">Trigonometry · Class 10 · NCERT Ch. 9</div>
+    </div>
+    
+    <div class="progress-container">
+      <div class="progress-text" id="progressText">Phase 1 of 5 — Hook</div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill" style="width: 20%"></div>
+      </div>
+    </div>
+    
+    <div class="phase-content" id="phaseContent">
+      <!-- Dynamic content inserted here -->
+    </div>
+    
+    <div class="controls-area" id="controlsArea">
+      <!-- SLIDERS ALWAYS VISIBLE -->
+    </div>
+  </div>
+</div>
+
+<script>
+// ╔══════════════════════════════════════════╗
+// ║  APEX-EDU v3 — CORE SIMULATION ENGINE    ║
+// ╚══════════════════════════════════════════╝
+
+const canvas = document.getElementById('mainCanvas');
+const ctx = canvas.getContext('2d');
+
+// State
+let state = {
+  phase: 1,
+  roadWidth: 150,
+  pillarHeight: 64.9519,
+  pointPosition: 37.5,
+  angleLeft: 60,
+  angleRight: 30,
+  studentPrediction: null,
+  currentStep: 0,
+  totalSteps: 7,
+  draggingSlider: null,
+  showConstruction: true,
+  showUnitCircle: true,
+  showGrid: true,
+  animationTime: 0,
+  showAnswer: false,
+  selfTestIndex: 0,
+  // Slider states
+  sliders: {
+    roadWidth: { min: 50, max: 300, value: 150, label: 'Road Width', unit: 'm' },
+    pointPos: { min: 10, max: 140, value: 37.5, label: 'Observer Position', unit: 'm' },
+    angleLeft: { min: 15, max: 75, value: 60, label: 'Left Angle', unit: '°' },
+    angleRight: { min: 15, max: 75, value: 30, label: 'Right Angle', unit: '°' }
+  }
+};
+
+// Resize canvas
+function resize() {
+  const container = document.getElementById('canvas-container');
+  canvas.width = container.clientWidth;
+  canvas.height = container.clientHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+// ╔══════════════════════════════════════════╗
+// ║  MATH UTILITIES                          ║
+// ╚══════════════════════════════════════════╝
+
+const toRad = deg => deg * Math.PI / 180;
+const toDeg = rad => rad * 180 / Math.PI;
+
+// ╔══════════════════════════════════════════╗
+// ║  RENDERING — COORDINATE SYSTEM           ║
+// ╚══════════════════════════════════════════╝
+
+function drawGrid() {
+  if (!state.showGrid) return;
+  
+  const scale = 40;
+  const originX = canvas.width * 0.15;
+  const originY = canvas.height * 0.85;
+  
+  ctx.strokeStyle = 'rgba(28, 25, 23, 0.06)';
+  ctx.lineWidth = 1;
+  
+  for (let x = originX % scale; x < canvas.width; x += scale) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, canvas.height);
+    ctx.stroke();
+  }
+  
+  for (let y = originY % scale; y < canvas.height; y += scale) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(canvas.width, y);
+    ctx.stroke();
+  }
+  
+  ctx.strokeStyle = 'rgba(28, 25, 23, 0.2)';
+  ctx.lineWidth = 2;
+  
+  ctx.beginPath();
+  ctx.moveTo(0, originY);
+  ctx.lineTo(canvas.width, originY);
+  ctx.stroke();
+  
+  ctx.beginPath();
+  ctx.moveTo(originX, 0);
+  ctx.lineTo(originX, canvas.height);
+  ctx.stroke();
+  
+  drawArrowhead(ctx, canvas.width - 15, originY, 0);
+  drawArrowhead(ctx, originX, 15, -Math.PI/2);
+  
+  ctx.fillStyle = '#6B6560';
+  ctx.font = '14px Georgia';
+  ctx.fillText('x (m)', canvas.width - 50, originY - 10);
+  ctx.fillText('y (m)', originX + 10, 25);
+  
+  return { originX, originY, scale };
+}
+
+function drawArrowhead(ctx, x, y, angle) {
+  const size = 8;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(-size, -size/2);
+  ctx.lineTo(-size, size/2);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(28, 25, 23, 0.3)';
+  ctx.fill();
+  ctx.restore();
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  RENDERING — SCENE OBJECTS               ║
+// ╚══════════════════════════════════════════╝
+
+function getSceneParams() {
+  const originX = canvas.width * 0.15;
+  const originY = canvas.height * 0.85;
+  const pixelsPerMeter = Math.min(canvas.width / (state.roadWidth + 80), canvas.height / 120);
+  
+  const roadLeft = originX;
+  const roadRight = originX + state.roadWidth * pixelsPerMeter;
+  const roadY = originY;
+  
+  const pointX = roadLeft + state.pointPosition * pixelsPerMeter;
+  
+  const pillarLeftX = roadLeft;
+  const pillarRightX = roadRight;
+  
+  // Calculate height from angles and position
+  const h1 = state.pointPosition * Math.tan(toRad(state.angleLeft));
+  const h2 = (state.roadWidth - state.pointPosition) * Math.tan(toRad(state.angleRight));
+  
+  // Use average for display (in real problem they should be equal)
+  const displayHeight = (h1 + h2) / 2;
+  const pillarHeightPx = displayHeight * pixelsPerMeter;
+  
+  return { originX, originY, pixelsPerMeter, roadLeft, roadRight, roadY, pointX, pillarLeftX, pillarRightX, pillarHeightPx, displayHeight };
+}
+
+function drawRoad() {
+  const { roadLeft, roadRight, roadY, pixelsPerMeter } = getSceneParams();
+  
+  ctx.fillStyle = '#E8E4DC';
+  ctx.fillRect(roadLeft - 20, roadY - 5, (state.roadWidth * pixelsPerMeter) + 40, 15);
+  
+  ctx.strokeStyle = '#C4BFB6';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([15, 10]);
+  ctx.beginPath();
+  ctx.moveTo(roadLeft, roadY + 2);
+  ctx.lineTo(roadRight, roadY + 2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  
+  ctx.fillStyle = '#6B6560';
+  ctx.font = '13px Verdana';
+  ctx.textAlign = 'center';
+  ctx.fillText(`Road = ${state.roadWidth.toFixed(1)} m`, (roadLeft + roadRight) / 2, roadY + 30);
+  ctx.textAlign = 'left';
+}
+
+function drawPillar(x, height, label, color) {
+  const { roadY, pixelsPerMeter } = getSceneParams();
+  const baseWidth = 12;
+  const topWidth = 8;
+  const h = height * pixelsPerMeter;
+  
+  ctx.fillStyle = color || '#8B7355';
+  ctx.beginPath();
+  ctx.moveTo(x - baseWidth/2, roadY);
+  ctx.lineTo(x + baseWidth/2, roadY);
+  ctx.lineTo(x + topWidth/2, roadY - h);
+  ctx.lineTo(x - topWidth/2, roadY - h);
+  ctx.closePath();
+  ctx.fill();
+  
+  ctx.strokeStyle = '#5C4A3A';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  
+  ctx.fillStyle = '#A09080';
+  ctx.fillRect(x - topWidth/2 - 2, roadY - h - 4, topWidth + 4, 4);
+  
+  if (state.phase >= 3) {
+    ctx.fillStyle = '#3B5B8C';
+    ctx.font = 'bold 13px Verdana';
+    ctx.textAlign = 'center';
+    ctx.fillText(`h = ${height.toFixed(1)}m`, x, roadY - h - 15);
+    ctx.textAlign = 'left';
+  }
+  
+  ctx.fillStyle = '#6B6560';
+  ctx.font = '12px Verdana';
+  ctx.textAlign = 'center';
+  ctx.fillText(label, x, roadY + 22);
+  ctx.textAlign = 'left';
+}
+
+function drawObserver() {
+  const { pointX, roadY } = getSceneParams();
+  
+  ctx.fillStyle = '#D4A843';
+  ctx.beginPath();
+  ctx.arc(pointX, roadY - 8, 8, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#1C1917';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  
+  ctx.fillStyle = '#1C1917';
+  ctx.beginPath();
+  ctx.arc(pointX - 2, roadY - 10, 2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(pointX + 2, roadY - 10, 2, 0, Math.PI * 2);
+  ctx.fill();
+  
+  ctx.fillStyle = '#1C1917';
+  ctx.font = 'bold 12px Verdana';
+  ctx.textAlign = 'center';
+  ctx.fillText('P', pointX, roadY + 22);
+  ctx.textAlign = 'left';
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  RENDERING — CONSTRUCTION LINES          ║
+// ╚══════════════════════════════════════════╝
+
+function drawConstructionLines() {
+  if (!state.showConstruction) return;
+  
+  const { pillarLeftX, pillarRightX, pillarHeightPx, pointX, roadY } = getSceneParams();
+  const topLeftY = roadY - pillarHeightPx;
+  const topRightY = roadY - pillarHeightPx;
+  
+  ctx.setLineDash([8, 4]);
+  ctx.lineWidth = 1.5;
+  
+  ctx.strokeStyle = 'rgba(59, 91, 140, 0.35)';
+  ctx.beginPath();
+  ctx.moveTo(pointX, roadY);
+  ctx.lineTo(pillarLeftX, roadY);
+  ctx.stroke();
+  
+  ctx.beginPath();
+  ctx.moveTo(pointX, roadY);
+  ctx.lineTo(pillarRightX, roadY);
+  ctx.stroke();
+  
+  ctx.strokeStyle = 'rgba(59, 91, 140, 0.35)';
+  ctx.beginPath();
+  ctx.moveTo(pillarLeftX, roadY);
+  ctx.lineTo(pillarLeftX, topLeftY);
+  ctx.stroke();
+  
+  ctx.beginPath();
+  ctx.moveTo(pillarRightX, roadY);
+  ctx.lineTo(pillarRightX, topRightY);
+  ctx.stroke();
+  
+  ctx.strokeStyle = 'rgba(196, 98, 45, 0.3)';
+  ctx.beginPath();
+  ctx.moveTo(pillarLeftX, topLeftY);
+  ctx.lineTo(pointX, topLeftY);
+  ctx.stroke();
+  
+  ctx.beginPath();
+  ctx.moveTo(pillarRightX, topRightY);
+  ctx.lineTo(pointX, topRightY);
+  ctx.stroke();
+  
+  ctx.setLineDash([]);
+  
+  drawRightAngleMarker(pillarLeftX, roadY, 18);
+  drawRightAngleMarker(pillarRightX, roadY, 18);
+}
+
+function drawRightAngleMarker(x, y, size) {
+  ctx.strokeStyle = 'rgba(59, 91, 140, 0.5)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(x, y - size);
+  ctx.lineTo(x, y);
+  ctx.lineTo(x + size, y);
+  ctx.stroke();
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  RENDERING — ANGLE OF ELEVATION LINES    ║
+// ╚══════════════════════════════════════════╝
+
+function drawElevationLines() {
+  const { pillarLeftX, pillarRightX, pillarHeightPx, pointX, roadY } = getSceneParams();
+  const topLeftY = roadY - pillarHeightPx;
+  const topRightY = roadY - pillarHeightPx;
+  
+  ctx.strokeStyle = '#3B5B8C';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(pointX, roadY - 8);
+  ctx.lineTo(pillarLeftX, topLeftY);
+  ctx.stroke();
+  
+  ctx.strokeStyle = '#3B5B8C';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(pointX, roadY - 8);
+  ctx.lineTo(pillarRightX, topRightY);
+  ctx.stroke();
+  
+  drawAngleArc(pointX, roadY - 8, pillarLeftX, topLeftY, state.angleLeft, 'left');
+  drawAngleArc(pointX, roadY - 8, pillarRightX, topRightY, state.angleRight, 'right');
+}
+
+function drawAngleArc(ox, oy, px, py, angle, side) {
+  const radius = 50;
+  const elevationAngle = toRad(angle);
+  
+  let startAngle, endAngle;
+  if (side === 'left') {
+    startAngle = Math.PI - elevationAngle;
+    endAngle = Math.PI;
+  } else {
+    startAngle = 0;
+    endAngle = elevationAngle;
+  }
+  
+  ctx.strokeStyle = '#C4622D';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(ox, oy, radius, Math.min(startAngle, endAngle), Math.max(startAngle, endAngle));
+  ctx.stroke();
+  
+  const midAngle = (startAngle + endAngle) / 2;
+  const labelX = ox + (radius + 20) * Math.cos(midAngle);
+  const labelY = oy + (radius + 20) * Math.sin(midAngle);
+  
+  ctx.fillStyle = '#C4622D';
+  ctx.font = 'bold 14px Verdana';
+  ctx.textAlign = 'center';
+  ctx.fillText(`${angle}°`, labelX, labelY);
+  ctx.textAlign = 'left';
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  RENDERING — DIMENSION LABELS            ║
+// ╚══════════════════════════════════════════╝
+
+function drawDimensionLabels() {
+  const { pillarLeftX, pillarRightX, pointX, roadY, pixelsPerMeter, displayHeight } = getSceneParams();
+  
+  const distLeft = state.pointPosition;
+  const midLeft = (pillarLeftX + pointX) / 2;
+  
+  ctx.fillStyle = '#2A7C6F';
+  ctx.font = '12px Verdana';
+  ctx.textAlign = 'center';
+  ctx.fillText(`x = ${distLeft.toFixed(1)}m`, midLeft, roadY + 45);
+  
+  const distRight = state.roadWidth - state.pointPosition;
+  const midRight = (pointX + pillarRightX) / 2;
+  
+  ctx.fillText(`${distRight.toFixed(1)}m`, midRight, roadY + 45);
+  ctx.textAlign = 'left';
+  
+  if (state.showAnswer || state.phase >= 4) {
+    const { pillarHeightPx } = getSceneParams();
+    const h = displayHeight;
+    
+    ctx.fillStyle = '#3B5B8C';
+    ctx.font = 'bold 13px Verdana';
+    ctx.textAlign = 'left';
+    ctx.fillText(`h = ${h.toFixed(2)}m`, pillarLeftX + 15, roadY - pillarHeightPx/2);
+    ctx.textAlign = 'left';
+  }
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  RENDERING — UNIT CIRCLE INSET           ║
+// ╚══════════════════════════════════════════╝
+
+function drawUnitCircleInset() {
+  if (!state.showUnitCircle) return;
+  
+  const insetSize = 130;
+  const cx = canvas.width - insetSize - 20;
+  const cy = insetSize + 20;
+  const radius = insetSize / 2 - 10;
+  
+  ctx.fillStyle = 'rgba(250, 250, 245, 0.95)';
+  ctx.fillRect(cx - insetSize/2 - 5, cy - insetSize/2 - 5, insetSize + 10, insetSize + 10);
+  ctx.strokeStyle = 'rgba(28, 25, 23, 0.15)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(cx - insetSize/2 - 5, cy - insetSize/2 - 5, insetSize + 10, insetSize + 10);
+  
+  ctx.fillStyle = '#6B6560';
+  ctx.font = '11px Verdana';
+  ctx.textAlign = 'center';
+  ctx.fillText('Unit Circle', cx, cy - insetSize/2 + 12);
+  ctx.textAlign = 'left';
+  
+  ctx.strokeStyle = 'rgba(28, 25, 23, 0.25)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+  ctx.stroke();
+  
+  ctx.beginPath();
+  ctx.moveTo(cx - radius - 8, cy);
+  ctx.lineTo(cx + radius + 8, cy);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - radius - 8);
+  ctx.lineTo(cx, cy + radius + 8);
+  ctx.stroke();
+  
+  const angle60 = toRad(state.angleLeft);
+  const endX60 = cx + radius * Math.cos(angle60);
+  const endY60 = cy - radius * Math.sin(angle60);
+  
+  ctx.strokeStyle = '#3B5B8C';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(endX60, endY60);
+  ctx.stroke();
+  
+  ctx.setLineDash([4, 3]);
+  ctx.strokeStyle = '#C4622D';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(endX60, endY60);
+  ctx.lineTo(endX60, cy);
+  ctx.stroke();
+  
+  ctx.strokeStyle = '#2A7C6F';
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(endX60, cy);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  
+  ctx.fillStyle = '#D4A843';
+  ctx.beginPath();
+  ctx.arc(endX60, endY60, 4, 0, Math.PI * 2);
+  ctx.fill();
+  
+  ctx.fillStyle = '#2A7C6F';
+  ctx.font = '10px Verdana';
+  ctx.textAlign = 'center';
+  ctx.fillText(`cos ${state.angleLeft}° = ${Math.cos(toRad(state.angleLeft)).toFixed(2)}`, cx + radius/2, cy + 18);
+  
+  ctx.fillStyle = '#C4622D';
+  ctx.fillText(`sin ${state.angleLeft}° = ${Math.sin(toRad(state.angleLeft)).toFixed(2)}`, endX60 + 25, cy - radius * Math.sin(angle60)/2);
+  
+  ctx.fillStyle = '#3B5B8C';
+  ctx.font = 'bold 11px Verdana';
+  ctx.fillText(`θ = ${state.angleLeft}°`, cx + 20, cy - 15);
+  ctx.textAlign = 'left';
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  RENDERING — ANIMATIONS                  ║
+// ╚══════════════════════════════════════════╝
+
+function drawAnimatedWater() {
+  const { roadY, roadLeft, roadRight } = getSceneParams();
+  const t = Date.now() / 1000;
+  
+  ctx.strokeStyle = 'rgba(59, 91, 140, 0.15)';
+  ctx.lineWidth = 2;
+  
+  for (let i = 0; i < 3; i++) {
+    const phase = t * 1.5 + i * 1.2;
+    const y = roadY + 5 + Math.sin(phase) * 3;
+    ctx.beginPath();
+    ctx.moveTo(roadLeft + 20, y);
+    ctx.lineTo(roadRight - 20, y);
+    ctx.stroke();
+  }
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  MAIN RENDER LOOP                        ║
+// ╚══════════════════════════════════════════╝
+
+function render() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  ctx.fillStyle = '#FAFAF5';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  const skyGrad = ctx.createLinearGradient(0, 0, 0, canvas.height * 0.4);
+  skyGrad.addColorStop(0, '#F0EDE8');
+  skyGrad.addColorStop(1, '#FAFAF5');
+  ctx.fillStyle = skyGrad;
+  ctx.fillRect(0, 0, canvas.width, canvas.height * 0.4);
+  
+  drawGrid();
+  drawRoad();
+  drawConstructionLines();
+  
+  const { displayHeight } = getSceneParams();
+  
+  drawPillar(getSceneParams().pillarLeftX, displayHeight, 'A', '#8B7355');
+  drawPillar(getSceneParams().pillarRightX, displayHeight, 'B', '#8B7355');
+  
+  drawObserver();
+  drawElevationLines();
+  drawDimensionLabels();
+  drawUnitCircleInset();
+  drawAnimatedWater();
+  
+  if (state.phase === 1) {
+    ctx.fillStyle = 'rgba(28, 25, 23, 0.8)';
+    ctx.font = 'bold 18px Georgia';
+    ctx.textAlign = 'center';
+    ctx.fillText('Two equal pillars. Two different angles. One mystery height.', canvas.width/2, 50);
+    ctx.font = '14px Georgia';
+    ctx.fillText('Use the sliders to explore →', canvas.width/2, 75);
+    ctx.textAlign = 'left';
+  }
+  
+  requestAnimationFrame(render);
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  SLIDER SYSTEM — ALWAYS VISIBLE          ║
+// ╚══════════════════════════════════════════╝
+
+function createSliderHTML(key, sliderData) {
+  const pct = ((sliderData.value - sliderData.min) / (sliderData.max - sliderData.min)) * 100;
+  
+  return `
+    <div class="control-group" data-slider="${key}">
+      <label>${sliderData.label}: <span style="color:var(--accent);font-weight:bold;">${sliderData.value.toFixed(1)}${sliderData.unit}</span></label>
+      <div class="slider-container">
+        <div class="slider-track" onclick="handleTrackClick(event, '${key}')">
+          <div class="slider-fill" style="width: ${pct}%"></div>
+          <div class="slider-thumb" style="left: ${pct}%" 
+               onmousedown="startDrag(event, '${key}')"
+               ontouchstart="startDrag(event, '${key}')"></div>
+        </div>
+        <span class="slider-value">${sliderData.min}${sliderData.unit}</span>
+      </div>
+      <div class="slider-hint">Drag to adjust ${sliderData.label.toLowerCase()}</div>
+    </div>
+  `;
+}
+
+function handleTrackClick(e, key) {
+  if (e.target.classList.contains('slider-thumb')) return;
+  const rect = e.currentTarget.getBoundingClientRect();
+  const pct = (e.clientX - rect.left) / rect.width;
+  updateSliderValue(key, pct);
+}
+
+function startDrag(e, key) {
+  e.preventDefault();
+  e.stopPropagation();
+  state.draggingSlider = key;
+  document.addEventListener('mousemove', onDrag);
+  document.addEventListener('mouseup', stopDrag);
+  document.addEventListener('touchmove', onDrag, { passive: false });
+  document.addEventListener('touchend', stopDrag);
+  e.target.classList.add('dragging');
+}
+
+function onDrag(e) {
+  if (!state.draggingSlider) return;
+  e.preventDefault();
+  
+  const group = document.querySelector(`[data-slider="${state.draggingSlider}"]`);
+  const track = group.querySelector('.slider-track');
+  const rect = track.getBoundingClientRect();
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  let pct = (clientX - rect.left) / rect.width;
+  pct = Math.max(0, Math.min(1, pct));
+  
+  updateSliderValue(state.draggingSlider, pct);
+}
+
+function stopDrag() {
+  const thumb = document.querySelector('.slider-thumb.dragging');
+  if (thumb) thumb.classList.remove('dragging');
+  state.draggingSlider = null;
+  document.removeEventListener('mousemove', onDrag);
+  document.removeEventListener('mouseup', stopDrag);
+  document.removeEventListener('touchmove', onDrag);
+  document.removeEventListener('touchend', stopDrag);
+}
+
+function updateSliderValue(key, pct) {
+  const slider = state.sliders[key];
+  slider.value = slider.min + pct * (slider.max - slider.min);
+  
+  // Update state
+  if (key === 'roadWidth') state.roadWidth = slider.value;
+  if (key === 'pointPos') state.pointPosition = slider.value;
+  if (key === 'angleLeft') state.angleLeft = slider.value;
+  if (key === 'angleRight') state.angleRight = slider.value;
+  
+  // Update UI
+  const group = document.querySelector(`[data-slider="${key}"]`);
+  if (group) {
+    const fill = group.querySelector('.slider-fill');
+    const thumb = group.querySelector('.slider-thumb');
+    const label = group.querySelector('label span');
+    
+    fill.style.width = `${pct * 100}%`;
+    thumb.style.left = `${pct * 100}%`;
+    label.textContent = `${slider.value.toFixed(1)}${slider.unit}`;
+  }
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  INTERACTION — CANVAS DRAGGING           ║
+// ╚══════════════════════════════════════════╝
+
+let isDraggingCanvas = false;
+let dragTarget = null;
+
+canvas.addEventListener('mousedown', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  
+  const { pointX, roadY } = getSceneParams();
+  
+  const dist = Math.hypot(mx - pointX, my - (roadY - 8));
+  if (dist < 30) {
+    isDraggingCanvas = true;
+    dragTarget = 'observer';
+    canvas.style.cursor = 'grabbing';
+  }
+});
+
+canvas.addEventListener('mousemove', (e) => {
+  if (!isDraggingCanvas) {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    const { pointX, roadY } = getSceneParams();
+    const dist = Math.hypot(mx - pointX, my - (roadY - 8));
+    canvas.style.cursor = dist < 30 ? 'grab' : 'default';
+    return;
+  }
+  
+  if (dragTarget === 'observer') {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const { roadLeft, roadRight, pixelsPerMeter } = getSceneParams();
+    
+    let newPos = (mx - roadLeft) / pixelsPerMeter;
+    newPos = Math.max(5, Math.min(state.roadWidth - 5, newPos));
+    state.pointPosition = newPos;
+    state.sliders.pointPos.value = newPos;
+    
+    // Update slider UI
+    const pct = (newPos - state.sliders.pointPos.min) / (state.sliders.pointPos.max - state.sliders.pointPos.min);
+    const group = document.querySelector(`[data-slider="pointPos"]`);
+    if (group) {
+      group.querySelector('.slider-fill').style.width = `${pct * 100}%`;
+      group.querySelector('.slider-thumb').style.left = `${pct * 100}%`;
+      group.querySelector('label span').textContent = `${newPos.toFixed(1)}m`;
+    }
+  }
+});
+
+canvas.addEventListener('mouseup', () => {
+  isDraggingCanvas = false;
+  dragTarget = null;
+  canvas.style.cursor = 'default';
+});
+
+// ╔══════════════════════════════════════════╗
+// ║  PANEL UI — PHASE MANAGEMENT             ║
+// ╚══════════════════════════════════════════╝
+
+function updatePanel() {
+  const content = document.getElementById('phaseContent');
+  const controls = document.getElementById('controlsArea');
+  const progressText = document.getElementById('progressText');
+  const progressFill = document.getElementById('progressFill');
+  
+  content.innerHTML = '';
+  
+  switch(state.phase) {
+    case 1:
+      progressText.textContent = 'Phase 1 of 5 — Hook';
+      progressFill.style.width = '20%';
+      renderPhase1(content, controls);
+      break;
+    case 2:
+      progressText.textContent = 'Phase 2 of 5 — Explore';
+      progressFill.style.width = '40%';
+      renderPhase2(content, controls);
+      break;
+    case 3:
+      progressText.textContent = 'Phase 3 of 5 — Challenge';
+      progressFill.style.width = '60%';
+      renderPhase3(content, controls);
+      break;
+    case 4:
+      progressText.textContent = 'Phase 4 of 5 — Reveal';
+      progressFill.style.width = '80%';
+      renderPhase4(content, controls);
+      break;
+    case 5:
+      progressText.textContent = 'Phase 5 of 5 — Master';
+      progressFill.style.width = '100%';
+      renderPhase5(content, controls);
+      break;
+  }
+}
+
+function renderPhase1(content, controls) {
+  content.innerHTML = `
+    <div class="phase-title">🎯 The Hook</div>
+    <div class="phase-text">
+      Two identical pillars stand on opposite sides of a <strong>150-meter road</strong>. 
+      From a point between them, you look up at <em>60°</em> to one top and <em>30°</em> to the other.
+      <br><br>
+      <strong>Strange, isn't it?</strong> The pillars are the same height, but the angles are wildly different. 
+      How tall are they? And where exactly are you standing?
+    </div>
+    <div class="did-you-know">
+      Ancient Egyptian surveyors used this exact method to measure pyramid heights from the ground — no climbing required.
+    </div>
+  `;
+  
+  controls.innerHTML = `
+    ${createSliderHTML('roadWidth', state.sliders.roadWidth)}
+    ${createSliderHTML('pointPos', state.sliders.pointPos)}
+    ${createSliderHTML('angleLeft', state.sliders.angleLeft)}
+    ${createSliderHTML('angleRight', state.sliders.angleRight)}
+    <button class="btn primary" style="margin-top:12px" onclick="nextPhase()">I'm Ready to Explore →</button>
+  `;
+}
+
+function renderPhase2(content, controls) {
+  content.innerHTML = `
+    <div class="phase-title">🔍 Explore Freely</div>
+    <div class="phase-text">
+      Drag the <strong>yellow observer dot</strong> left and right along the road, or use the sliders below. 
+      Watch how the angles change and the triangles reshape themselves.
+      <br><br>
+      Notice: the construction lines (dashed) show the hidden right triangles that make this problem solvable.
+    </div>
+    <div class="did-you-know">
+      The tangent of an angle in a right triangle is simply: opposite side ÷ adjacent side.
+    </div>
+  `;
+  
+  controls.innerHTML = `
+    ${createSliderHTML('roadWidth', state.sliders.roadWidth)}
+    ${createSliderHTML('pointPos', state.sliders.pointPos)}
+    ${createSliderHTML('angleLeft', state.sliders.angleLeft)}
+    ${createSliderHTML('angleRight', state.sliders.angleRight)}
+    <button class="btn primary" style="margin-top:12px" onclick="nextPhase()">I've Explored Enough →</button>
+  `;
+}
+
+function renderPhase3(content, controls) {
+  content.innerHTML = `
+    <div class="challenge-card">
+      <span class="badge">🏆 Challenge</span>
+      <p>Two pillars of <strong>equal height</strong> stand on either side of a road <strong>150 m wide</strong>. 
+      From a point between them, the angles of elevation to the tops are <strong>60°</strong> and <strong>30°</strong>.
+      <br><br>
+      Find the <strong>height</strong> of each pillar and the <strong>position</strong> of the point.</p>
+    </div>
+  `;
+  
+  if (!state.studentPrediction) {
+    content.innerHTML += `
+      <div class="prediction-widget">
+        <label>🔮 Before solving — guess the height of the pillars:</label>
+        <input type="number" class="prediction-input" id="predHeight" placeholder="Enter height in meters">
+        <button class="prediction-btn" onclick="submitPrediction()">Lock in My Prediction</button>
+      </div>
+    `;
+  } else {
+    content.innerHTML += `
+      <div class="prediction-result good">
+        ✅ Prediction locked: <strong>${state.studentPrediction} m</strong>
+      </div>
+      <button class="btn primary" onclick="nextPhase()">Show Me the Solution →</button>
+    `;
+  }
+  
+  controls.innerHTML = `
+    ${createSliderHTML('roadWidth', state.sliders.roadWidth)}
+    ${createSliderHTML('pointPos', state.sliders.pointPos)}
+    ${createSliderHTML('angleLeft', state.sliders.angleLeft)}
+    ${createSliderHTML('angleRight', state.sliders.angleRight)}
+  `;
+}
+
+function renderPhase4(content, controls) {
+  const steps = [
+    {
+      title: 'The Scene',
+      text: 'Let the height of each pillar be <strong>h</strong> meters. Let the observer point P be <strong>x</strong> meters from pillar A and <strong>(150 − x)</strong> meters from pillar B.'
+    },
+    {
+      title: 'The First Triangle (60°)',
+      text: 'In right triangle ΔABP:<br>tan 60° = h/x<br>√3 = h/x<br>So <strong>h = x√3</strong> ... (1)'
+    },
+    {
+      title: 'The Second Triangle (30°)',
+      text: 'In right triangle ΔCDP:<br>tan 30° = h/(150−x)<br>1/√3 = h/(150−x)<br>So <strong>h = (150−x)/√3</strong> ... (2)'
+    },
+    {
+      title: 'The Key Insight',
+      text: 'Both expressions equal <strong>h</strong>. Set them equal:<br><br>x√3 = (150−x)/√3'
+    },
+    {
+      title: 'Solve for x',
+      text: 'Multiply both sides by √3:<br>3x = 150 − x<br>4x = 150<br><strong>x = 37.5 m</strong>'
+    },
+    {
+      title: 'Find the Height',
+      text: 'Substitute x = 37.5 into equation (1):<<br>h = 37.5 × √3<br>h = 37.5 × 1.732<br><strong>h ≈ 64.95 m</strong>'
+    },
+    {
+      title: 'Verification',
+      text: 'Check with equation (2):<<br>h = (150 − 37.5)/√3 = 112.5/1.732 ≈ <strong>64.95 m</strong> ✓<<br><br>Distance from P to B = 150 − 37.5 = <strong>112.5 m</strong>'
+    }
+  ];
+  
+  let html = `<div class="phase-title">📐 Step-by-Step Solution</div>`;
+  
+  steps.forEach((step, i) => {
+    const visible = i <= state.currentStep;
+    const opacity = visible ? '1' : '0.3';
+    html += `
+      <div class="step-card" style="opacity: ${opacity}">
+        <span class="step-num">Step ${i+1}</span>
+        <h3>${step.title}</h3>
+        <p>${step.text}</p>
+      </div>
+    `;
+  });
+  
+  content.innerHTML = html;
+  
+  controls.innerHTML = `
+    <div class="btn-group">
+      <button class="btn" onclick="prevStep()" ${state.currentStep <= 0 ? 'disabled' : ''}>← Back</button>
+      <button class="btn primary" onclick="nextStep()">
+        ${state.currentStep >= steps.length - 1 ? 'See Final Answer →' : 'Next Step →'}
+      </button>
+    </div>
+    ${createSliderHTML('roadWidth', state.sliders.roadWidth)}
+    ${createSliderHTML('pointPos', state.sliders.pointPos)}
+    ${createSliderHTML('angleLeft', state.sliders.angleLeft)}
+    ${createSliderHTML('angleRight', state.sliders.angleRight)}
+  `;
+  
+  state.showAnswer = state.currentStep >= 5;
+}
+
+function renderPhase5(content, controls) {
+  const tests = [
+    {
+      q: 'A tower and a pole of equal height stand 100 m apart. From a point between them, angles of elevation are 45° and 45°. Find the height.',
+      a: '50 m'
+    },
+    {
+      q: 'Two poles of equal height are 80 m apart. From a point between them, angles are 60° and 30°. Find the height (exact form).',
+      a: '20√3 m'
+    },
+    {
+      q: 'Two buildings of equal height are 200 m apart. From a point, angles are 30° and 60°. How far is the point from the 30° building?',
+      a: '150 m'
+    }
+  ];
+  
+  const test = tests[state.selfTestIndex];
+  
+  content.innerHTML = `
+    <div class="phase-title">🎓 Master Level</div>
+    <div class="phase-text">
+      Same formula — totally different situations. Test yourself:
+    </div>
+    <div class="challenge-card">
+      <span class="badge">Self-Test ${state.selfTestIndex + 1}/3</span>
+      <p>${test.q}</p>
+    </div>
+    <div class="result-box" id="testResult" style="display:none">
+      <div class="big-answer" id="testAnswer"></div>
+      <div class="result-label">Answer</div>
+    </div>
+  `;
+  
+  controls.innerHTML = `
+    <div class="btn-group">
+      <button class="btn" onclick="showTestAnswer()">Show Answer</button>
+      <button class="btn primary" onclick="nextTest()">Next Problem →</button>
+    </div>
+    ${createSliderHTML('roadWidth', state.sliders.roadWidth)}
+    ${createSliderHTML('pointPos', state.sliders.pointPos)}
+    ${createSliderHTML('angleLeft', state.sliders.angleLeft)}
+    ${createSliderHTML('angleRight', state.sliders.angleRight)}
+    <div class="did-you-know" style="margin-top:12px">
+      Surveyors use this "equal-height, two-angle" method to measure inaccessible cliff heights across rivers.
+    </div>
+  `;
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  ACTIONS & NAVIGATION                    ║
+// ╚══════════════════════════════════════════╝
+
+function nextPhase() {
+  if (state.phase < 5) {
+    state.phase++;
+    state.currentStep = 0;
+    updatePanel();
+  }
+}
+
+function prevStep() {
+  if (state.currentStep > 0) {
+    state.currentStep--;
+    updatePanel();
+  }
+}
+
+function nextStep() {
+  const maxSteps = 7;
+  if (state.currentStep < maxSteps - 1) {
+    state.currentStep++;
+    updatePanel();
+  } else {
+    state.showAnswer = true;
+    nextPhase();
+  }
+}
+
+function submitPrediction() {
+  const val = document.getElementById('predHeight').value;
+  if (val && !isNaN(val)) {
+    state.studentPrediction = parseFloat(val);
+    updatePanel();
+  }
+}
+
+function showTestAnswer() {
+  const tests = ['50 m', '20√3 m (≈ 34.64 m)', '150 m'];
+  document.getElementById('testResult').style.display = 'block';
+  document.getElementById('testAnswer').textContent = tests[state.selfTestIndex];
+}
+
+function nextTest() {
+  if (state.selfTestIndex < 2) {
+    state.selfTestIndex++;
+    updatePanel();
+  }
+}
+
+function toggleTeacher() {
+  const dash = document.getElementById('teacherDash');
+  dash.style.display = dash.style.display === 'block' ? 'none' : 'block';
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  KEYBOARD SHORTCUTS                      ║
+// ╚══════════════════════════════════════════╝
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === ' ') {
+    e.preventDefault();
+  } else if (e.key === 'n' || e.key === 'N') {
+    if (state.phase === 4) nextStep();
+    else nextPhase();
+  } else if (e.key === 'p' || e.key === 'P') {
+    if (state.phase === 4) prevStep();
+  } else if (e.key === 'r' || e.key === 'R') {
+    state.phase = 1;
+    state.currentStep = 0;
+    state.studentPrediction = null;
+    state.selfTestIndex = 0;
+    state.showAnswer = false;
+    state.roadWidth = 150;
+    state.pointPosition = 37.5;
+    state.angleLeft = 60;
+    state.angleRight = 30;
+    state.sliders.roadWidth.value = 150;
+    state.sliders.pointPos.value = 37.5;
+    state.sliders.angleLeft.value = 60;
+    state.sliders.angleRight.value = 30;
+    updatePanel();
+  }
+});
+
+// ╔══════════════════════════════════════════╗
+// ║  INITIALIZATION                          ║
+// ╚══════════════════════════════════════════╝
+
+updatePanel();
+render();
+
+</script>
+</body>
+</html>

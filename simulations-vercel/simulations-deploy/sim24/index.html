@@ -1,0 +1,1564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APEX-EDU v4 — Building & Lamp Post: Angle of Depression</title>
+<style>
+:root {
+  --bg-canvas: #F8F5F0;
+  --bg-panel: #F0EBE3;
+  --bg-card: #FDFBF8;
+  --ink-primary: #1A1714;
+  --ink-secondary: #5C5652;
+  --ink-ghost: #A8A29E;
+  --fill-color: #3D6B9E;
+  --drain-color: #C25D2E;
+  --highlight: #C9961A;
+  --correct: #2A7A6B;
+  --proof: #4A6FA5;
+  --construction: rgba(59,91,140,0.35);
+  --angle-color: #3D6B9E;
+  --sin-color: #C25D2E;
+  --cos-color: #2A7A6B;
+  --hyp-color: #5B4A8A;
+  --grid-color: rgba(26,23,20,0.07);
+  --axis-color: rgba(26,23,20,0.22);
+  --font-body: Georgia, 'Times New Roman', serif;
+  --font-label: Verdana, Geneva, Tahoma, sans-serif;
+  --font-mono: 'Courier New', Courier, monospace;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg-canvas);
+  color: var(--ink-primary);
+  font-family: var(--font-body);
+  overflow: hidden;
+  height: 100vh;
+}
+
+#app {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+}
+
+/* Canvas Zone */
+#canvas-zone {
+  flex: 1;
+  position: relative;
+  background: var(--bg-canvas);
+  overflow: hidden;
+}
+
+canvas { display: block; width: 100%; height: 100%; }
+
+/* Panel Zone */
+#panel-zone {
+  width: 380px;
+  background: var(--bg-panel);
+  border-left: 1px solid #DDD5C8;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.panel-header {
+  padding: 20px 24px 12px;
+  border-bottom: 1px solid #DDD5C8;
+}
+
+.panel-header h1 {
+  font-size: 18px;
+  font-weight: normal;
+  color: var(--ink-primary);
+  margin-bottom: 4px;
+}
+
+.panel-header .meta {
+  font-size: 12px;
+  color: var(--ink-secondary);
+  font-family: var(--font-label);
+}
+
+/* Progress */
+.progress-container {
+  padding: 12px 24px;
+  border-bottom: 1px solid #DDD5C8;
+}
+
+.progress-text {
+  font-size: 11px;
+  color: var(--ink-secondary);
+  font-family: var(--font-label);
+  margin-bottom: 6px;
+}
+
+.progress-bar {
+  height: 4px;
+  background: rgba(26,23,20,0.08);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--fill-color);
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+
+/* Phase Content */
+.phase-content {
+  padding: 16px 24px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.phase-title {
+  font-size: 15px;
+  font-weight: bold;
+  color: var(--fill-color);
+  margin-bottom: 10px;
+  font-family: var(--font-label);
+}
+
+.phase-text {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--ink-primary);
+  margin-bottom: 12px;
+}
+
+.phase-text strong { color: var(--ink-primary); }
+.phase-text em { color: var(--drain-color); font-style: italic; }
+
+/* Cards */
+.card {
+  background: var(--bg-card);
+  border: 1px solid #DDD5C8;
+  border-radius: 8px;
+  padding: 14px;
+  margin: 12px 0;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+}
+
+.card .badge {
+  display: inline-block;
+  background: var(--fill-color);
+  color: white;
+  font-size: 9px;
+  font-family: var(--font-label);
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.card p {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink-primary);
+}
+
+/* Prediction */
+.prediction-widget {
+  background: var(--bg-card);
+  border: 2px solid var(--highlight);
+  border-radius: 8px;
+  padding: 14px;
+  margin: 12px 0;
+}
+
+.prediction-widget label {
+  display: block;
+  font-size: 12px;
+  color: var(--ink-secondary);
+  margin-bottom: 6px;
+  font-family: var(--font-label);
+}
+
+.prediction-input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #DDD5C8;
+  border-radius: 5px;
+  font-size: 15px;
+  font-family: var(--font-mono);
+  color: var(--ink-primary);
+  margin-bottom: 8px;
+}
+
+.prediction-btn {
+  background: var(--fill-color);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 5px;
+  font-size: 12px;
+  font-family: var(--font-label);
+  cursor: pointer;
+  width: 100%;
+}
+
+/* Step Cards */
+.step-card {
+  background: var(--bg-card);
+  border: 1px solid #DDD5C8;
+  border-radius: 8px;
+  padding: 14px;
+  margin: 10px 0;
+  position: relative;
+}
+
+.step-card .step-num {
+  position: absolute;
+  top: -7px;
+  left: 14px;
+  background: var(--fill-color);
+  color: white;
+  font-size: 10px;
+  font-family: var(--font-label);
+  padding: 2px 8px;
+  border-radius: 8px;
+}
+
+.step-card h3 {
+  font-size: 13px;
+  margin-top: 6px;
+  margin-bottom: 8px;
+  color: var(--ink-primary);
+}
+
+.step-card p {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--ink-primary);
+  margin-bottom: 8px;
+}
+
+/* Formula */
+.formula-box {
+  background: #f5f2ec;
+  border: 1px solid #DDD5C8;
+  border-radius: 5px;
+  padding: 10px 12px;
+  margin: 8px 0;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  text-align: center;
+  color: var(--ink-primary);
+}
+
+/* Result */
+.result-box {
+  background: var(--bg-card);
+  border: 2px solid var(--correct);
+  border-radius: 8px;
+  padding: 14px;
+  margin: 12px 0;
+  text-align: center;
+}
+
+.big-answer {
+  font-size: 26px;
+  font-weight: bold;
+  color: var(--correct);
+  font-family: var(--font-mono);
+}
+
+.result-label {
+  font-size: 11px;
+  color: var(--ink-secondary);
+  margin-top: 4px;
+}
+
+/* Buttons */
+.btn-group {
+  display: flex;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.btn {
+  flex: 1;
+  padding: 8px 14px;
+  border: 1px solid #DDD5C8;
+  background: white;
+  border-radius: 5px;
+  font-size: 11px;
+  font-family: var(--font-label);
+  cursor: pointer;
+  color: var(--ink-primary);
+}
+
+.btn.primary {
+  background: var(--fill-color);
+  color: white;
+  border-color: var(--fill-color);
+}
+
+/* Controls — SLIDERS ALWAYS VISIBLE */
+.controls-area {
+  padding: 14px 24px;
+  border-top: 1px solid #DDD5C8;
+  background: rgba(255,255,255,0.5);
+}
+
+.control-group {
+  margin-bottom: 16px;
+}
+
+.control-group label {
+  display: block;
+  font-size: 11px;
+  color: var(--ink-secondary);
+  font-family: var(--font-label);
+  margin-bottom: 6px;
+}
+
+.slider-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+}
+
+.slider-track {
+  flex: 1;
+  height: 7px;
+  background: rgba(26,23,20,0.08);
+  border-radius: 4px;
+  position: relative;
+  cursor: pointer;
+}
+
+.slider-fill {
+  height: 100%;
+  background: var(--fill-color);
+  border-radius: 4px;
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+}
+
+.slider-thumb {
+  width: 20px;
+  height: 20px;
+  background: var(--bg-canvas);
+  border: 2.5px solid var(--fill-color);
+  border-radius: 50%;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  cursor: grab;
+  box-shadow: 0 1px 5px rgba(0,0,0,0.15);
+  z-index: 2;
+  touch-action: none;
+}
+
+.slider-thumb:active, .slider-thumb.dragging {
+  cursor: grabbing;
+  border-color: var(--highlight);
+  transform: translate(-50%, -50%) scale(1.1);
+}
+
+.slider-value {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--fill-color);
+  min-width: 55px;
+  text-align: right;
+  font-weight: bold;
+}
+
+/* Did You Know */
+.did-you-know {
+  font-style: italic;
+  font-size: 11px;
+  color: var(--ink-secondary);
+  border-left: 3px solid var(--highlight);
+  padding-left: 10px;
+  margin: 12px 0;
+  line-height: 1.5;
+}
+
+/* Teacher toggle */
+.teacher-toggle {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(255,255,255,0.9);
+  border: 1px solid #DDD5C8;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 10px;
+  font-family: var(--font-label);
+  cursor: pointer;
+  z-index: 100;
+  color: var(--ink-secondary);
+}
+
+.teacher-dashboard {
+  position: absolute;
+  top: 36px;
+  right: 10px;
+  width: 300px;
+  max-height: 80vh;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #DDD5C8;
+  border-radius: 8px;
+  padding: 14px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  z-index: 100;
+  font-size: 11px;
+  line-height: 1.6;
+  display: none;
+}
+
+.teacher-dashboard h4 {
+  font-size: 12px;
+  margin-bottom: 8px;
+  color: var(--ink-primary);
+  border-bottom: 1px solid #DDD5C8;
+  padding-bottom: 5px;
+}
+
+.teacher-dashboard ul {
+  margin-left: 14px;
+  margin-bottom: 8px;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  #app { flex-direction: column; }
+  #panel-zone { width: 100%; height: 42%; border-left: none; border-top: 1px solid #DDD5C8; }
+  #canvas-zone { height: 58%; }
+  .teacher-dashboard { width: 90%; right: 5%; }
+}
+</style>
+<base target="_blank">
+</head>
+<body>
+
+<div id="app">
+  <div id="canvas-zone">
+    <canvas id="mainCanvas"></canvas>
+    <button class="teacher-toggle" onclick="toggleTeacher()">📋 For Teachers</button>
+    <div class="teacher-dashboard" id="teacherDash">
+      <h4>Teacher & Parent Notes</h4>
+      <p><strong>Topic:</strong> Angle of Depression (Class 10)<br>
+      <strong>NCERT:</strong> Ch. 9, Exercise 9.1<br>
+      <strong>Concepts:</strong> Angle of depression = angle of elevation, tan ratios, horizontal distance</p>
+      <h4>Learning Objectives</h4>
+      <ul>
+        <li>Understand angle of depression from horizontal line</li>
+        <li>Apply alternate interior angles (depression = elevation)</li>
+        <li>Use tan θ = opposite/adjacent in two right triangles</li>
+        <li>Solve for unknown height using two angle conditions</li>
+      </ul>
+      <h4>Common Errors</h4>
+      <ul>
+        <li>Confusing angle of depression with angle from vertical</li>
+        <li>Not using alternate interior angles to convert</li>
+        <li>Using sin/cos instead of tan for horizontal distance</li>
+        <li>Subtracting angles (60°−30°=30°) instead of using tan</li>
+        <li>Forgetting that depression to top gives smaller triangle</li>
+      </ul>
+    </div>
+  </div>
+  
+  <div id="panel-zone">
+    <div class="panel-header">
+      <h1>Building & Lamp Post: Angle of Depression</h1>
+      <div class="meta">Trigonometry · Class 10 · NCERT Ch. 9</div>
+    </div>
+    
+    <div class="progress-container">
+      <div class="progress-text" id="progressText">Phase 0 of 6 — Prior Knowledge</div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+      </div>
+    </div>
+    
+    <div class="phase-content" id="phaseContent"></div>
+    
+    <div class="controls-area" id="controlsArea">
+      <!-- SLIDERS ALWAYS RENDERED HERE -->
+    </div>
+  </div>
+</div>
+
+<script>
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  APEX-EDU v4 — ANGLE OF DEPRESSION SIMULATION                ║
+// ║  Topic: Math → Trigonometry → Heights & Distances             ║
+// ║  Grade: 10 (CBSE/NCERT)                                       ║
+// ║  Real Object: Building AB (60m) and vertical lamp post CD     ║
+// ║  Four Representations: Visual, Numeric, Algebraic, Verbal       ║
+// ║  Top 5 Misconceptions:                                        ║
+// ║   1. Depression angle measured from vertical (not horizontal) ║
+// ║   2. Not using alternate interior angles to get elevation      ║
+// ║   3. Using sin/cos for horizontal distance problems            ║
+// ║   4. Adding/subtracting angles instead of using tan ratios     ║
+// ║   5. Confusing which triangle gives which height segment       ║
+// ╚══════════════════════════════════════════════════════════════╝
+
+const canvas = document.getElementById('mainCanvas');
+const ctx = canvas.getContext('2d');
+
+// ═══════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════
+
+let state = {
+  phase: 0,
+  buildingHeight: 60,
+  lampHeight: 40,
+  distance: 34.641, // 20√3 ≈ 34.64m
+  angleDepressionBottom: 60,
+  angleDepressionTop: 30,
+  studentPrediction: null,
+  currentStep: 0,
+  showAnswer: false,
+  selfTestIndex: 0,
+  showConstruction: true,
+  showUnitCircle: true,
+  showGrid: true,
+  showTrigPlot: true,
+  // Sliders — ALWAYS present
+  sliders: {
+    buildingH: { min: 20, max: 100, value: 60, label: 'Building Height', unit: 'm', step: 1 },
+    distance: { min: 10, max: 80, value: 34.641, label: 'Horizontal Distance', unit: 'm', step: 0.5 },
+    angleBot: { min: 15, max: 75, value: 60, label: 'Angle to Bottom', unit: '°', step: 1, snap: [30,45,60] },
+    angleTop: { min: 5, max: 45, value: 30, label: 'Angle to Top', unit: '°', step: 1, snap: [15,30,45] }
+  }
+};
+
+// ═══════════════════════════════════════════════════════════════
+// RESIZE
+// ═══════════════════════════════════════════════════════════════
+
+function resize() {
+  const c = document.getElementById('canvas-zone');
+  canvas.width = c.clientWidth;
+  canvas.height = c.clientHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+// ═══════════════════════════════════════════════════════════════
+// MATH
+// ═══════════════════════════════════════════════════════════════
+
+const toRad = d => d * Math.PI / 180;
+const toDeg = r => r * 180 / Math.PI;
+
+// ═══════════════════════════════════════════════════════════════
+// SCENE PARAMETERS
+// ═══════════════════════════════════════════════════════════════
+
+function getScene() {
+  const ox = canvas.width * 0.12;
+  const oy = canvas.height * 0.82;
+  const ppm = Math.min(canvas.width / 140, canvas.height / 90); // pixels per meter
+  
+  const bX = ox + 20; // building base x
+  const bTopY = oy - state.buildingHeight * ppm;
+  const lX = bX + state.distance * ppm; // lamp post base x
+  const lTopY = oy - state.lampHeight * ppm;
+  
+  // Observer point (top of building)
+  const obsX = bX;
+  const obsY = bTopY;
+  
+  // Horizontal line from observer
+  const horizEndX = lX + 30;
+  
+  return { ox, oy, ppm, bX, bTopY, lX, lTopY, obsX, obsY, horizEndX };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER — COORDINATE SYSTEM
+// ═══════════════════════════════════════════════════════════════
+
+function drawGrid() {
+  if (!state.showGrid) return;
+  const { ox, oy } = getScene();
+  const scale = 30;
+  
+  ctx.strokeStyle = 'rgba(26,23,20,0.05)';
+  ctx.lineWidth = 1;
+  
+  for (let x = ox % scale; x < canvas.width; x += scale) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+  }
+  for (let y = oy % scale; y < canvas.height; y += scale) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+  }
+  
+  ctx.strokeStyle = 'rgba(26,23,20,0.18)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(0, oy); ctx.lineTo(canvas.width, oy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(ox, 0); ctx.lineTo(ox, canvas.height); ctx.stroke();
+  
+  // Arrowheads
+  drawArrow(canvas.width - 10, oy, 0);
+  drawArrow(ox, 10, -Math.PI/2);
+  
+  ctx.fillStyle = '#5C5652';
+  ctx.font = '12px Georgia';
+  ctx.fillText('x (m)', canvas.width - 45, oy - 8);
+  ctx.fillText('y (m)', ox + 8, 18);
+}
+
+function drawArrow(x, y, angle) {
+  const s = 7;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(-s, -s/2);
+  ctx.lineTo(-s, s/2);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(26,23,20,0.25)';
+  ctx.fill();
+  ctx.restore();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER — BUILDING & LAMP POST (REAL OBJECTS)
+// ═══════════════════════════════════════════════════════════════
+
+function drawBuilding() {
+  const { bX, oy, ppm } = getScene();
+  const w = 18; // building width in pixels
+  const h = state.buildingHeight * ppm;
+  
+  // Building body — brick texture suggestion
+  ctx.fillStyle = '#C4B5A0';
+  ctx.fillRect(bX - w/2, oy - h, w, h);
+  
+  // Building outline
+  ctx.strokeStyle = '#8B7355';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(bX - w/2, oy - h, w, h);
+  
+  // Horizontal lines (floors)
+  ctx.strokeStyle = 'rgba(139,115,85,0.3)';
+  ctx.lineWidth = 1;
+  const floors = Math.floor(state.buildingHeight / 3);
+  for (let i = 1; i < floors; i++) {
+    const fy = oy - (i * 3 * ppm);
+    ctx.beginPath(); ctx.moveTo(bX - w/2, fy); ctx.lineTo(bX + w/2, fy); ctx.stroke();
+  }
+  
+  // Roof
+  ctx.fillStyle = '#A09080';
+  ctx.beginPath();
+  ctx.moveTo(bX - w/2 - 3, oy - h);
+  ctx.lineTo(bX, oy - h - 8);
+  ctx.lineTo(bX + w/2 + 3, oy - h);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = '#8B7355';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  
+  // Label
+  ctx.fillStyle = '#1A1714';
+  ctx.font = 'bold 12px Verdana';
+  ctx.textAlign = 'center';
+  ctx.fillText('A', bX, oy - h - 14);
+  ctx.fillText('B', bX, oy + 16);
+  ctx.textAlign = 'left';
+}
+
+function drawLampPost() {
+  const { lX, oy, ppm } = getScene();
+  const w = 8;
+  const h = state.lampHeight * ppm;
+  
+  // Post
+  ctx.fillStyle = '#6B6560';
+  ctx.fillRect(lX - w/2, oy - h, w, h);
+  ctx.strokeStyle = '#4A4540';
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(lX - w/2, oy - h, w, h);
+  
+  // Lamp head
+  ctx.fillStyle = '#D4A843';
+  ctx.beginPath();
+  ctx.moveTo(lX - 10, oy - h);
+  ctx.lineTo(lX + 10, oy - h);
+  ctx.lineTo(lX + 6, oy - h - 12);
+  ctx.lineTo(lX - 6, oy - h - 12);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = '#C9961A';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  
+  // Light glow
+  ctx.fillStyle = 'rgba(212,168,67,0.15)';
+  ctx.beginPath();
+  ctx.arc(lX, oy - h - 6, 20, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // Labels
+  ctx.fillStyle = '#1A1714';
+  ctx.font = 'bold 12px Verdana';
+  ctx.textAlign = 'center';
+  ctx.fillText('C', lX, oy - h - 18);
+  ctx.fillText('D', lX, oy + 16);
+  ctx.textAlign = 'left';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER — GROUND & HORIZONTAL REFERENCE
+// ═══════════════════════════════════════════════════════════════
+
+function drawGround() {
+  const { ox, oy, bX, lX, ppm } = getScene();
+  
+  // Ground line
+  ctx.strokeStyle = '#8B7355';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(ox - 10, oy);
+  ctx.lineTo(lX + 40, oy);
+  ctx.stroke();
+  
+  // Ground texture
+  ctx.fillStyle = '#E8E4DC';
+  ctx.fillRect(ox - 10, oy, lX - ox + 50, 12);
+  
+  // Distance label
+  ctx.fillStyle = '#2A7A6B';
+  ctx.font = '12px Verdana';
+  ctx.textAlign = 'center';
+  ctx.fillText(`x = ${state.distance.toFixed(1)} m`, (bX + lX) / 2, oy + 28);
+  ctx.textAlign = 'left';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER — HORIZONTAL LINE FROM OBSERVER (KEY CONSTRUCTION)
+// ═══════════════════════════════════════════════════════════════
+
+function drawHorizontalLine() {
+  const { obsX, obsY, horizEndX } = getScene();
+  
+  ctx.strokeStyle = '#3D6B9E';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([6, 4]);
+  ctx.beginPath();
+  ctx.moveTo(obsX, obsY);
+  ctx.lineTo(horizEndX, obsY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  
+  // Horizontal label
+  ctx.fillStyle = '#3D6B9E';
+  ctx.font = 'italic 11px Georgia';
+  ctx.textAlign = 'center';
+  ctx.fillText('Horizontal', (obsX + horizEndX) / 2, obsY - 8);
+  ctx.textAlign = 'left';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER — CONSTRUCTION LINES (DASHED)
+// ═══════════════════════════════════════════════════════════════
+
+function drawConstructionLines() {
+  if (!state.showConstruction) return;
+  const { bX, lX, oy, obsX, obsY, lTopY } = getScene();
+  
+  ctx.setLineDash([8, 4]);
+  ctx.lineWidth = 1.5;
+  
+  // Vertical from observer down to lamp top level
+  ctx.strokeStyle = 'rgba(59,91,140,0.35)';
+  ctx.beginPath();
+  ctx.moveTo(lX, obsY);
+  ctx.lineTo(lX, lTopY);
+  ctx.stroke();
+  
+  // Horizontal from lamp top to building
+  ctx.strokeStyle = 'rgba(196,98,45,0.3)';
+  ctx.beginPath();
+  ctx.moveTo(bX, lTopY);
+  ctx.lineTo(lX, lTopY);
+  ctx.stroke();
+  
+  // Right angle at building base
+  drawRightAngle(bX, oy, 16);
+  
+  // Right angle at lamp post base  
+  drawRightAngle(lX, oy, 16);
+  
+  ctx.setLineDash([]);
+}
+
+function drawRightAngle(x, y, s) {
+  ctx.strokeStyle = 'rgba(59,91,140,0.45)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(x, y - s);
+  ctx.lineTo(x, y);
+  ctx.lineTo(x + s, y);
+  ctx.stroke();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER — LINES OF SIGHT (ANGLE OF DEPRESSION)
+// ═══════════════════════════════════════════════════════════════
+
+function drawLinesOfSight() {
+  const { obsX, obsY, lX, oy, lTopY } = getScene();
+  
+  // Line of sight to bottom of lamp post (angle of depression = 60°)
+  ctx.strokeStyle = '#3D6B9E';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(obsX, obsY);
+  ctx.lineTo(lX, oy);
+  ctx.stroke();
+  
+  // Line of sight to top of lamp post (angle of depression = 30°)
+  ctx.strokeStyle = '#5B4A8A';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(obsX, obsY);
+  ctx.lineTo(lX, lTopY);
+  ctx.stroke();
+  
+  // Angle arcs — depression angles (below horizontal)
+  drawDepressionArc(obsX, obsY, state.angleDepressionBottom, 'bottom');
+  drawDepressionArc(obsX, obsY, state.angleDepressionTop, 'top');
+}
+
+function drawDepressionArc(cx, cy, angle, which) {
+  const r = 45;
+  const rad = toRad(angle);
+  
+  ctx.strokeStyle = '#C25D2E';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  if (which === 'bottom') {
+    // Arc from horizontal (0°) down to depression angle
+    ctx.arc(cx, cy, r, 0, rad, false);
+  } else {
+    // Arc from horizontal (0°) down to smaller depression angle
+    ctx.arc(cx, cy, r * 0.7, 0, rad, false);
+  }
+  ctx.stroke();
+  
+  // Angle label
+  const midAngle = rad / 2;
+  const lx = cx + (r + (which === 'bottom' ? 18 : 12)) * Math.cos(midAngle);
+  const ly = cy + (r + (which === 'bottom' ? 18 : 12)) * Math.sin(midAngle);
+  
+  ctx.fillStyle = '#C25D2E';
+  ctx.font = 'bold 12px Verdana';
+  ctx.textAlign = 'center';
+  ctx.fillText(`${angle}°`, lx, ly);
+  ctx.textAlign = 'left';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER — HEIGHT LABELS
+// ═══════════════════════════════════════════════════════════════
+
+function drawHeightLabels() {
+  const { bX, oy, obsY, lX, lTopY, ppm } = getScene();
+  
+  // Building height
+  ctx.fillStyle = '#3D6B9E';
+  ctx.font = 'bold 13px Verdana';
+  ctx.textAlign = 'left';
+  ctx.fillText(`AB = ${state.buildingHeight}m`, bX + 14, (oy + obsY) / 2);
+  
+  // Lamp post height
+  ctx.fillStyle = '#5B4A8A';
+  ctx.font = 'bold 13px Verdana';
+  ctx.fillText(`CD = ${state.lampHeight.toFixed(1)}m`, lX + 12, (oy + lTopY) / 2);
+  
+  // Difference segment
+  if (state.showAnswer || state.phase >= 4) {
+    const diff = state.buildingHeight - state.lampHeight;
+    ctx.fillStyle = '#C25D2E';
+    ctx.font = 'bold 12px Verdana';
+    ctx.textAlign = 'left';
+    ctx.fillText(`Diff = ${diff.toFixed(1)}m`, bX + 14, lTopY + (obsY - lTopY) / 2);
+  }
+  
+  ctx.textAlign = 'left';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER — UNIT CIRCLE INSET (MANDATORY FOR TRIG)
+// ═══════════════════════════════════════════════════════════════
+
+function drawUnitCircleInset() {
+  if (!state.showUnitCircle) return;
+  
+  const size = 120;
+  const cx = canvas.width - size - 15;
+  const cy = size + 15;
+  const r = size / 2 - 10;
+  
+  // Background
+  ctx.fillStyle = 'rgba(253,251,248,0.95)';
+  ctx.fillRect(cx - size/2 - 4, cy - size/2 - 4, size + 8, size + 8);
+  ctx.strokeStyle = 'rgba(26,23,20,0.12)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(cx - size/2 - 4, cy - size/2 - 4, size + 8, size + 8);
+  
+  ctx.fillStyle = '#5C5652';
+  ctx.font = '10px Verdana';
+  ctx.textAlign = 'center';
+  ctx.fillText('Unit Circle', cx, cy - size/2 + 10);
+  ctx.textAlign = 'left';
+  
+  // Circle
+  ctx.strokeStyle = 'rgba(26,23,20,0.2)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+  
+  // Axes
+  ctx.beginPath(); ctx.moveTo(cx - r - 6, cy); ctx.lineTo(cx + r + 6, cy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx, cy - r - 6); ctx.lineTo(cx, cy + r + 6); ctx.stroke();
+  
+  // For depression angle (below horizontal = negative angle in standard position)
+  // Show 60° below horizontal = -60° = 300°
+  const theta = toRad(state.angleDepressionBottom);
+  const px = cx + r * Math.cos(theta);
+  const py = cy + r * Math.sin(theta); // positive y = down in canvas
+  
+  // Radius
+  ctx.strokeStyle = '#3D6B9E';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(px, py); ctx.stroke();
+  
+  // Vertical (sin)
+  ctx.setLineDash([4, 3]);
+  ctx.strokeStyle = '#C25D2E';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(px, cy); ctx.lineTo(px, py); ctx.stroke();
+  
+  // Horizontal (cos)
+  ctx.strokeStyle = '#2A7A6B';
+  ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(px, cy); ctx.stroke();
+  ctx.setLineDash([]);
+  
+  // Point
+  ctx.fillStyle = '#C9961A';
+  ctx.beginPath(); ctx.arc(px, py, 5, 0, Math.PI * 2); ctx.fill();
+  
+  // Labels
+  ctx.fillStyle = '#2A7A6B';
+  ctx.font = '9px Verdana';
+  ctx.textAlign = 'center';
+  ctx.fillText(`cos ${state.angleDepressionBottom}°=${Math.cos(theta).toFixed(2)}`, cx + r/2, cy + 14);
+  
+  ctx.fillStyle = '#C25D2E';
+  ctx.fillText(`sin ${state.angleDepressionBottom}°=${Math.sin(theta).toFixed(2)}`, px + 18, cy + r * Math.sin(theta) / 2);
+  
+  ctx.fillStyle = '#3D6B9E';
+  ctx.font = 'bold 10px Verdana';
+  ctx.fillText(`θ=${state.angleDepressionBottom}°`, cx + 16, cy + 12);
+  ctx.textAlign = 'left';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER — TRIG FUNCTION PLOT INSET
+// ═══════════════════════════════════════════════════════════════
+
+function drawTrigPlotInset() {
+  if (!state.showTrigPlot) return;
+  
+  const x = 15;
+  const y = canvas.height - 110;
+  const w = 200;
+  const h = 90;
+  
+  // Background
+  ctx.fillStyle = 'rgba(253,251,248,0.9)';
+  ctx.fillRect(x - 4, y - 4, w + 8, h + 8);
+  ctx.strokeStyle = 'rgba(26,23,20,0.1)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(x - 4, y - 4, w + 8, h + 8);
+  
+  ctx.fillStyle = '#5C5652';
+  ctx.font = '9px Verdana';
+  ctx.fillText('tan θ', x, y - 2);
+  
+  const mid = y + h / 2;
+  
+  // Zero line
+  ctx.strokeStyle = 'rgba(26,23,20,0.1)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(x, mid); ctx.lineTo(x + w, mid); ctx.stroke();
+  
+  // Tan curve (0 to 75°)
+  ctx.strokeStyle = '#7B6FA0';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  let first = true;
+  for (let px = 0; px <= w; px++) {
+    const deg = (px / w) * 75;
+    const val = Math.tan(toRad(deg));
+    if (Math.abs(val) > 5) { first = true; continue; }
+    const py = mid - val * (h / 2) * 0.15;
+    if (first) { ctx.moveTo(x + px, py); first = false; }
+    else ctx.lineTo(x + px, py);
+  }
+  ctx.stroke();
+  
+  // Highlight current angles
+  for (const angle of [state.angleDepressionBottom, state.angleDepressionTop]) {
+    const hx = x + (angle / 75) * w;
+    const hVal = Math.tan(toRad(angle));
+    const hy = mid - hVal * (h / 2) * 0.15;
+    
+    ctx.strokeStyle = '#C9961A';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 2]);
+    ctx.beginPath(); ctx.moveTo(hx, y); ctx.lineTo(hx, y + h); ctx.stroke();
+    ctx.setLineDash([]);
+    
+    if (Math.abs(hVal) <= 5) {
+      ctx.fillStyle = '#C9961A';
+      ctx.beginPath(); ctx.arc(hx, hy, 3, 0, Math.PI * 2); ctx.fill();
+      
+      ctx.fillStyle = '#1A1714';
+      ctx.font = '9px Verdana';
+      ctx.textAlign = hx < x + w - 40 ? 'left' : 'right';
+      const off = hx < x + w - 40 ? 5 : -5;
+      ctx.fillText(`tan ${angle}°=${hVal.toFixed(2)}`, hx + off, hy - 6);
+    }
+  }
+  
+  // X labels
+  ctx.fillStyle = '#A8A29E';
+  ctx.font = '8px Verdana';
+  ctx.textAlign = 'center';
+  for (const d of [0, 30, 45, 60, 75]) {
+    const px = x + (d / 75) * w;
+    ctx.fillText(`${d}°`, px, y + h - 2);
+  }
+  ctx.textAlign = 'left';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER — OBSERVER DOT & HORIZONTAL MARKER
+// ═══════════════════════════════════════════════════════════════
+
+function drawObserver() {
+  const { obsX, obsY } = getScene();
+  
+  // Observer eye
+  ctx.fillStyle = '#D4A843';
+  ctx.beginPath(); ctx.arc(obsX, obsY, 7, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#1A1714';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  
+  // Eye detail
+  ctx.fillStyle = '#1A1714';
+  ctx.beginPath(); ctx.arc(obsX - 1, obsY - 1, 1.5, 0, Math.PI * 2); ctx.fill();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MAIN RENDER LOOP
+// ═══════════════════════════════════════════════════════════════
+
+function render() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  // Background
+  ctx.fillStyle = '#F8F5F0';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  // Sky
+  const skyGrad = ctx.createLinearGradient(0, 0, 0, canvas.height * 0.45);
+  skyGrad.addColorStop(0, '#EDE9E2');
+  skyGrad.addColorStop(1, '#F8F5F0');
+  ctx.fillStyle = skyGrad;
+  ctx.fillRect(0, 0, canvas.width, canvas.height * 0.45);
+  
+  drawGrid();
+  drawGround();
+  drawConstructionLines();
+  drawHorizontalLine();
+  drawBuilding();
+  drawLampPost();
+  drawLinesOfSight();
+  drawObserver();
+  drawHeightLabels();
+  drawUnitCircleInset();
+  drawTrigPlotInset();
+  
+  // Phase overlay
+  if (state.phase === 0) {
+    ctx.fillStyle = 'rgba(26,23,20,0.75)';
+    ctx.font = 'bold 16px Georgia';
+    ctx.textAlign = 'center';
+    ctx.fillText('From the top of a 60m building, you look down at a lamp post.', canvas.width/2, 40);
+    ctx.font = '13px Georgia';
+    ctx.fillText('The angles of depression are 30° and 60°. How much shorter is the lamp post?', canvas.width/2, 62);
+    ctx.textAlign = 'left';
+  }
+  
+  requestAnimationFrame(render);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SLIDER SYSTEM — ALWAYS VISIBLE
+// ═══════════════════════════════════════════════════════════════
+
+function createSliderHTML(key, data) {
+  const pct = ((data.value - data.min) / (data.max - data.min)) * 100;
+  return `
+    <div class="control-group" data-slider="${key}">
+      <label>${data.label}: <span style="color:var(--fill-color);font-weight:bold;">${data.value.toFixed(data.step < 1 ? 2 : 0)}${data.unit}</span></label>
+      <div class="slider-container">
+        <div class="slider-track" onclick="handleTrackClick(event, '${key}')">
+          <div class="slider-fill" style="width: ${pct}%"></div>
+          <div class="slider-thumb" style="left: ${pct}%" 
+               onmousedown="startSliderDrag(event, '${key}')"
+               ontouchstart="startSliderDrag(event, '${key}')"></div>
+        </div>
+        <span class="slider-value">${data.min}${data.unit}</span>
+      </div>
+    </div>
+  `;
+}
+
+function handleTrackClick(e, key) {
+  if (e.target.classList.contains('slider-thumb')) return;
+  const rect = e.currentTarget.getBoundingClientRect();
+  const pct = (e.clientX - rect.left) / rect.width;
+  updateSlider(key, pct);
+}
+
+function startSliderDrag(e, key) {
+  e.preventDefault();
+  e.stopPropagation();
+  state._draggingSlider = key;
+  e.target.classList.add('dragging');
+  document.addEventListener('mousemove', onSliderDrag);
+  document.addEventListener('mouseup', stopSliderDrag);
+  document.addEventListener('touchmove', onSliderDrag, { passive: false });
+  document.addEventListener('touchend', stopSliderDrag);
+}
+
+function onSliderDrag(e) {
+  if (!state._draggingSlider) return;
+  e.preventDefault();
+  const key = state._draggingSlider;
+  const group = document.querySelector(`[data-slider="${key}"]`);
+  const track = group.querySelector('.slider-track');
+  const rect = track.getBoundingClientRect();
+  const cx = e.touches ? e.touches[0].clientX : e.clientX;
+  let pct = (cx - rect.left) / rect.width;
+  pct = Math.max(0, Math.min(1, pct));
+  updateSlider(key, pct);
+}
+
+function stopSliderDrag() {
+  const thumb = document.querySelector('.slider-thumb.dragging');
+  if (thumb) thumb.classList.remove('dragging');
+  state._draggingSlider = null;
+  document.removeEventListener('mousemove', onSliderDrag);
+  document.removeEventListener('mouseup', stopSliderDrag);
+  document.removeEventListener('touchmove', onSliderDrag);
+  document.removeEventListener('touchend', stopSliderDrag);
+}
+
+function updateSlider(key, pct) {
+  const data = state.sliders[key];
+  let val = data.min + pct * (data.max - data.min);
+  val = Math.round(val / data.step) * data.step;
+  
+  // Snap to special values
+  if (data.snap) {
+    for (const snap of data.snap) {
+      if (Math.abs(val - snap) < (data.max - data.min) * 0.02) val = snap;
+    }
+  }
+  
+  val = Math.max(data.min, Math.min(data.max, val));
+  data.value = val;
+  
+  // Update state
+  if (key === 'buildingH') state.buildingHeight = val;
+  if (key === 'distance') state.distance = val;
+  if (key === 'angleBot') state.angleDepressionBottom = val;
+  if (key === 'angleTop') state.angleDepressionTop = val;
+  
+  // Recalculate lamp height from geometry
+  // h = buildingHeight - distance * tan(angleTop)
+  state.lampHeight = state.buildingHeight - state.distance * Math.tan(toRad(state.angleDepressionTop));
+  if (state.lampHeight < 5) state.lampHeight = 5;
+  if (state.lampHeight > state.buildingHeight - 2) state.lampHeight = state.buildingHeight - 2;
+  
+  // Update UI
+  const group = document.querySelector(`[data-slider="${key}"]`);
+  if (group) {
+    group.querySelector('.slider-fill').style.width = `${pct * 100}%`;
+    group.querySelector('.slider-thumb').style.left = `${pct * 100}%`;
+    group.querySelector('label span').textContent = `${val.toFixed(data.step < 1 ? 2 : 0)}${data.unit}`;
+  }
+}
+
+function renderSliders() {
+  const area = document.getElementById('controlsArea');
+  area.innerHTML = `
+    ${createSliderHTML('buildingH', state.sliders.buildingH)}
+    ${createSliderHTML('distance', state.sliders.distance)}
+    ${createSliderHTML('angleBot', state.sliders.angleBot)}
+    ${createSliderHTML('angleTop', state.sliders.angleTop)}
+  `;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PANEL UI — PHASE MANAGEMENT
+// ═══════════════════════════════════════════════════════════════
+
+function updatePanel() {
+  const content = document.getElementById('phaseContent');
+  const progressText = document.getElementById('progressText');
+  const progressFill = document.getElementById('progressFill');
+  
+  content.innerHTML = '';
+  
+  const phases = [
+    'Phase 0 of 6 — Prior Knowledge',
+    'Phase 1 of 6 — Hook', 
+    'Phase 2 of 6 — Explore',
+    'Phase 3 of 6 — Challenge',
+    'Phase 4 of 6 — Reveal',
+    'Phase 5 of 6 — Proof',
+    'Phase 6 of 6 — Master'
+  ];
+  
+  progressText.textContent = phases[state.phase];
+  progressFill.style.width = `${(state.phase / 6) * 100}%`;
+  
+  switch(state.phase) {
+    case 0: renderPhase0(content); break;
+    case 1: renderPhase1(content); break;
+    case 2: renderPhase2(content); break;
+    case 3: renderPhase3(content); break;
+    case 4: renderPhase4(content); break;
+    case 5: renderPhase5(content); break;
+    case 6: renderPhase6(content); break;
+  }
+  
+  renderSliders();
+}
+
+function renderPhase0(content) {
+  content.innerHTML = `
+    <div class="phase-title">🧠 Prior Knowledge Check</div>
+    <div class="phase-text">
+      Before we dive in — a quick check. When you stand at the top of a tall building and look <em>down</em> at something on the ground, the angle between your horizontal gaze and your line of sight is called the <strong>angle of depression</strong>.
+      <br><br>
+      <strong>Key fact:</strong> The angle of depression from your eye equals the angle of elevation from the ground object to your eye. (Alternate interior angles — remember?)
+    </div>
+    <div class="did-you-know">
+      The word "depression" here means "pressing down" — the angle presses downward from the horizontal. It has nothing to do with sadness.
+    </div>
+    <div class="btn-group">
+      <button class="btn primary" onclick="nextPhase()">I Remember This →</button>
+    </div>
+  `;
+}
+
+function renderPhase1(content) {
+  content.innerHTML = `
+    <div class="phase-title">🎯 The Hook</div>
+    <div class="phase-text">
+      A building stands <strong>60 meters tall</strong>. From its roof, you look down at a lamp post. The angle of depression to the <em>bottom</em> of the post is <strong>60°</strong>. To the <em>top</em> of the post, it's only <strong>30°</strong>.
+      <br><br>
+      <strong>Counterintuitive:</strong> The angle to the bottom is <em>steeper</em> than the angle to the top. That means the lamp post is significantly shorter than the building. But by how much?
+    </div>
+    <div class="did-you-know">
+      Surveyors on the Eiffel Tower used this exact method in 1889 to measure the height of nearby structures — no need to leave the tower.
+    </div>
+    <div class="btn-group">
+      <button class="btn primary" onclick="nextPhase()">Show Me the Scene →</button>
+    </div>
+  `;
+}
+
+function renderPhase2(content) {
+  content.innerHTML = `
+    <div class="phase-title">🔍 Explore Freely</div>
+    <div class="phase-text">
+      Use the <strong>sliders below</strong> to change the building height, distance, and angles. Watch how the lines of sight and the geometry change in real time.
+      <br><br>
+      Try this: increase the distance. What happens to the angles? Try making both angles equal — what does that tell you about the lamp post height?
+    </div>
+    <div class="did-you-know">
+      tan 60° = √3 ≈ 1.732. tan 30° = 1/√3 ≈ 0.577. Notice: tan 60° is exactly 3 times tan 30°.
+    </div>
+    <div class="btn-group">
+      <button class="btn primary" onclick="nextPhase()">I'm Ready for the Problem →</button>
+    </div>
+  `;
+}
+
+function renderPhase3(content) {
+  content.innerHTML = `
+    <div class="card">
+      <span class="badge">🏆 Challenge</span>
+      <p>From the top of building <strong>AB, 60 m high</strong>, the angles of depression of the <strong>top</strong> and <strong>bottom</strong> of a vertical lamp post <strong>CD</strong> are <strong>30°</strong> and <strong>60°</strong> respectively.
+      <br><br>
+      Find the <strong>difference between the heights</strong> of the building and the lamp post.</p>
+    </div>
+  `;
+  
+  if (!state.studentPrediction) {
+    content.innerHTML += `
+      <div class="prediction-widget">
+        <label>🔮 Guess the height difference before solving:</label>
+        <input type="number" class="prediction-input" id="predDiff" placeholder="Enter difference in meters">
+        <button class="prediction-btn" onclick="submitPrediction()">Lock in My Prediction</button>
+      </div>
+    `;
+  } else {
+    content.innerHTML += `
+      <div class="result-box" style="border-color:var(--highlight);background:rgba(201,150,26,0.05)">
+        <div class="big-answer" style="font-size:18px;color:var(--highlight)">Prediction: ${state.studentPrediction} m</div>
+      </div>
+      <div class="btn-group">
+        <button class="btn primary" onclick="nextPhase()">Show Solution →</button>
+      </div>
+    `;
+  }
+}
+
+function renderPhase4(content) {
+  const steps = [
+    {
+      title: 'The Scene',
+      text: 'Let <strong>AB = 60 m</strong> (building height). Let <strong>CD = h</strong> (lamp post height). Let <strong>BD = x</strong> (horizontal distance). From A, draw horizontal <strong>AX</strong> parallel to ground.'
+    },
+    {
+      title: 'Alternate Interior Angles',
+      text: 'Angle of depression = Angle of elevation (alternate interior angles).<<br>So ∠XAD = 30° and ∠XAC = 60°.<br>Wait — actually: depression to bottom D is 60°, so ∠XAD = 60°. Depression to top C is 30°, so ∠XAC = 30°.'
+    },
+    {
+      title: 'Triangle ABD (60°)',
+      text: 'In right ΔABD:<br>tan 60° = AB/BD = 60/x<br>√3 = 60/x<br><strong>x = 60/√3 = 20√3 m</strong>'
+    },
+    {
+      title: 'Triangle AEC (30°)',
+      text: 'Draw CE ⊥ AB, so CE = BD = x and AE = AB − EB = 60 − h.<br>In right ΔAEC:<br>tan 30° = AE/CE = (60−h)/x<br>1/√3 = (60−h)/(20√3)'
+    },
+    {
+      title: 'Solve for h',
+      text: 'Multiply both sides by 20√3:<br>20√3/√3 = 60 − h<br>20 = 60 − h<br><strong>h = 40 m</strong>'
+    },
+    {
+      title: 'Find the Difference',
+      text: 'Difference = AB − CD = 60 − 40<br><br><strong>Difference = 20 m</strong>'
+    },
+    {
+      title: 'Verification',
+      text: 'Check: tan 30° = (60−40)/(20√3) = 20/(20√3) = 1/√3 ✓<<br>Check: tan 60° = 60/(20√3) = 3/√3 = √3 ✓'
+    }
+  ];
+  
+  let html = `<div class="phase-title">📐 Step-by-Step Solution</div>`;
+  
+  steps.forEach((step, i) => {
+    const visible = i <= state.currentStep;
+    const op = visible ? '1' : '0.3';
+    html += `
+      <div class="step-card" style="opacity:${op}">
+        <span class="step-num">Step ${i+1}</span>
+        <h3>${step.title}</h3>
+        <p>${step.text}</p>
+      </div>
+    `;
+  });
+  
+  content.innerHTML = html;
+  
+  const isLast = state.currentStep >= steps.length - 1;
+  content.innerHTML += `
+    <div class="btn-group" style="margin-top:8px">
+      <button class="btn" onclick="prevStep()" ${state.currentStep <= 0 ? 'disabled style="opacity:0.4"' : ''}>← Back</button>
+      <button class="btn primary" onclick="${isLast ? 'nextPhase()' : 'nextStep()'}">
+        ${isLast ? 'See Proof →' : 'Next Step →'}
+      </button>
+    </div>
+  `;
+  
+  state.showAnswer = state.currentStep >= 5;
+}
+
+function renderPhase5(content) {
+  content.innerHTML = `
+    <div class="phase-title">📋 Formal Proof</div>
+    <div class="phase-text">
+      <strong>Given:</strong> Building AB = 60 m. From A, angles of depression to C (top of lamp) and D (bottom of lamp) are 30° and 60°.
+      <br><br>
+      <strong>To Prove:</strong> AB − CD = 20 m.
+    </div>
+    <div class="formula-box" style="text-align:left;font-size:12px;line-height:1.8">
+      <strong>Proof:</strong><br>
+      1. Draw AX ∥ BD (horizontal from A)<br>
+      2. ∠XAD = 60° (angle of depression = angle of elevation, alt. int. angles)<br>
+      3. ∠XAC = 30° (same reason)<br>
+      4. In ΔABD: tan 60° = AB/BD ⇒ BD = AB/tan 60° = 60/√3 = 20√3<br>
+      5. Draw CE ⊥ AB, so AE = AB − CD, CE = BD = 20√3<br>
+      6. In ΔAEC: tan 30° = AE/CE ⇒ AE = CE·tan 30° = 20√3 · (1/√3) = 20<br>
+      7. AB − CD = AE = 20<br>
+      8. ∴ Difference = 20 m <span style="color:var(--correct)">∎</span>
+    </div>
+    <div class="btn-group">
+      <button class="btn primary" onclick="nextPhase()">Master Level →</button>
+    </div>
+  `;
+}
+
+function renderPhase6(content) {
+  const tests = [
+    {
+      q: 'From the top of a 45m tower, angles of depression to top and bottom of a pole are 30° and 60°. Find the pole height.',
+      a: '30 m'
+    },
+    {
+      q: 'From a cliff 80m high, depression angles to top and bottom of a tree are 45° and 60°. Find the tree height.',
+      a: '80 − 80/√3 ≈ 33.8 m'
+    },
+    {
+      q: 'From a building 30m high, depression to bottom of tower is 60°, to top is 30°. Find tower height.',
+      a: '40 m (tower is taller!)'
+    }
+  ];
+  
+  const test = tests[state.selfTestIndex];
+  
+  content.innerHTML = `
+    <div class="phase-title">🎓 Master Level</div>
+    <div class="phase-text">
+      Same concept — different situations. Test yourself:
+    </div>
+    <div class="card">
+      <span class="badge">Self-Test ${state.selfTestIndex + 1}/3</span>
+      <p>${test.q}</p>
+    </div>
+    <div class="result-box" id="testResult" style="display:none">
+      <div class="big-answer" id="testAnswer"></div>
+      <div class="result-label">Answer</div>
+    </div>
+    <div class="btn-group">
+      <button class="btn" onclick="showTestAnswer()">Show Answer</button>
+      <button class="btn primary" onclick="nextTest()">Next Problem →</button>
+    </div>
+    <div class="did-you-know" style="margin-top:10px">
+      This same "two-angle from a height" method is how drones measure building heights from aerial photos.
+    </div>
+  `;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ACTIONS
+// ═══════════════════════════════════════════════════════════════
+
+function nextPhase() {
+  if (state.phase < 6) {
+    state.phase++;
+    state.currentStep = 0;
+    updatePanel();
+  }
+}
+
+function nextStep() {
+  state.currentStep++;
+  updatePanel();
+}
+
+function prevStep() {
+  if (state.currentStep > 0) {
+    state.currentStep--;
+    updatePanel();
+  }
+}
+
+function submitPrediction() {
+  const val = document.getElementById('predDiff').value;
+  if (val && !isNaN(val)) {
+    state.studentPrediction = parseFloat(val);
+    updatePanel();
+  }
+}
+
+function showTestAnswer() {
+  const answers = ['30 m', '80 − 80/√3 ≈ 33.8 m', '40 m (tower is taller!)'];
+  document.getElementById('testResult').style.display = 'block';
+  document.getElementById('testAnswer').textContent = answers[state.selfTestIndex];
+}
+
+function nextTest() {
+  if (state.selfTestIndex < 2) {
+    state.selfTestIndex++;
+    updatePanel();
+  }
+}
+
+function toggleTeacher() {
+  const d = document.getElementById('teacherDash');
+  d.style.display = d.style.display === 'block' ? 'none' : 'block';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// KEYBOARD
+// ═══════════════════════════════════════════════════════════════
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'n' || e.key === 'N') {
+    if (state.phase === 4) nextStep();
+    else nextPhase();
+  } else if (e.key === 'p' || e.key === 'P') {
+    if (state.phase === 4) prevStep();
+  } else if (e.key === 'r' || e.key === 'R') {
+    state.phase = 0;
+    state.currentStep = 0;
+    state.studentPrediction = null;
+    state.selfTestIndex = 0;
+    state.showAnswer = false;
+    state.buildingHeight = 60;
+    state.distance = 34.641;
+    state.angleDepressionBottom = 60;
+    state.angleDepressionTop = 30;
+    state.lampHeight = 40;
+    state.sliders.buildingH.value = 60;
+    state.sliders.distance.value = 34.641;
+    state.sliders.angleBot.value = 60;
+    state.sliders.angleTop.value = 30;
+    updatePanel();
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+
+updatePanel();
+render();
+
+</script>
+</body>
+</html>

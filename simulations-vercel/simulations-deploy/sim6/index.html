@@ -1,0 +1,1571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APEX-EDU · Tower Shadow Trigonometry · Interactive Simulation</title>
+<style>
+/* ╔══════════════════════════════════════════╗
+   ║  CSS VARIABLES & RESET                   ║
+   ╚══════════════════════════════════════════╝ */
+:root {
+  --bg:          #FAFAF5;
+  --ink:         #1C1917;
+  --ink-light:   #6B6560;
+  --accent:      #3B5B8C;
+  --accent-warm: #C4622D;
+  --highlight:   #D4A843;
+  --panel-bg:    #F2EDE5;
+  --panel-border:#DDD5C8;
+  --success:     #2A7C6F;
+  --canvas-bg:   #E8E4DC;
+  --sky-day:     #B8D4E3;
+  --sky-dusk:    #E8C8A0;
+  --ground:      #8B7355;
+  --tower:       #6B6560;
+  --shadow:      #3A3530;
+  --sun:         #F4D03F;
+  --sun-glow:    #F9E79F;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: Georgia, 'Times New Roman', serif;
+  background: var(--bg);
+  color: var(--ink);
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* ╔══════════════════════════════════════════╗
+   ║  LAYOUT                                  ║
+   ╚══════════════════════════════════════════╝ */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.header-bar {
+  background: var(--ink);
+  color: var(--bg);
+  padding: 8px 20px;
+  font-size: 13px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-bar .topic-tag {
+  color: var(--highlight);
+  font-weight: bold;
+}
+
+.main-stage {
+  display: flex;
+  flex: 1;
+  position: relative;
+}
+
+/* Canvas area */
+.canvas-wrapper {
+  flex: 1;
+  position: relative;
+  background: var(--canvas-bg);
+  min-height: 500px;
+  overflow: hidden;
+}
+
+#simCanvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Solution Panel */
+.solution-panel {
+  width: 380px;
+  background: var(--panel-bg);
+  border-left: 2px solid var(--panel-border);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  max-height: calc(100vh - 40px);
+}
+
+.panel-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--panel-border);
+  background: linear-gradient(135deg, var(--panel-bg) 0%, #E8E0D4 100%);
+}
+
+.panel-header h2 {
+  font-size: 18px;
+  margin-bottom: 4px;
+  color: var(--ink);
+}
+
+.panel-header .meta {
+  font-size: 12px;
+  color: var(--ink-light);
+  font-family: Verdana, Geneva, sans-serif;
+}
+
+.progress-track {
+  padding: 12px 20px;
+  background: rgba(0,0,0,0.03);
+}
+
+.progress-bar {
+  height: 4px;
+  background: var(--panel-border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  width: 0%;
+  transition: width 0.6s ease;
+}
+
+.step-label {
+  font-size: 11px;
+  color: var(--ink-light);
+  margin-top: 6px;
+  font-family: Verdana, Geneva, sans-serif;
+}
+
+/* Step Cards */
+.step-content {
+  flex: 1;
+  padding: 0;
+}
+
+.step-card {
+  padding: 20px;
+  border-bottom: 1px solid var(--panel-border);
+  display: none;
+  animation: fadeIn 0.4s ease;
+}
+
+.step-card.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.step-number {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--accent);
+  font-weight: bold;
+  margin-bottom: 12px;
+  font-family: Verdana, Geneva, sans-serif;
+}
+
+.step-title {
+  font-size: 20px;
+  margin-bottom: 16px;
+  line-height: 1.3;
+}
+
+.step-body {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--ink);
+}
+
+.step-body p {
+  margin-bottom: 14px;
+}
+
+.formula-box {
+  background: var(--bg);
+  border: 2px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin: 16px 0;
+  text-align: center;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 18px;
+  position: relative;
+}
+
+.formula-box .formula-label {
+  position: absolute;
+  top: -10px;
+  left: 16px;
+  background: var(--panel-bg);
+  padding: 0 8px;
+  font-size: 11px;
+  color: var(--ink-light);
+  font-family: Verdana, Geneva, sans-serif;
+}
+
+.inline-formula {
+  font-family: 'Courier New', Courier, monospace;
+  background: rgba(59,91,140,0.08);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.95em;
+}
+
+/* Interactive Elements */
+.prediction-widget {
+  background: var(--bg);
+  border: 2px solid var(--highlight);
+  border-radius: 10px;
+  padding: 20px;
+  margin: 16px 0;
+}
+
+.prediction-widget h4 {
+  font-size: 14px;
+  margin-bottom: 12px;
+  color: var(--ink);
+}
+
+.slider-container {
+  margin: 12px 0;
+}
+
+.slider-container input[type="range"] {
+  width: 100%;
+  height: 6px;
+  -webkit-appearance: none;
+  background: var(--panel-border);
+  border-radius: 3px;
+  outline: none;
+}
+
+.slider-container input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  background: var(--highlight);
+  border-radius: 50%;
+  cursor: pointer;
+  border: 3px solid var(--bg);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+.slider-value {
+  text-align: center;
+  font-size: 24px;
+  font-weight: bold;
+  color: var(--accent);
+  margin-top: 8px;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.btn {
+  display: inline-block;
+  padding: 10px 24px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: Georgia, serif;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 12px;
+}
+
+.btn:hover {
+  background: #2A4A6E;
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: var(--ink-light);
+  margin-left: 8px;
+}
+
+.btn-secondary:hover {
+  background: var(--ink);
+}
+
+/* Fill-in-the-blank */
+.fill-blank {
+  display: inline-block;
+  min-width: 50px;
+  border-bottom: 2px solid var(--accent);
+  text-align: center;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 16px;
+  padding: 0 4px;
+  margin: 0 2px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid var(--accent);
+  color: var(--accent);
+  font-weight: bold;
+}
+
+.fill-blank:focus {
+  outline: none;
+  border-bottom-color: var(--highlight);
+}
+
+.fill-blank.correct {
+  border-bottom-color: var(--success);
+  color: var(--success);
+}
+
+.fill-blank.wrong {
+  border-bottom-color: var(--accent-warm);
+  color: var(--accent-warm);
+}
+
+/* Challenge Card */
+.challenge-card {
+  background: linear-gradient(135deg, var(--accent) 0%, #2A4A6E 100%);
+  color: white;
+  padding: 20px;
+  border-radius: 10px;
+  margin: 16px 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.challenge-card::before {
+  content: "🏆";
+  position: absolute;
+  top: 10px;
+  right: 16px;
+  font-size: 28px;
+  opacity: 0.3;
+}
+
+.challenge-card h3 {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 10px;
+  opacity: 0.9;
+}
+
+.challenge-card p {
+  font-size: 15px;
+  line-height: 1.6;
+  font-style: italic;
+}
+
+.challenge-card .difficulty {
+  margin-top: 12px;
+  font-size: 12px;
+  font-family: Verdana, Geneva, sans-serif;
+}
+
+/* Watch on Canvas button */
+.watch-canvas {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--accent);
+  font-size: 13px;
+  cursor: pointer;
+  margin-top: 12px;
+  font-family: Verdana, Geneva, sans-serif;
+}
+
+.watch-canvas:hover {
+  color: var(--highlight);
+}
+
+/* Warning/Note */
+.warning-box {
+  background: rgba(196,98,45,0.08);
+  border-left: 3px solid var(--accent-warm);
+  padding: 12px 16px;
+  margin: 14px 0;
+  font-size: 14px;
+  border-radius: 0 6px 6px 0;
+}
+
+.warning-box::before {
+  content: "⚠ ";
+  color: var(--accent-warm);
+  font-weight: bold;
+}
+
+/* Answer reveal */
+.answer-reveal {
+  background: linear-gradient(135deg, var(--success) 0%, #1E5C50 100%);
+  color: white;
+  padding: 20px;
+  border-radius: 10px;
+  margin: 16px 0;
+  text-align: center;
+}
+
+.answer-reveal .big-answer {
+  font-size: 32px;
+  font-weight: bold;
+  margin: 8px 0;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.answer-reveal .prediction-compare {
+  font-size: 13px;
+  opacity: 0.9;
+  margin-top: 8px;
+}
+
+/* Navigation */
+.panel-nav {
+  padding: 16px 20px;
+  border-top: 1px solid var(--panel-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--panel-bg);
+  position: sticky;
+  bottom: 0;
+}
+
+.nav-btn {
+  padding: 8px 16px;
+  background: var(--bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: Georgia, serif;
+  transition: all 0.2s;
+}
+
+.nav-btn:hover:not(:disabled) {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.nav-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Teacher Dashboard Toggle */
+.teacher-toggle {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 44px;
+  height: 44px;
+  background: var(--ink);
+  color: var(--bg);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  z-index: 100;
+  transition: transform 0.2s;
+}
+
+.teacher-toggle:hover {
+  transform: scale(1.1);
+}
+
+/* Teacher Dashboard */
+.teacher-dashboard {
+  display: none;
+  position: fixed;
+  bottom: 70px;
+  right: 20px;
+  width: 340px;
+  max-height: 500px;
+  background: white;
+  border: 2px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+  z-index: 99;
+  overflow-y: auto;
+}
+
+.teacher-dashboard.visible {
+  display: block;
+}
+
+.teacher-dashboard h3 {
+  font-size: 14px;
+  margin-bottom: 12px;
+  color: var(--ink);
+  border-bottom: 1px solid var(--panel-border);
+  padding-bottom: 8px;
+}
+
+.teacher-dashboard ul {
+  list-style: none;
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.teacher-dashboard li::before {
+  content: "✓ ";
+  color: var(--success);
+  font-weight: bold;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .main-stage { flex-direction: column; }
+  .solution-panel { width: 100%; max-height: none; border-left: none; border-top: 2px solid var(--panel-border); }
+  .canvas-wrapper { min-height: 400px; }
+}
+
+/* Achievement toast */
+.achievement-toast {
+  position: fixed;
+  top: 60px;
+  right: 20px;
+  background: var(--ink);
+  color: var(--bg);
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  display: none;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  z-index: 200;
+  animation: slideIn 0.4s ease;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* Controls overlay on canvas */
+.canvas-controls {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  display: flex;
+  gap: 8px;
+  z-index: 10;
+}
+
+.canvas-control-btn {
+  background: rgba(28,25,23,0.8);
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: Verdana, Geneva, sans-serif;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.canvas-control-btn:hover {
+  background: var(--accent);
+}
+
+/* Did You Know */
+.did-you-know {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  max-width: 280px;
+  background: rgba(250,250,245,0.95);
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-style: italic;
+  color: var(--ink-light);
+  border: 1px solid var(--panel-border);
+  line-height: 1.5;
+  z-index: 10;
+}
+
+/* Hint system */
+.hint-box {
+  background: rgba(212,168,67,0.1);
+  border: 1px dashed var(--highlight);
+  padding: 12px;
+  border-radius: 6px;
+  margin: 12px 0;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.hint-box .hint-content {
+  display: none;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--highlight);
+}
+
+.hint-box.expanded .hint-content {
+  display: block;
+}
+
+/* Score display */
+.score-display {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(28,25,23,0.85);
+  color: white;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: Verdana, Geneva, sans-serif;
+  z-index: 10;
+}
+</style>
+<base target="_blank">
+</head>
+<body>
+
+<div class="app-container">
+  <div class="header-bar">
+    <div><span class="topic-tag">APEX-EDU</span> · Trigonometry · Height & Distance</div>
+    <div style="font-size:11px;opacity:0.7;">Class 10 · NCERT Ch.8</div>
+  </div>
+
+  <div class="main-stage">
+    <!-- CANVAS AREA -->
+    <div class="canvas-wrapper">
+      <canvas id="simCanvas"></canvas>
+
+      <div class="canvas-controls">
+        <button class="canvas-control-btn" onclick="sim.togglePlay()">⏯ Play/Pause</button>
+        <button class="canvas-control-btn" onclick="sim.reset()">↺ Reset</button>
+        <button class="canvas-control-btn" onclick="sim.setAngle(30)">30°</button>
+        <button class="canvas-control-btn" onclick="sim.setAngle(60)">60°</button>
+        <button class="canvas-control-btn" onclick="sim.animateTransition()">Animate</button>
+      </div>
+
+      <div class="score-display" id="scoreDisplay">
+        ✓ <span id="correctCount">0</span> correct | streak: <span id="streakCount">0</span>
+      </div>
+
+      <div class="did-you-know" id="didYouKnow">
+        💡 Ancient Egyptian surveyors used shadow-length math to build the pyramids with precision — over 4,500 years ago.
+      </div>
+    </div>
+
+    <!-- SOLUTION PANEL -->
+    <div class="solution-panel">
+      <div class="panel-header">
+        <h2>🏛️ The Tower's Secret</h2>
+        <div class="meta">Mathematics · Applications of Trigonometry · Class 10</div>
+      </div>
+
+      <div class="progress-track">
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="step-label" id="stepLabel">Step 1 of 7</div>
+      </div>
+
+      <div class="step-content" id="stepContent">
+
+        <!-- STEP 1: HOOK -->
+        <div class="step-card active" data-step="1">
+          <div class="step-number">Phase 1 · The Hook</div>
+          <div class="step-title">A Shadow That Grows 40 Meters Longer</div>
+          <div class="step-body">
+            <p>Imagine standing beside a tall tower. At noon, the Sun is high behind it — the shadow is short. By late afternoon, the Sun sinks lower — the shadow stretches far across the ground in front.</p>
+            <p><strong>The surprise:</strong> When the Sun's altitude drops from 60° to just 30°, the tower's shadow grows by <strong>exactly 40 meters</strong>.</p>
+            <p>How tall must this tower be?</p>
+
+            <div class="watch-canvas" onclick="sim.highlightTower()">
+              👁 Watch the tower on canvas →
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 2: EXPLORE -->
+        <div class="step-card" data-step="2">
+          <div class="step-number">Phase 2 · Explore</div>
+          <div class="step-title">Play with the Sun's Position</div>
+          <div class="step-body">
+            <p>Drag the Sun across the sky or use the buttons below. The Sun is <strong>behind</strong> the tower — the shadow is cast <strong>forward</strong> onto the ground.</p>
+            <p>Notice: <span class="inline-formula">tan(θ) = height / shadow</span></p>
+
+            <div class="slider-container">
+              <label style="font-size:12px;color:var(--ink-light);">Sun's Altitude (θ)</label>
+              <input type="range" id="angleSlider" min="10" max="80" value="60" oninput="sim.setAngle(this.value)">
+              <div class="slider-value"><span id="angleValue">60</span>°</div>
+            </div>
+
+            <div style="margin-top:12px;font-size:13px;color:var(--ink-light);">
+              Shadow length: <span id="shadowValue" class="inline-formula">20.00</span> m<br>
+              (assuming h = 20√3 ≈ 34.64 m)
+            </div>
+
+            <p style="margin-top:16px;"><em>Try both 30° and 60°. See the 40m difference?</em></p>
+
+            <button class="btn" onclick="advanceToStep(3)">I'm Ready →</button>
+          </div>
+        </div>
+
+        <!-- STEP 3: CHALLENGE -->
+        <div class="step-card" data-step="3">
+          <div class="step-number">Phase 3 · Challenge</div>
+          <div class="step-title">The Exam Problem</div>
+          <div class="step-body">
+            <div class="challenge-card">
+              <h3>🏆 Challenge</h3>
+              <p>"The shadow of a tower standing on level ground is found to be <strong>40 m longer</strong> when the Sun's altitude is <strong>30°</strong> than when it is <strong>60°</strong>. Find the height of the tower."</p>
+              <div class="difficulty">Difficulty: ●●●○○ · Class 10 · CBSE/NCERT</div>
+            </div>
+
+            <div class="prediction-widget">
+              <h4>🔮 Make Your Prediction</h4>
+              <p style="font-size:13px;margin-bottom:8px;">Before solving — how tall do you think the tower is?</p>
+              <div class="slider-container">
+                <input type="range" id="predictionSlider" min="10" max="80" value="35" oninput="updatePrediction(this.value)">
+                <div class="slider-value"><span id="predictionValue">35</span> m</div>
+              </div>
+              <button class="btn" onclick="submitPrediction()">Lock Prediction & Solve</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 4: THE SCENE -->
+        <div class="step-card" data-step="4">
+          <div class="step-number">Step 1 · The Scene</div>
+          <div class="step-title">Drawing the Right Triangles</div>
+          <div class="step-body">
+            <p>Let <strong>AB</strong> be the tower with height <span class="inline-formula">h</span> meters.</p>
+            <p>When Sun's altitude is <strong>60°</strong>, shadow <strong>BC</strong> = <span class="inline-formula">x</span> meters.</p>
+            <p>When Sun's altitude is <strong>30°</strong>, shadow <strong>BD</strong> = <span class="inline-formula">x + 40</span> meters.</p>
+
+            <div class="formula-box">
+              <div class="formula-label">Two Right Triangles</div>
+              ΔABC (60°) and ΔABD (30°)<br>
+              Both share height AB = h<br>
+              <span style="font-size:13px;color:var(--ink-light);">Sun is behind the tower — shadow extends forward</span>
+            </div>
+
+            <div class="watch-canvas" onclick="sim.showBothTriangles()">
+              👁 Show both triangles on canvas →
+            </div>
+
+            <button class="btn" onclick="advanceToStep(5)">Continue →</button>
+          </div>
+        </div>
+
+        <!-- STEP 5: THE KEY INSIGHT -->
+        <div class="step-card" data-step="5">
+          <div class="step-number">Step 2 · The Key Insight</div>
+          <div class="step-title">Using the Tangent Ratio</div>
+          <div class="step-body">
+            <p>In a right triangle, <span class="inline-formula">tan(θ) = perpendicular / base</span></p>
+            <p>Here, perpendicular = height of tower (<span class="inline-formula">h</span>), base = shadow length.</p>
+
+            <div class="formula-box">
+              <div class="formula-label">From Triangle ABC (60°)</div>
+              tan 60° = AB/BC = h/x<br>
+              √3 = h/x<br>
+              <strong>x = h/√3</strong> ......(1)
+            </div>
+
+            <div class="formula-box">
+              <div class="formula-label">From Triangle ABD (30°)</div>
+              tan 30° = AB/BD = h/(x+40)<br>
+              1/√3 = h/(x+40)<br>
+              <strong>x + 40 = h√3</strong> ......(2)
+            </div>
+
+            <div class="hint-box" onclick="this.classList.toggle('expanded')">
+              💡 Why tan? Click to see why we use tangent here.
+              <div class="hint-content">
+                We know the angle and we need to relate the opposite side (height) to the adjacent side (shadow). Tangent is the only ratio that connects opposite and adjacent directly!
+              </div>
+            </div>
+
+            <button class="btn" onclick="advanceToStep(6)">Continue →</button>
+          </div>
+        </div>
+
+        <!-- STEP 6: THE CALCULATION -->
+        <div class="step-card" data-step="6">
+          <div class="step-number">Step 3 · The Calculation</div>
+          <div class="step-title">Solving for Height</div>
+          <div class="step-body">
+            <p>From equations (1) and (2):</p>
+
+            <div class="formula-box">
+              <div class="formula-label">Substitute x from (1) into (2)</div>
+              h/√3 + 40 = h√3
+            </div>
+
+            <p>Rearranging:</p>
+            <div class="formula-box">
+              40 = h√3 − h/√3<br>
+              40 = h(√3 − 1/√3)<br>
+              40 = h(<span class="inline-formula">3/√3 − 1/√3</span>)<br>
+              40 = h(<span class="inline-formula">2/√3</span>)
+            </div>
+
+            <p>Therefore:</p>
+            <div class="formula-box" style="border-color:var(--success);">
+              <div class="formula-label" style="color:var(--success);">Final Answer</div>
+              h = 40 × √3 / 2<br>
+              <strong>h = 20√3 meters</strong><br>
+              <span style="font-size:14px;opacity:0.8;">≈ 34.64 meters</span>
+            </div>
+
+            <div class="warning-box">
+              Do NOT add the angles (30° + 60° = 90°). The angles are for different times of day — they don't combine that way!
+            </div>
+
+            <button class="btn" onclick="advanceToStep(7)">Verify Answer →</button>
+          </div>
+        </div>
+
+        <!-- STEP 7: VERIFICATION -->
+        <div class="step-card" data-step="7">
+          <div class="step-number">Step 4 · Verification</div>
+          <div class="step-title">Does 20√3 Make Sense?</div>
+          <div class="step-body">
+            <div class="answer-reveal">
+              <div style="font-size:13px;opacity:0.9;">Height of Tower</div>
+              <div class="big-answer">20√3 m</div>
+              <div style="font-size:14px;">≈ 34.64 meters</div>
+              <div class="prediction-compare" id="predictionCompare">
+                You guessed: -- · Actual: 20√3 m
+              </div>
+            </div>
+
+            <p><strong>Check:</strong> If h = 20√3 m</p>
+            <ul style="margin-left:20px;line-height:2;">
+              <li>Shadow at 60°: <span class="inline-formula">20√3 / √3 = 20 m</span> ✓</li>
+              <li>Shadow at 30°: <span class="inline-formula">20√3 × √3 = 60 m</span> ✓</li>
+              <li>Difference: <span class="inline-formula">60 − 20 = 40 m</span> ✓</li>
+            </ul>
+
+            <div class="watch-canvas" onclick="sim.animateVerification()">
+              👁 Watch the verification animation →
+            </div>
+
+            <button class="btn" onclick="advanceToStep(8)">Master Phase →</button>
+          </div>
+        </div>
+
+        <!-- STEP 8: MASTER -->
+        <div class="step-card" data-step="8">
+          <div class="step-number">Phase 5 · Master</div>
+          <div class="step-title">Three Variants to Test Yourself</div>
+          <div class="step-body">
+
+            <div style="background:var(--bg);border:1px solid var(--panel-border);border-radius:8px;padding:16px;margin-bottom:12px;">
+              <div style="font-size:12px;color:var(--accent);font-weight:bold;margin-bottom:8px;">Variant 1 · Different Numbers</div>
+              <p style="font-size:14px;">Shadow difference is 30m (not 40m). Sun altitudes 45° and 60°. Find height.</p>
+              <div class="hint-box" onclick="this.classList.toggle('expanded')">
+                💡 Show solution
+                <div class="hint-content">
+                  h/tan45° − h/tan60° = 30 → h − h/√3 = 30 → h = 30√3/(√3−1) = 15(3+√3) ≈ 70.98 m
+                </div>
+              </div>
+            </div>
+
+            <div style="background:var(--bg);border:1px solid var(--panel-border);border-radius:8px;padding:16px;margin-bottom:12px;">
+              <div style="font-size:12px;color:var(--accent);font-weight:bold;margin-bottom:8px;">Variant 2 · Inverted Problem</div>
+              <p style="font-size:14px;">Tower height = 30m. Shadow at 60° is 10√3 m. Find the other angle if shadow difference is 20m.</p>
+            </div>
+
+            <div style="background:var(--bg);border:1px solid var(--panel-border);border-radius:8px;padding:16px;margin-bottom:12px;">
+              <div style="font-size:12px;color:var(--accent);font-weight:bold;margin-bottom:8px;">Variant 3 · Real World</div>
+              <p style="font-size:14px;">A 50m building casts a shadow. At 2pm (altitude 45°) vs 4pm (altitude 30°). How much longer is the 4pm shadow?</p>
+              <div class="hint-box" onclick="this.classList.toggle('expanded')">
+                💡 Show answer
+                <div class="hint-content">
+                  50/tan30° − 50/tan45° = 50√3 − 50 = 50(√3−1) ≈ 36.6 meters longer
+                </div>
+              </div>
+            </div>
+
+            <button class="btn" onclick="sim.reset();advanceToStep(1)">↺ Start Over</button>
+            <button class="btn btn-secondary" onclick="window.print()">🖨 Print Summary</button>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="panel-nav">
+        <button class="nav-btn" id="btnPrev" onclick="prevStep()">← Back</button>
+        <button class="nav-btn" id="btnNext" onclick="nextStep()">Next →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Achievement Toast -->
+<div class="achievement-toast" id="achievementToast">
+  <span id="achievementIcon">🏅</span>
+  <span id="achievementText">Achievement Unlocked!</span>
+</div>
+
+<!-- Teacher Dashboard -->
+<button class="teacher-toggle" onclick="toggleTeacher()" title="Teacher & Parent Dashboard">📋</button>
+<div class="teacher-dashboard" id="teacherDashboard">
+  <h3>📋 For Teachers & Parents</h3>
+  <p style="font-size:12px;color:var(--ink-light);margin-bottom:12px;">Topic: Height & Distance (Class 10 Mathematics)<br>Curriculum: NCERT Ch.8, CBSE, ICSE</p>
+
+  <h3>Learning Objectives</h3>
+  <ul>
+    <li>Visualize angle of elevation vs shadow length</li>
+    <li>Apply tan(θ) = height/shadow correctly</li>
+    <li>Set up equations from two right triangles</li>
+    <li>Solve surd equations with √3</li>
+    <li>Verify answer by back-substitution</li>
+  </ul>
+
+  <h3>Common Errors</h3>
+  <ul style="margin-bottom:12px;">
+    <li style="color:var(--accent-warm);"><span style="color:var(--accent-warm);">✗</span> Adding angles (30+60=90)</li>
+    <li style="color:var(--accent-warm);"><span style="color:var(--accent-warm);">✗</span> Using sin/cos instead of tan</li>
+    <li style="color:var(--accent-warm);"><span style="color:var(--accent-warm);">✗</span> Forgetting to rationalize 1/√3</li>
+  </ul>
+
+  <h3>Extension Activities</h3>
+  <ul>
+    <li>Measure your own shadow at different times</li>
+    <li>Calculate local Sun altitude using a stick</li>
+    <li>Research: Eratosthenes measured Earth this way!</li>
+  </ul>
+</div>
+
+<script>
+// ╔══════════════════════════════════════════╗
+// ║  SIMULATION ENGINE                       ║
+// ╚══════════════════════════════════════════╝
+
+class TowerShadowSimulation {
+  constructor() {
+    this.canvas = document.getElementById('simCanvas');
+    this.ctx = this.canvas.getContext('2d');
+    this.angle = 60; // Sun altitude in degrees
+    this.targetAngle = 60;
+    this.height = 20 * Math.sqrt(3); // 20√3 ≈ 34.64
+    this.groundY = 0;
+    this.towerX = 0;
+    this.isPlaying = true;
+    this.animationId = null;
+    this.time = 0;
+    this.showBoth = false;
+    this.verificationMode = false;
+    this.particles = [];
+    this.stars = [];
+
+    this.resize();
+    window.addEventListener('resize', () => this.resize());
+
+    // Mouse interaction for Sun dragging
+    this.canvas.addEventListener('mousemove', (e) => this.onMouseMove(e));
+    this.canvas.addEventListener('mousedown', (e) => this.onMouseDown(e));
+    this.canvas.addEventListener('mouseup', () => this.onMouseUp());
+    this.dragging = false;
+
+    this.initStars();
+    this.gameLoop();
+  }
+
+  resize() {
+    const rect = this.canvas.parentElement.getBoundingClientRect();
+    this.canvas.width = rect.width;
+    this.canvas.height = rect.height;
+    this.groundY = this.canvas.height * 0.78;
+    this.towerX = this.canvas.width * 0.45; // Tower more centered
+  }
+
+  initStars() {
+    for (let i = 0; i < 50; i++) {
+      this.stars.push({
+        x: Math.random(),
+        y: Math.random() * 0.5,
+        size: Math.random() * 2 + 0.5,
+        twinkle: Math.random() * Math.PI * 2
+      });
+    }
+  }
+
+  setAngle(deg) {
+    this.targetAngle = parseFloat(deg);
+    document.getElementById('angleSlider').value = this.targetAngle;
+    document.getElementById('angleValue').textContent = Math.round(this.targetAngle);
+    this.updateShadowDisplay();
+  }
+
+  updateShadowDisplay() {
+    const rad = this.targetAngle * Math.PI / 180;
+    const shadow = this.height / Math.tan(rad);
+    document.getElementById('shadowValue').textContent = shadow.toFixed(2);
+  }
+
+  togglePlay() {
+    this.isPlaying = !this.isPlaying;
+  }
+
+  reset() {
+    this.angle = 60;
+    this.targetAngle = 60;
+    this.showBoth = false;
+    this.verificationMode = false;
+    this.setAngle(60);
+  }
+
+  animateTransition() {
+    let start = this.angle;
+    let end = this.angle === 60 ? 30 : 60;
+    let duration = 2000;
+    let startTime = null;
+
+    const animate = (timestamp) => {
+      if (!startTime) startTime = timestamp;
+      let progress = Math.min((timestamp - startTime) / duration, 1);
+      // Ease in-out
+      progress = progress < 0.5 ? 2*progress*progress : 1 - Math.pow(-2*progress+2,2)/2;
+      this.angle = start + (end - start) * progress;
+      this.targetAngle = this.angle;
+      document.getElementById('angleSlider').value = this.angle;
+      document.getElementById('angleValue').textContent = Math.round(this.angle);
+      this.updateShadowDisplay();
+
+      if (progress < 1) requestAnimationFrame(animate);
+    };
+    requestAnimationFrame(animate);
+  }
+
+  highlightTower() {
+    this.highlightTimer = 60;
+  }
+
+  showBothTriangles() {
+    this.showBoth = true;
+  }
+
+  animateVerification() {
+    this.verificationMode = true;
+    this.verificationTimer = 0;
+  }
+
+  // Sun is BEHIND the tower (to the left), shadow extends FORWARD (to the right)
+  getSunPosition() {
+    // Sun is positioned behind the tower (to the left) at the given altitude angle
+    // The sun ray comes from behind, passes over tower top, creates shadow in front
+    const rad = this.angle * Math.PI / 180;
+    const sunDist = Math.min(this.canvas.width, this.canvas.height) * 0.4;
+    // Sun is to the LEFT of tower (behind it), at altitude angle above horizon
+    return {
+      x: this.towerX - Math.cos(rad) * sunDist,
+      y: this.groundY - Math.sin(rad) * sunDist
+    };
+  }
+
+  onMouseMove(e) {
+    const rect = this.canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    if (this.dragging) {
+      // Calculate angle from tower base to mouse position
+      const dx = this.towerX - x;
+      const dy = this.groundY - y;
+      let angle = Math.atan2(dy, dx) * 180 / Math.PI;
+      if (angle > 0 && angle <= 85) {
+        this.setAngle(angle);
+      }
+      return;
+    }
+
+    // Check if hovering over sun
+    const sunPos = this.getSunPosition();
+    const dx = x - sunPos.x;
+    const dy = y - sunPos.y;
+    if (Math.sqrt(dx*dx + dy*dy) < 35) {
+      this.canvas.style.cursor = 'grab';
+    } else {
+      this.canvas.style.cursor = 'default';
+    }
+  }
+
+  onMouseDown(e) {
+    const rect = this.canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    const sunPos = this.getSunPosition();
+    const dx = x - sunPos.x;
+    const dy = y - sunPos.y;
+    if (Math.sqrt(dx*dx + dy*dy) < 45) {
+      this.dragging = true;
+      this.canvas.style.cursor = 'grabbing';
+    }
+  }
+
+  onMouseUp() {
+    this.dragging = false;
+    this.canvas.style.cursor = 'default';
+  }
+
+  gameLoop() {
+    if (this.isPlaying) {
+      this.time += 0.016;
+
+      // Smooth angle transition
+      const diff = this.targetAngle - this.angle;
+      if (Math.abs(diff) > 0.1) {
+        this.angle += diff * 0.05;
+      }
+
+      if (this.highlightTimer > 0) this.highlightTimer--;
+      if (this.verificationMode) this.verificationTimer++;
+
+      this.draw();
+    }
+    this.animationId = requestAnimationFrame(() => this.gameLoop());
+  }
+
+  draw() {
+    const ctx = this.ctx;
+    const w = this.canvas.width;
+    const h = this.canvas.height;
+
+    // Sky gradient based on angle
+    const skyGrad = ctx.createLinearGradient(0, 0, 0, h);
+    if (this.angle > 45) {
+      // High sun = bright blue
+      skyGrad.addColorStop(0, '#87CEEB');
+      skyGrad.addColorStop(0.6, '#B8D4E3');
+      skyGrad.addColorStop(1, '#E0F0F8');
+    } else if (this.angle > 25) {
+      // Medium sun = warm
+      skyGrad.addColorStop(0, '#FFB347');
+      skyGrad.addColorStop(0.5, '#FFCC80');
+      skyGrad.addColorStop(1, '#FFE0B2');
+    } else {
+      // Low sun = dusk
+      skyGrad.addColorStop(0, '#FF8C42');
+      skyGrad.addColorStop(0.4, '#FFB347');
+      skyGrad.addColorStop(1, '#FFD699');
+    }
+    ctx.fillStyle = skyGrad;
+    ctx.fillRect(0, 0, w, h);
+
+    // Stars (visible when sun is low)
+    if (this.angle < 20) {
+      ctx.fillStyle = 'white';
+      this.stars.forEach(star => {
+        const alpha = (Math.sin(this.time * 2 + star.twinkle) + 1) / 2 * 0.8;
+        ctx.globalAlpha = alpha;
+        ctx.beginPath();
+        ctx.arc(star.x * w, star.y * h, star.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+    }
+
+    // Ground
+    ctx.fillStyle = '#8B7355';
+    ctx.fillRect(0, this.groundY, w, h - this.groundY);
+
+    // Ground texture
+    ctx.strokeStyle = '#7A6548';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < w; i += 40) {
+      ctx.beginPath();
+      ctx.moveTo(i, this.groundY);
+      ctx.lineTo(i + 20, this.groundY + 5);
+      ctx.stroke();
+    }
+
+    // Tower dimensions
+    const towerWidth = 28;
+    const scale = 4; // Scale factor for visibility
+    const towerHeightPx = this.height * scale;
+    const towerTop = this.groundY - towerHeightPx;
+
+    // Calculate shadow length based on current angle
+    const shadowLenPx = (this.height / Math.tan(this.angle * Math.PI / 180)) * scale;
+    const shadowTipX = this.towerX + towerWidth/2 + shadowLenPx;
+
+    // SHADOW (cast forward, to the right of tower)
+    // The shadow is on the ground, extending from tower base to shadow tip
+    ctx.fillStyle = 'rgba(58,53,48,0.35)';
+    ctx.beginPath();
+    ctx.moveTo(this.towerX + towerWidth/2, this.groundY);
+    ctx.lineTo(shadowTipX, this.groundY);
+    ctx.lineTo(shadowTipX, this.groundY - 4);
+    ctx.lineTo(this.towerX + towerWidth/2, this.groundY - 4);
+    ctx.closePath();
+    ctx.fill();
+
+    // Shadow edge line (sun ray hitting ground)
+    ctx.strokeStyle = 'rgba(58,53,48,0.5)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(this.towerX + towerWidth/2, this.groundY);
+    ctx.lineTo(shadowTipX, this.groundY);
+    ctx.stroke();
+
+    // Tower body
+    const towerGrad = ctx.createLinearGradient(this.towerX, towerTop, this.towerX + towerWidth, towerTop);
+    towerGrad.addColorStop(0, '#9E9E9E');
+    towerGrad.addColorStop(0.3, '#BDBDBD');
+    towerGrad.addColorStop(0.7, '#757575');
+    towerGrad.addColorStop(1, '#616161');
+    ctx.fillStyle = towerGrad;
+    ctx.fillRect(this.towerX, towerTop, towerWidth, towerHeightPx);
+
+    // Tower top (pyramid)
+    ctx.fillStyle = '#757575';
+    ctx.beginPath();
+    ctx.moveTo(this.towerX - 4, towerTop);
+    ctx.lineTo(this.towerX + towerWidth/2, towerTop - 12);
+    ctx.lineTo(this.towerX + towerWidth + 4, towerTop);
+    ctx.closePath();
+    ctx.fill();
+
+    // Tower windows
+    ctx.fillStyle = '#424242';
+    for (let i = 1; i < 6; i++) {
+      ctx.fillRect(this.towerX + 8, towerTop + i * (towerHeightPx/7), 12, 8);
+    }
+
+    // Tower base
+    ctx.fillStyle = '#616161';
+    ctx.fillRect(this.towerX - 2, this.groundY - 6, towerWidth + 4, 6);
+
+    // Height measurement line (left side of tower)
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    ctx.moveTo(this.towerX - 18, this.groundY);
+    ctx.lineTo(this.towerX - 18, towerTop);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Height arrows
+    ctx.beginPath();
+    ctx.moveTo(this.towerX - 22, this.groundY);
+    ctx.lineTo(this.towerX - 14, this.groundY);
+    ctx.moveTo(this.towerX - 22, towerTop);
+    ctx.lineTo(this.towerX - 14, towerTop);
+    ctx.stroke();
+
+    // Height label
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 13px Georgia';
+    ctx.textAlign = 'right';
+    ctx.fillText('h = 20√3', this.towerX - 24, towerTop + towerHeightPx/2);
+
+    // SUN — positioned BEHIND the tower (to the left)
+    const sunPos = this.getSunPosition();
+
+    // Sun glow
+    const glowGrad = ctx.createRadialGradient(sunPos.x, sunPos.y, 0, sunPos.x, sunPos.y, 60);
+    glowGrad.addColorStop(0, 'rgba(244,208,63,0.5)');
+    glowGrad.addColorStop(0.5, 'rgba(244,208,63,0.2)');
+    glowGrad.addColorStop(1, 'rgba(244,208,63,0)');
+    ctx.fillStyle = glowGrad;
+    ctx.beginPath();
+    ctx.arc(sunPos.x, sunPos.y, 60, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Sun body
+    ctx.fillStyle = '#F4D03F';
+    ctx.beginPath();
+    ctx.arc(sunPos.x, sunPos.y, 22, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Sun rays (rotating)
+    ctx.strokeStyle = 'rgba(244,208,63,0.7)';
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 12; i++) {
+      const rayAngle = (this.time * 0.3) + (i * Math.PI / 6);
+      ctx.beginPath();
+      ctx.moveTo(sunPos.x + Math.cos(rayAngle) * 26, sunPos.y + Math.sin(rayAngle) * 26);
+      ctx.lineTo(sunPos.x + Math.cos(rayAngle) * 36, sunPos.y + Math.sin(rayAngle) * 36);
+      ctx.stroke();
+    }
+
+    // Sun ray from Sun → Tower Top → Shadow Tip (the light path)
+    ctx.strokeStyle = 'rgba(244,208,63,0.6)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([10, 8]);
+    ctx.beginPath();
+    ctx.moveTo(sunPos.x, sunPos.y);
+    ctx.lineTo(this.towerX + towerWidth/2, towerTop);
+    ctx.lineTo(shadowTipX, this.groundY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Angle of elevation arc (at shadow tip)
+    const arcRadius = 50;
+    ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(shadowTipX, this.groundY, arcRadius, Math.PI, Math.PI + (this.angle * Math.PI / 180), false);
+    ctx.stroke();
+
+    // Angle label
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 14px Georgia';
+    ctx.textAlign = 'center';
+    const labelAngle = Math.PI + (this.angle * Math.PI / 180) / 2;
+    ctx.fillText(this.angle.toFixed(0) + '°', 
+      shadowTipX + Math.cos(labelAngle) * (arcRadius + 20),
+      this.groundY + Math.sin(labelAngle) * (arcRadius + 20) - 5);
+
+    // Shadow measurement label
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.font = '12px Georgia';
+    ctx.textAlign = 'center';
+    const shadowMeters = (this.height / Math.tan(this.angle * Math.PI / 180)).toFixed(1);
+    ctx.fillText('shadow = ' + shadowMeters + 'm', 
+      this.towerX + towerWidth/2 + shadowLenPx/2, this.groundY + 22);
+
+    // Shadow tip marker
+    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+    ctx.beginPath();
+    ctx.arc(shadowTipX, this.groundY, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Show both triangles mode
+    if (this.showBoth) {
+      this.drawBothTriangles(ctx, w, h, towerWidth, towerHeightPx, scale);
+    }
+
+    // Verification animation
+    if (this.verificationMode && this.verificationTimer < 300) {
+      this.drawVerification(ctx, w, h);
+    }
+
+    // Highlight effect
+    if (this.highlightTimer > 0) {
+      ctx.strokeStyle = `rgba(212,168,67,${this.highlightTimer/60})`;
+      ctx.lineWidth = 4;
+      ctx.strokeRect(this.towerX - 6, towerTop - 6, towerWidth + 12, towerHeightPx + 12);
+    }
+
+    // Ground level label
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.font = '11px Verdana';
+    ctx.textAlign = 'left';
+    ctx.fillText('Level ground', 20, this.groundY + 20);
+
+    // Direction labels
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.font = '10px Verdana';
+    ctx.textAlign = 'center';
+    ctx.fillText('← Sun behind tower', sunPos.x, sunPos.y + 45);
+    ctx.fillText('Shadow forward →', shadowTipX + 40, this.groundY + 15);
+  }
+
+  drawBothTriangles(ctx, w, h, towerWidth, towerHeightPx, scale) {
+    const towerTop = this.groundY - towerHeightPx;
+
+    // Triangle for 60° (blue)
+    const shadow60 = (this.height / Math.tan(60 * Math.PI / 180)) * scale;
+    ctx.strokeStyle = 'rgba(59,91,140,0.9)';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(this.towerX + towerWidth/2, towerTop);
+    ctx.lineTo(this.towerX + towerWidth/2 + shadow60, this.groundY);
+    ctx.lineTo(this.towerX + towerWidth/2, this.groundY);
+    ctx.closePath();
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(59,91,140,0.12)';
+    ctx.fill();
+
+    // Triangle for 30° (terracotta)
+    const shadow30 = (this.height / Math.tan(30 * Math.PI / 180)) * scale;
+    ctx.strokeStyle = 'rgba(196,98,45,0.9)';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(this.towerX + towerWidth/2, towerTop);
+    ctx.lineTo(this.towerX + towerWidth/2 + shadow30, this.groundY);
+    ctx.lineTo(this.towerX + towerWidth/2, this.groundY);
+    ctx.closePath();
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(196,98,45,0.08)';
+    ctx.fill();
+
+    // Labels for triangles
+    ctx.fillStyle = 'rgba(59,91,140,0.95)';
+    ctx.font = 'bold 12px Georgia';
+    ctx.textAlign = 'center';
+    ctx.fillText('60° → 20m shadow', this.towerX + towerWidth/2 + shadow60/2, this.groundY + 45);
+
+    ctx.fillStyle = 'rgba(196,98,45,0.95)';
+    ctx.fillText('30° → 60m shadow', this.towerX + towerWidth/2 + shadow30/2, this.groundY + 60);
+
+    // 40m difference bracket
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(this.towerX + towerWidth/2 + shadow60, this.groundY - 30);
+    ctx.lineTo(this.towerX + towerWidth/2 + shadow60, this.groundY - 45);
+    ctx.lineTo(this.towerX + towerWidth/2 + shadow30, this.groundY - 45);
+    ctx.lineTo(this.towerX + towerWidth/2 + shadow30, this.groundY - 30);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 14px Georgia';
+    ctx.fillText('40m longer', this.towerX + towerWidth/2 + (shadow60 + shadow30)/2, this.groundY - 52);
+  }
+
+  drawVerification(ctx, w, h) {
+    const progress = Math.min(this.verificationTimer / 180, 1);
+
+    ctx.fillStyle = 'rgba(42,124,111,0.85)';
+    ctx.font = 'bold 16px Georgia';
+    ctx.textAlign = 'center';
+
+    const yStart = h * 0.12;
+    if (progress > 0.2) {
+      ctx.fillText('✓ At 60°: h/√3 = 20√3/√3 = 20m shadow', w/2, yStart);
+    }
+    if (progress > 0.5) {
+      ctx.fillText('✓ At 30°: h√3 = 20√3 × √3 = 60m shadow', w/2, yStart + 28);
+    }
+    if (progress > 0.8) {
+      ctx.fillText('✓ Difference: 60 − 20 = 40m ✓', w/2, yStart + 56);
+    }
+  }
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  STEP MANAGEMENT                         ║
+// ╚══════════════════════════════════════════╝
+
+let currentStep = 1;
+const totalSteps = 8;
+let studentPrediction = null;
+let correctCount = 0;
+let streakCount = 0;
+
+function updateProgress() {
+  const pct = (currentStep / totalSteps) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('stepLabel').textContent = `Step ${Math.min(currentStep, 7)} of 7`;
+
+  document.getElementById('btnPrev').disabled = currentStep === 1;
+  document.getElementById('btnNext').disabled = currentStep === totalSteps;
+
+  document.querySelectorAll('.step-card').forEach(card => {
+    card.classList.remove('active');
+    if (parseInt(card.dataset.step) === currentStep) {
+      card.classList.add('active');
+    }
+  });
+}
+
+function advanceToStep(n) {
+  currentStep = n;
+  updateProgress();
+
+  if (n === 2) sim.setAngle(60);
+  if (n === 4) sim.showBoth = true;
+  if (n === 7) sim.animateVerification();
+}
+
+function nextStep() {
+  if (currentStep < totalSteps) {
+    advanceToStep(currentStep + 1);
+  }
+}
+
+function prevStep() {
+  if (currentStep > 1) {
+    advanceToStep(currentStep - 1);
+  }
+}
+
+function updatePrediction(val) {
+  document.getElementById('predictionValue').textContent = val;
+}
+
+function submitPrediction() {
+  studentPrediction = parseFloat(document.getElementById('predictionSlider').value);
+  const actual = 20 * Math.sqrt(3);
+  const diff = Math.abs(studentPrediction - actual);
+  const pctOff = (diff / actual) * 100;
+
+  let message = '';
+  let icon = '🏅';
+
+  if (pctOff < 10) {
+    message = 'Sharp Eye! Within 10%!';
+    icon = '👁';
+    correctCount++;
+    streakCount++;
+    showAchievement(icon, message);
+  } else if (pctOff < 25) {
+    message = 'Good intuition! Close guess.';
+    icon = '⭐';
+    streakCount++;
+    showAchievement(icon, message);
+  } else {
+    message = 'Interesting guess — most students guess lower!';
+    streakCount = 0;
+  }
+
+  document.getElementById('correctCount').textContent = correctCount;
+  document.getElementById('streakCount').textContent = streakCount;
+
+  document.getElementById('predictionCompare').innerHTML = 
+    `You guessed: ${studentPrediction}m · Actual: 20√3 ≈ ${actual.toFixed(2)}m · Off by ${pctOff.toFixed(1)}%`;
+
+  advanceToStep(4);
+}
+
+function showAchievement(icon, text) {
+  const toast = document.getElementById('achievementToast');
+  document.getElementById('achievementIcon').textContent = icon;
+  document.getElementById('achievementText').textContent = text;
+  toast.style.display = 'flex';
+  setTimeout(() => {
+    toast.style.display = 'none';
+  }, 3000);
+}
+
+function toggleTeacher() {
+  document.getElementById('teacherDashboard').classList.toggle('visible');
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  KEYBOARD SHORTCUTS                      ║
+// ╚══════════════════════════════════════════╝
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === ' ') { e.preventDefault(); sim.togglePlay(); }
+  if (e.key === 'r' || e.key === 'R') sim.reset();
+  if (e.key === 'n' || e.key === 'N') nextStep();
+  if (e.key === 'p' || e.key === 'P') prevStep();
+  if (e.key === 't' || e.key === 'T') toggleTeacher();
+});
+
+// ╔══════════════════════════════════════════╗
+// ║  INITIALIZATION                          ║
+// ╚══════════════════════════════════════════╝
+
+const sim = new TowerShadowSimulation();
+updateProgress();
+</script>
+
+</body>
+</html>

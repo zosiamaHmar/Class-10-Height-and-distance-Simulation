@@ -1,0 +1,1799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APEX-EDU · Angles of Elevation & Depression · Cable Tower</title>
+<style>
+:root {
+  --bg: #FAFAF5;
+  --ink: #1C1917;
+  --ink-light: #6B6560;
+  --accent: #3B5B8C;
+  --accent-warm: #C4622D;
+  --highlight: #D4A843;
+  --panel-bg: #F2EDE5;
+  --panel-border: #DDD5C8;
+  --success: #2A7C6F;
+  --font-body: Georgia, 'Times New Roman', serif;
+  --font-mono: 'Courier New', Courier, monospace;
+  --font-label: Verdana, Geneva, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  overflow: hidden;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── TOP BAR ── */
+.top-bar {
+  height: 48px;
+  background: var(--panel-bg);
+  border-bottom: 1px solid var(--panel-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  flex-shrink: 0;
+}
+
+.top-bar h1 {
+  font-size: 15px;
+  font-weight: normal;
+  letter-spacing: 0.5px;
+  color: var(--ink);
+}
+
+.top-bar .meta {
+  font-family: var(--font-label);
+  font-size: 11px;
+  color: var(--ink-light);
+}
+
+.top-bar .badge {
+  background: var(--accent);
+  color: white;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-family: var(--font-label);
+  margin-left: 10px;
+}
+
+/* ── MAIN LAYOUT ── */
+.main {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ── CANVAS AREA ── */
+.canvas-wrap {
+  flex: 1;
+  position: relative;
+  background: var(--bg);
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ── PANEL ── */
+.panel {
+  width: 340px;
+  background: var(--panel-bg);
+  border-left: 1px solid var(--panel-border);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
+}
+
+.panel-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.panel-header h2 {
+  font-size: 16px;
+  font-weight: normal;
+  margin-bottom: 4px;
+}
+
+.progress-bar {
+  height: 3px;
+  background: var(--panel-border);
+  border-radius: 2px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+/* ── STEP CARDS ── */
+.step-card {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--panel-border);
+  display: none;
+}
+
+.step-card.active {
+  display: block;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.step-number {
+  font-family: var(--font-label);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--ink-light);
+  margin-bottom: 8px;
+}
+
+.step-title {
+  font-size: 15px;
+  margin-bottom: 12px;
+  color: var(--ink);
+}
+
+.step-body {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--ink);
+}
+
+.step-body p {
+  margin-bottom: 10px;
+}
+
+.formula-box {
+  background: white;
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  padding: 14px 16px;
+  margin: 12px 0;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--ink);
+}
+
+.formula-box .frac {
+  display: inline-block;
+  text-align: center;
+  vertical-align: middle;
+  margin: 0 2px;
+}
+
+.formula-box .frac .num {
+  display: block;
+  border-bottom: 1px solid var(--ink);
+  padding: 0 4px;
+}
+
+.formula-box .frac .den {
+  display: block;
+  padding: 0 4px;
+}
+
+.highlight-text {
+  color: var(--accent);
+  font-weight: bold;
+}
+
+.highlight-warm {
+  color: var(--accent-warm);
+  font-weight: bold;
+}
+
+/* ── CONTROLS ── */
+.controls-section {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.controls-section h3 {
+  font-family: var(--font-label);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--ink-light);
+  margin-bottom: 14px;
+}
+
+.slider-group {
+  margin-bottom: 16px;
+}
+
+.slider-label {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-label);
+  font-size: 12px;
+  margin-bottom: 6px;
+  color: var(--ink);
+}
+
+.slider-label .value {
+  color: var(--accent);
+  font-weight: bold;
+}
+
+.slider-track {
+  position: relative;
+  height: 24px;
+  cursor: pointer;
+}
+
+.slider-track-line {
+  position: absolute;
+  top: 10px;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--panel-border);
+  border-radius: 2px;
+}
+
+.slider-track-fill {
+  position: absolute;
+  top: 10px;
+  left: 0;
+  height: 4px;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 0.1s;
+}
+
+.slider-thumb {
+  position: absolute;
+  top: 4px;
+  width: 16px;
+  height: 16px;
+  background: var(--bg);
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  cursor: grab;
+  transition: left 0.1s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+
+.slider-thumb:hover {
+  transform: scale(1.15);
+}
+
+.slider-thumb:active {
+  cursor: grabbing;
+}
+
+/* ── PREDICTION WIDGET ── */
+.prediction-widget {
+  padding: 16px 20px;
+  background: white;
+  border: 2px solid var(--highlight);
+  border-radius: 8px;
+  margin: 12px 20px;
+}
+
+.prediction-widget h3 {
+  font-size: 14px;
+  margin-bottom: 10px;
+  color: var(--ink);
+}
+
+.prediction-input {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.prediction-input input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.prediction-input button {
+  padding: 8px 16px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-family: var(--font-label);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.prediction-input button:hover {
+  background: #2d4568;
+}
+
+.prediction-result {
+  font-size: 13px;
+  color: var(--ink-light);
+  margin-top: 8px;
+}
+
+/* ── BUTTONS ── */
+.btn-row {
+  display: flex;
+  gap: 8px;
+  padding: 12px 20px;
+}
+
+.btn {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid var(--panel-border);
+  background: white;
+  border-radius: 6px;
+  font-family: var(--font-label);
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--ink);
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.btn:hover {
+  background: var(--bg);
+  border-color: var(--accent);
+}
+
+.btn.primary {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.btn.primary:hover {
+  background: #2d4568;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── NAVIGATION ── */
+.nav-row {
+  display: flex;
+  gap: 8px;
+  padding: 12px 20px 16px;
+  border-top: 1px solid var(--panel-border);
+  margin-top: auto;
+}
+
+/* ── CHALLENGE CARD ── */
+.challenge-card {
+  background: white;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin: 12px 20px;
+}
+
+.challenge-card .challenge-label {
+  font-family: var(--font-label);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+
+.challenge-card p {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--ink);
+}
+
+/* ── DID YOU KNOW ── */
+.did-you-know {
+  padding: 12px 20px;
+  font-style: italic;
+  font-size: 12px;
+  color: var(--ink-light);
+  border-top: 1px solid var(--panel-border);
+}
+
+/* ── UNIT CIRCLE INSET ── */
+.unit-circle-inset {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 140px;
+  height: 140px;
+  background: rgba(250,250,245,0.95);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+/* ── ANSWER REVEAL ── */
+.answer-reveal {
+  background: white;
+  border: 2px solid var(--success);
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin: 12px 20px;
+  text-align: center;
+}
+
+.answer-reveal .big-answer {
+  font-size: 24px;
+  font-weight: bold;
+  color: var(--success);
+  margin: 8px 0;
+}
+
+.answer-reveal .prediction-compare {
+  font-size: 12px;
+  color: var(--ink-light);
+  margin-top: 8px;
+}
+
+/* ── MOBILE DRAWER ── */
+@media (max-width: 768px) {
+  .panel {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 100%;
+    transform: translateX(100%);
+    z-index: 100;
+  }
+  .panel.open {
+    transform: translateX(0);
+  }
+  .panel-toggle {
+    display: block;
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    width: 48px;
+    height: 48px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 20px;
+    cursor: pointer;
+    z-index: 50;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+}
+
+@media (min-width: 769px) {
+  .panel-toggle {
+    display: none;
+  }
+}
+
+/* ── PHASE INDICATOR ── */
+.phase-indicator {
+  display: flex;
+  padding: 8px 20px;
+  gap: 4px;
+}
+
+.phase-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--panel-border);
+  transition: background 0.3s;
+}
+
+.phase-dot.active {
+  background: var(--accent);
+}
+
+.phase-dot.completed {
+  background: var(--success);
+}
+
+/* ── TEACHER DASHBOARD ── */
+.teacher-toggle {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-family: var(--font-label);
+  font-size: 11px;
+  cursor: pointer;
+  color: var(--ink-light);
+  z-index: 40;
+}
+
+.teacher-dashboard {
+  display: none;
+  position: absolute;
+  bottom: 50px;
+  left: 16px;
+  width: 320px;
+  background: white;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  z-index: 41;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.teacher-dashboard.show {
+  display: block;
+}
+
+.teacher-dashboard h4 {
+  font-size: 13px;
+  margin-bottom: 10px;
+  color: var(--ink);
+}
+
+.teacher-dashboard p, .teacher-dashboard li {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--ink-light);
+  margin-bottom: 6px;
+}
+
+.teacher-dashboard ul {
+  margin-left: 16px;
+  margin-bottom: 12px;
+}
+
+/* ── HOOK OVERLAY ── */
+.hook-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(250,250,245,0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 30;
+  flex-direction: column;
+  padding: 40px;
+  text-align: center;
+}
+
+.hook-overlay h2 {
+  font-size: 28px;
+  margin-bottom: 20px;
+  color: var(--ink);
+  max-width: 600px;
+  line-height: 1.4;
+}
+
+.hook-overlay p {
+  font-size: 16px;
+  color: var(--ink-light);
+  max-width: 500px;
+  line-height: 1.6;
+  margin-bottom: 30px;
+}
+
+.hook-overlay .hook-btn {
+  padding: 14px 32px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-family: var(--font-label);
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.hook-overlay .hook-btn:hover {
+  background: #2d4568;
+}
+
+/* ── SELF-TEST ── */
+.self-test-option {
+  background: white;
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin: 6px 0;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.self-test-option:hover {
+  border-color: var(--accent);
+  background: var(--bg);
+}
+
+.self-test-option.correct {
+  border-color: var(--success);
+  background: rgba(42,124,111,0.08);
+}
+
+.self-test-option.wrong {
+  border-color: var(--accent-warm);
+  background: rgba(196,98,45,0.08);
+}
+
+/* ── HINT TOOLTIP ── */
+.hint-box {
+  background: rgba(212,168,67,0.1);
+  border-left: 3px solid var(--highlight);
+  padding: 10px 14px;
+  margin: 10px 0;
+  font-size: 12px;
+  color: var(--ink-light);
+  border-radius: 0 4px 4px 0;
+}
+
+/* ── CHECKMARK ANIMATION ── */
+.checkmark {
+  width: 40px;
+  height: 40px;
+  margin: 10px auto;
+}
+
+.checkmark-circle {
+  stroke-dasharray: 166;
+  stroke-dashoffset: 166;
+  stroke-width: 2;
+  stroke-miterlimit: 10;
+  stroke: var(--success);
+  fill: none;
+  animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+}
+
+.checkmark-check {
+  transform-origin: 50% 50%;
+  stroke-dasharray: 48;
+  stroke-dashoffset: 48;
+  animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.6s forwards;
+}
+
+@keyframes stroke {
+  100% { stroke-dashoffset: 0; }
+}
+</style>
+<base target="_blank">
+</head>
+<body>
+
+<div class="top-bar">
+  <div style="display:flex;align-items:center;">
+    <h1>APEX-EDU <span style="color:var(--ink-light);font-size:12px;">v3</span></h1>
+    <span class="badge">Trigonometry</span>
+    <span class="badge" style="background:var(--accent-warm);">Class 10</span>
+  </div>
+  <div class="meta">Angles of Elevation & Depression · Cable Tower Problem</div>
+</div>
+
+<div class="main">
+  <div class="canvas-wrap" id="canvasWrap">
+    <canvas id="mainCanvas"></canvas>
+    
+    <!-- Unit Circle Inset -->
+    <canvas id="unitCircleCanvas" class="unit-circle-inset" width="140" height="140"></canvas>
+    
+    <!-- Hook Overlay -->
+    <div class="hook-overlay" id="hookOverlay">
+      <h2>From a rooftop, you look up at a cable tower at 30°. You look down at its base at 60°. The building is 9m tall.</h2>
+      <p>How tall is the tower? Before you calculate — just guess: is it taller than the building, or shorter?</p>
+      <button class="hook-btn" onclick="startExplore()">Explore the Scene →</button>
+    </div>
+    
+    <!-- Teacher Dashboard -->
+    <button class="teacher-toggle" onclick="toggleTeacher()" id="teacherBtn">📋 Teacher</button>
+    <div class="teacher-dashboard" id="teacherDash">
+      <h4>Teacher & Parent Notes</h4>
+      <p><strong>Topic:</strong> Angles of Elevation & Depression (Class 10)</p>
+      <p><strong>Curriculum:</strong> NCERT Ch. 9 · ICSE · CBSE</p>
+      <p><strong>Prerequisites:</strong></p>
+      <ul>
+        <li>Right triangle trigonometry (sin, cos, tan)</li>
+        <li>Complementary angles (90° − θ)</li>
+        <li>Special angle values (30°, 60°)</li>
+      </ul>
+      <p><strong>Common Errors:</strong></p>
+      <ul>
+        <li>Confusing elevation vs depression</li>
+        <li>Forgetting that depression angle = elevation angle from ground</li>
+        <li>Adding 9m + h instead of 9m + (9m × tan 30° / tan 60°)</li>
+      </ul>
+      <p><strong>Real-world:</strong> Surveying, astronomy, architecture, navigation</p>
+    </div>
+  </div>
+
+  <div class="panel" id="panel">
+    <div class="panel-header">
+      <h2>Learning Path</h2>
+      <div class="phase-indicator" id="phaseIndicator">
+        <div class="phase-dot active" data-phase="1"></div>
+        <div class="phase-dot" data-phase="2"></div>
+        <div class="phase-dot" data-phase="3"></div>
+        <div class="phase-dot" data-phase="4"></div>
+        <div class="phase-dot" data-phase="5"></div>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill" style="width: 10%"></div>
+      </div>
+    </div>
+
+    <!-- PHASE 1: HOOK (shown in overlay, panel shows intro) -->
+    <div class="step-card active" id="step-hook">
+      <div class="step-number">Phase 1 · Hook</div>
+      <div class="step-title">The Cable Tower Mystery</div>
+      <div class="step-body">
+        <p>You're on the roof of a <strong>9 metre</strong> building. Looking up, the top of a distant cable tower appears at <strong>30°</strong> above horizontal. Looking down, the tower's base appears at <strong>60°</strong> below horizontal.</p>
+        <p>Two angles. One building. One tower. Can you find the tower's height?</p>
+        <div class="hint-box">💡 Key insight: The horizontal distance from you to the tower is the SAME for both angles.</div>
+      </div>
+    </div>
+
+    <!-- PHASE 2: EXPLORE -->
+    <div class="step-card" id="step-explore">
+      <div class="step-number">Phase 2 · Explore</div>
+      <div class="step-title">Play with the Scene</div>
+      <div class="step-body">
+        <p>Drag the sliders to change the building height and angles. Watch how the tower height, the triangles, and the unit circle all update together.</p>
+        <p>Notice: the <span class="highlight-text">horizontal distance</span> is hidden — but it's the bridge between both triangles.</p>
+      </div>
+      
+      <div class="controls-section">
+        <h3>Controls</h3>
+        <div class="slider-group">
+          <div class="slider-label">
+            <span>Building Height (h₁)</span>
+            <span class="value" id="valBuilding">9.0 m</span>
+          </div>
+          <div class="slider-track" id="trackBuilding">
+            <div class="slider-track-line"></div>
+            <div class="slider-track-fill" id="fillBuilding" style="width:45%"></div>
+            <div class="slider-thumb" id="thumbBuilding" style="left:45%"></div>
+          </div>
+        </div>
+        <div class="slider-group">
+          <div class="slider-label">
+            <span>Angle of Elevation (α)</span>
+            <span class="value" id="valElev">30°</span>
+          </div>
+          <div class="slider-track" id="trackElev">
+            <div class="slider-track-line"></div>
+            <div class="slider-track-fill" id="fillElev" style="width:33.3%"></div>
+            <div class="slider-thumb" id="thumbElev" style="left:33.3%"></div>
+          </div>
+        </div>
+        <div class="slider-group">
+          <div class="slider-label">
+            <span>Angle of Depression (β)</span>
+            <span class="value" id="valDep">60°</span>
+          </div>
+          <div class="slider-track" id="trackDep">
+            <div class="slider-track-line"></div>
+            <div class="slider-track-fill" id="fillDep" style="width:66.7%"></div>
+            <div class="slider-thumb" id="thumbDep" style="left:66.7%"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn primary" onclick="startChallenge()">I'm Ready → Challenge</button>
+      </div>
+    </div>
+
+    <!-- PHASE 3: CHALLENGE -->
+    <div class="step-card" id="step-challenge">
+      <div class="step-number">Phase 3 · Challenge</div>
+      <div class="step-title">Solve It Step by Step</div>
+      
+      <div class="challenge-card">
+        <div class="challenge-label">🏆 The Problem</div>
+        <p>From the top of a <strong>9 m</strong> high building, the angle of elevation of the top of a cable tower is <strong>30°</strong>, and the angle of depression of its foot is <strong>60°</strong>. Determine the height of the tower.</p>
+      </div>
+
+      <div class="prediction-widget" id="predictionWidget">
+        <h3>🔮 Make Your Prediction</h3>
+        <p style="font-size:12px;color:var(--ink-light);margin-bottom:10px;">Before solving — how tall do you think the tower is?</p>
+        <div class="prediction-input">
+          <input type="number" id="predictionInput" placeholder="Enter height in metres" min="1" max="50" step="0.1">
+          <button onclick="submitPrediction()">Guess</button>
+        </div>
+        <div class="prediction-result" id="predictionResult"></div>
+      </div>
+
+      <div class="btn-row" id="challengeBtns" style="display:none;">
+        <button class="btn primary" onclick="startReveal()">Start Solving →</button>
+      </div>
+    </div>
+
+    <!-- PHASE 4: REVEAL (Step by Step) -->
+    <div class="step-card" id="step-reveal">
+      <div class="step-number">Phase 4 · Reveal</div>
+      <div class="step-title">Building the Solution</div>
+      
+      <!-- Step 4.1 -->
+      <div id="reveal-step-1" class="reveal-substep">
+        <div class="step-number">Step 1 · The Scene</div>
+        <div class="step-body">
+          <p>Imagine standing on the roof. You look <span class="highlight-warm">down</span> at 60° to see the tower's base. You look <span class="highlight-text">up</span> at 30° to see its top.</p>
+          <p>The building, the tower, and the ground form two right triangles that share the same <strong>horizontal distance</strong> — let's call it <em>d</em>.</p>
+          <p>On the canvas, the dashed construction lines show both triangles clearly.</p>
+        </div>
+        <div class="btn-row">
+          <button class="btn primary" onclick="nextRevealStep(2)">Next Step →</button>
+        </div>
+      </div>
+
+      <!-- Step 4.2 -->
+      <div id="reveal-step-2" class="reveal-substep" style="display:none;">
+        <div class="step-number">Step 2 · The First Triangle (Depression)</div>
+        <div class="step-body">
+          <p>The angle of depression from the roof to the tower's base is 60°. By the <strong>alternate interior angles</strong> theorem, the angle of elevation from the base to the roof is also 60°.</p>
+          <p>In the lower triangle:</p>
+          <div class="formula-box">
+            tan 60° = <span class="frac"><span class="num">building height</span><span class="den">horizontal distance</span></span> = <span class="frac"><span class="num">9</span><span class="den">d</span></span>
+          </div>
+          <p>We know tan 60° = √3 ≈ 1.732</p>
+          <p>So: <strong>d = 9 / √3 = 3√3 ≈ 5.196 m</strong></p>
+        </div>
+        <div class="btn-row">
+          <button class="btn" onclick="prevRevealStep(1)">← Back</button>
+          <button class="btn primary" onclick="nextRevealStep(3)">Next Step →</button>
+        </div>
+      </div>
+
+      <!-- Step 4.3 -->
+      <div id="reveal-step-3" class="reveal-substep" style="display:none;">
+        <div class="step-number">Step 3 · The Second Triangle (Elevation)</div>
+        <div class="step-body">
+          <p>Now look at the upper triangle from the roof to the tower top. The angle of elevation is 30°.</p>
+          <p>The <strong>same horizontal distance d</strong> applies here too.</p>
+          <div class="formula-box">
+            tan 30° = <span class="frac"><span class="num">extra height above roof</span><span class="den">horizontal distance</span></span> = <span class="frac"><span class="num">h₂</span><span class="den">d</span></span>
+          </div>
+          <p>We know tan 30° = 1/√3 ≈ 0.577</p>
+          <p>So: <strong>h₂ = d × tan 30° = 3√3 × (1/√3) = 3 m</strong></p>
+        </div>
+        <div class="btn-row">
+          <button class="btn" onclick="prevRevealStep(2)">← Back</button>
+          <button class="btn primary" onclick="nextRevealStep(4)">Next Step →</button>
+        </div>
+      </div>
+
+      <!-- Step 4.4 -->
+      <div id="reveal-step-4" class="reveal-substep" style="display:none;">
+        <div class="step-number">Step 4 · The Total Height</div>
+        <div class="step-body">
+          <p>The tower's total height is the building height PLUS the extra height above the roof:</p>
+          <div class="formula-box">
+            H = h₁ + h₂ = 9 + 3 = <span class="highlight-text" style="font-size:18px;">12 metres</span>
+          </div>
+          <p>Notice something elegant: because tan 60° = √3 and tan 30° = 1/√3, the extra height h₂ = 9/3 = 3m exactly.</p>
+        </div>
+        <div class="btn-row">
+          <button class="btn" onclick="prevRevealStep(3)">← Back</button>
+          <button class="btn primary" onclick="nextRevealStep(5)">Verify →</button>
+        </div>
+      </div>
+
+      <!-- Step 4.5 -->
+      <div id="reveal-step-5" class="reveal-substep" style="display:none;">
+        <div class="step-number">Step 5 · Verification</div>
+        <div class="step-body">
+          <p>Let's check our answer makes sense:</p>
+          <p>• Horizontal distance d = 9/√3 = 5.196 m</p>
+          <p>• From base: tan 60° = 9/5.196 = 1.732 ✓</p>
+          <p>• From roof: tan 30° = 3/5.196 = 0.577 ✓</p>
+          <p>• Total height = 9 + 3 = 12 m ✓</p>
+          
+          <div class="answer-reveal" id="finalAnswerBox">
+            <div style="font-size:12px;color:var(--ink-light);">The height of the cable tower is</div>
+            <div class="big-answer">12 metres</div>
+            <div class="prediction-compare" id="predictionCompare"></div>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn" onclick="prevRevealStep(4)">← Back</button>
+          <button class="btn primary" onclick="startMaster()">Master It →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHASE 5: MASTER -->
+    <div class="step-card" id="step-master">
+      <div class="step-number">Phase 5 · Master</div>
+      <div class="step-title">Test Yourself</div>
+      <div class="step-body">
+        <p>Same concept, different situations. Can you solve these?</p>
+        
+        <div style="margin-top:14px;">
+          <p style="font-size:12px;color:var(--ink-light);margin-bottom:8px;">Problem 1: Inverted</p>
+          <p style="font-size:13px;margin-bottom:8px;">A tower is 15m tall. From its top, the angle of depression to a building's base is 45°. The angle of elevation to the building's top is 30°. How tall is the building?</p>
+          <div class="self-test-option" onclick="checkVariant(1, this, false)">5.4 metres</div>
+          <div class="self-test-option" onclick="checkVariant(1, this, true)">6.34 metres</div>
+          <div class="self-test-option" onclick="checkVariant(1, this, false)">8.66 metres</div>
+        </div>
+
+        <div style="margin-top:14px;">
+          <p style="font-size:12px;color:var(--ink-light);margin-bottom:8px;">Problem 2: Real World</p>
+          <p style="font-size:13px;margin-bottom:8px;">A lighthouse keeper 20m above sea level sees a ship. The angle of depression to the ship is 15°. How far is the ship from the lighthouse base?</p>
+          <div class="self-test-option" onclick="checkVariant(2, this, false)">52 metres</div>
+          <div class="self-test-option" onclick="checkVariant(2, this, true)">74.6 metres</div>
+          <div class="self-test-option" onclick="checkVariant(2, this, false)">100 metres</div>
+        </div>
+
+        <div style="margin-top:14px;">
+          <p style="font-size:12px;color:var(--ink-light);margin-bottom:8px;">Problem 3: Extension</p>
+          <p style="font-size:13px;margin-bottom:8px;">If the building was 12m and angles stayed 30°/60°, what would the tower height be?</p>
+          <div class="self-test-option" onclick="checkVariant(3, this, false)">14 metres</div>
+          <div class="self-test-option" onclick="checkVariant(3, this, true)">16 metres</div>
+          <div class="self-test-option" onclick="checkVariant(3, this, false)">18 metres</div>
+        </div>
+      </div>
+      
+      <div class="did-you-know">
+        Did you know? Ancient Egyptian surveyors used the same principle — measuring shadow angles to calculate pyramid heights over 4,500 years ago.
+      </div>
+      
+      <div class="btn-row">
+        <button class="btn" onclick="resetAll()">↺ Start Over</button>
+        <button class="btn" onclick="toggleTeacher()">📋 Teacher Notes</button>
+      </div>
+    </div>
+
+    <div class="nav-row" id="navRow">
+      <button class="btn" id="btnBack" onclick="goBack()" disabled>← Back</button>
+      <button class="btn primary" id="btnNext" onclick="goNext()">Continue →</button>
+    </div>
+  </div>
+</div>
+
+<button class="panel-toggle" id="panelToggle" onclick="togglePanel()">☰</button>
+
+<script>
+// ╔══════════════════════════════════════════╗
+// ║  STATE & CONFIGURATION                   ║
+// ╚══════════════════════════════════════════╝
+
+const state = {
+  phase: 1, // 1=hook, 2=explore, 3=challenge, 4=reveal, 5=master
+  revealStep: 1,
+  buildingHeight: 9,
+  angleElev: 30,
+  angleDep: 60,
+  prediction: null,
+  dragging: null,
+  mouseX: 0,
+  mouseY: 0,
+  time: 0,
+  showConstruction: true,
+  showUnitCircle: true,
+  showCoords: true,
+  animating: true
+};
+
+const canvas = document.getElementById('mainCanvas');
+const ctx = canvas.getContext('2d');
+const ucCanvas = document.getElementById('unitCircleCanvas');
+const ucCtx = ucCanvas.getContext('2d');
+
+let dpr = window.devicePixelRatio || 1;
+
+// ╔══════════════════════════════════════════╗
+// ║  RESIZE HANDLER                          ║
+// ╚══════════════════════════════════════════╝
+
+function resize() {
+  const wrap = document.getElementById('canvasWrap');
+  canvas.width = wrap.clientWidth * dpr;
+  canvas.height = wrap.clientHeight * dpr;
+  canvas.style.width = wrap.clientWidth + 'px';
+  canvas.style.height = wrap.clientHeight + 'px';
+  ctx.scale(dpr, dpr);
+}
+window.addEventListener('resize', () => {
+  resize();
+  // reset scale since we multiply each frame
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.scale(dpr, dpr);
+});
+resize();
+
+// ╔══════════════════════════════════════════╗
+// ║  SLIDER SYSTEM                           ║
+// ╚══════════════════════════════════════════╝
+
+const sliders = {
+  building: { min: 3, max: 20, value: 9, el: 'trackBuilding', fill: 'fillBuilding', thumb: 'thumbBuilding', label: 'valBuilding', unit: ' m' },
+  elev: { min: 10, max: 80, value: 30, el: 'trackElev', fill: 'fillElev', thumb: 'thumbElev', label: 'valElev', unit: '°' },
+  dep: { min: 10, max: 80, value: 60, el: 'trackDep', fill: 'fillDep', thumb: 'thumbDep', label: 'valDep', unit: '°' }
+};
+
+function updateSlider(key, ratio) {
+  const s = sliders[key];
+  s.value = s.min + ratio * (s.max - s.min);
+  if (key === 'building') state.buildingHeight = s.value;
+  if (key === 'elev') state.angleElev = s.value;
+  if (key === 'dep') state.angleDep = s.value;
+  
+  document.getElementById(s.label).textContent = s.value.toFixed(1) + s.unit;
+  document.getElementById(s.fill).style.width = (ratio * 100) + '%';
+  document.getElementById(s.thumb).style.left = (ratio * 100) + '%';
+}
+
+function initSliders() {
+  Object.keys(sliders).forEach(key => {
+    const s = sliders[key];
+    const track = document.getElementById(s.el);
+    
+    const getRatio = (e) => {
+      const rect = track.getBoundingClientRect();
+      let x = (e.clientX || e.touches[0].clientX) - rect.left;
+      return Math.max(0, Math.min(1, x / rect.width));
+    };
+    
+    const startDrag = (e) => {
+      state.dragging = key;
+      updateSlider(key, getRatio(e));
+      e.preventDefault();
+    };
+    
+    track.addEventListener('mousedown', startDrag);
+    track.addEventListener('touchstart', startDrag);
+  });
+  
+  window.addEventListener('mousemove', (e) => {
+    if (state.dragging) {
+      const s = sliders[state.dragging];
+      const track = document.getElementById(s.el);
+      const rect = track.getBoundingClientRect();
+      let ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+      updateSlider(state.dragging, ratio);
+    }
+    state.mouseX = e.clientX;
+    state.mouseY = e.clientY;
+  });
+  
+  window.addEventListener('touchmove', (e) => {
+    if (state.dragging) {
+      const s = sliders[state.dragging];
+      const track = document.getElementById(s.el);
+      const rect = track.getBoundingClientRect();
+      let ratio = Math.max(0, Math.min(1, (e.touches[0].clientX - rect.left) / rect.width));
+      updateSlider(state.dragging, ratio);
+    }
+  });
+  
+  const endDrag = () => { state.dragging = null; };
+  window.addEventListener('mouseup', endDrag);
+  window.addEventListener('touchend', endDrag);
+}
+
+initSliders();
+
+// ╔══════════════════════════════════════════╗
+// ║  DRAWING PRIMITIVES                      ║
+// ╚══════════════════════════════════════════╝
+
+function drawGrid(ctx, w, h, originX, originY, scale) {
+  ctx.strokeStyle = 'rgba(28, 25, 23, 0.06)';
+  ctx.lineWidth = 1;
+  
+  for (let x = originX % scale; x < w; x += scale) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+  }
+  for (let y = originY % scale; y < h; y += scale) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+  }
+  
+  // Axes
+  ctx.strokeStyle = 'rgba(28, 25, 23, 0.2)';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(0, originY); ctx.lineTo(w, originY); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(originX, 0); ctx.lineTo(originX, h); ctx.stroke();
+  
+  // Arrowheads
+  ctx.fillStyle = 'rgba(28, 25, 23, 0.3)';
+  ctx.beginPath();
+  ctx.moveTo(w - 10, originY - 4); ctx.lineTo(w, originY); ctx.lineTo(w - 10, originY + 4);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(originX - 4, 10); ctx.lineTo(originX, 0); ctx.lineTo(originX + 4, 10);
+  ctx.fill();
+  
+  // Labels
+  ctx.fillStyle = '#6B6560';
+  ctx.font = '13px Georgia';
+  ctx.fillText('x', w - 20, originY - 12);
+  ctx.fillText('y', originX + 10, 18);
+}
+
+function drawArrowhead(ctx, x, y, angle, size = 8) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+  ctx.fillStyle = ctx.strokeStyle;
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(-size, -size/2);
+  ctx.lineTo(-size, size/2);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawDashedLine(ctx, x1, y1, x2, y2, color = 'rgba(59, 91, 140, 0.4)') {
+  ctx.save();
+  ctx.setLineDash([8, 4]);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawRightAngle(ctx, x, y, size = 16, color = 'rgba(59, 91, 140, 0.5)') {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x + size, y);
+  ctx.lineTo(x + size, y - size);
+  ctx.stroke();
+}
+
+function drawAngleArc(ctx, cx, cy, radius, startAngle, endAngle, color, label, labelOffset = 20) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, startAngle, endAngle);
+  ctx.stroke();
+  
+  const midAngle = (startAngle + endAngle) / 2;
+  const lx = cx + (radius + labelOffset) * Math.cos(midAngle);
+  const ly = cy + (radius + labelOffset) * Math.sin(midAngle);
+  
+  ctx.fillStyle = color;
+  ctx.font = 'bold 13px Georgia';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(label, lx, ly);
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+}
+
+function drawDimensionLabel(ctx, x, y, text, align = 'center', color = '#1C1917') {
+  ctx.fillStyle = color;
+  ctx.font = '12px Georgia';
+  const metrics = ctx.measureText(text);
+  let dx = x;
+  if (align === 'center') dx -= metrics.width / 2;
+  else if (align === 'right') dx -= metrics.width;
+  
+  // Small background for readability
+  ctx.fillStyle = 'rgba(250,250,245,0.85)';
+  ctx.fillRect(dx - 3, y - 10, metrics.width + 6, 16);
+  
+  ctx.fillStyle = color;
+  ctx.fillText(text, dx, y + 3);
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  SCENE DRAWING                           ║
+// ╚══════════════════════════════════════════╝
+
+function drawScene() {
+  const w = canvas.width / dpr;
+  const h = canvas.height / dpr;
+  const t = state.time;
+  
+  ctx.clearRect(0, 0, w, h);
+  
+  // Coordinate system
+  const originX = 80;
+  const originY = h - 80;
+  const scale = 40;
+  
+  if (state.showCoords) {
+    drawGrid(ctx, w, h, originX, originY, scale);
+  }
+  
+  // Scene parameters
+  const buildingH = state.buildingHeight;
+  const alpha = state.angleElev * Math.PI / 180;
+  const beta = state.angleDep * Math.PI / 180;
+  
+  // Calculate horizontal distance d from depression triangle
+  // tan(beta) = buildingH / d  =>  d = buildingH / tan(beta)
+  const d = buildingH / Math.tan(beta);
+  
+  // Calculate extra tower height h2 from elevation triangle
+  // tan(alpha) = h2 / d  =>  h2 = d * tan(alpha)
+  const h2 = d * Math.tan(alpha);
+  const towerH = buildingH + h2;
+  
+  // Pixel scale: fit scene in canvas
+  const maxW = w - originX - 200;
+  const maxH = h - 160;
+  const sceneScale = Math.min(maxW / (d + 2), maxH / (towerH + 2));
+  
+  const groundY = originY;
+  const buildingX = originX + 50;
+  const buildingW = 60 * sceneScale / 10; // scale building width with scene
+  const towerX = buildingX + d * sceneScale;
+  
+  // ── GROUND ──
+  ctx.fillStyle = '#E8E2D8';
+  ctx.fillRect(originX, groundY, w - originX, 4);
+  
+  // Ground texture lines
+  ctx.strokeStyle = 'rgba(28,25,23,0.08)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < (w - originX); i += 20) {
+    ctx.beginPath();
+    ctx.moveTo(originX + i, groundY + 2);
+    ctx.lineTo(originX + i + 10, groundY + 6);
+    ctx.stroke();
+  }
+  
+  // ── BUILDING ──
+  const bTopY = groundY - buildingH * sceneScale;
+  
+  // Building body
+  ctx.fillStyle = '#D4CFC7';
+  ctx.fillRect(buildingX, bTopY, buildingW, buildingH * sceneScale);
+  
+  // Building outline
+  ctx.strokeStyle = '#1C1917';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(buildingX, bTopY, buildingW, buildingH * sceneScale);
+  
+  // Building windows
+  ctx.fillStyle = 'rgba(59, 91, 140, 0.15)';
+  for (let wy = bTopY + 15; wy < groundY - 15; wy += 25) {
+    ctx.fillRect(buildingX + 8, wy, buildingW - 16, 14);
+    ctx.strokeStyle = 'rgba(28,25,23,0.15)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(buildingX + 8, wy, buildingW - 16, 14);
+  }
+  
+  // Building label
+  drawDimensionLabel(ctx, buildingX + buildingW/2, bTopY - 12, `Building: ${buildingH.toFixed(1)}m`, 'center');
+  
+  // ── TOWER ──
+  const tTopY = groundY - towerH * sceneScale;
+  const towerW = 40 * sceneScale / 10;
+  
+  // Tower body
+  ctx.fillStyle = '#C4BFB6';
+  ctx.fillRect(towerX - towerW/2, tTopY, towerW, towerH * sceneScale);
+  
+  // Tower outline
+  ctx.strokeStyle = '#1C1917';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(towerX - towerW/2, tTopY, towerW, towerH * sceneScale);
+  
+  // Tower cross-bracing (cable tower look)
+  ctx.strokeStyle = 'rgba(28,25,23,0.2)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 5; i++) {
+    const ty = tTopY + (towerH * sceneScale) * (i / 5);
+    ctx.beginPath();
+    ctx.moveTo(towerX - towerW/2, ty);
+    ctx.lineTo(towerX + towerW/2, ty + (towerH * sceneScale) / 5);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(towerX + towerW/2, ty);
+    ctx.lineTo(towerX - towerW/2, ty + (towerH * sceneScale) / 5);
+    ctx.stroke();
+  }
+  
+  // Tower label
+  drawDimensionLabel(ctx, towerX, tTopY - 12, `Tower: ${towerH.toFixed(1)}m`, 'center', '#3B5B8C');
+  
+  // ── OBSERVER POINT (on roof) ──
+  const obsX = buildingX + buildingW;
+  const obsY = bTopY;
+  
+  // Observer dot
+  ctx.fillStyle = '#D4A843';
+  ctx.beginPath();
+  ctx.arc(obsX, obsY, 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#1C1917';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  
+  // Observer label
+  ctx.fillStyle = '#1C1917';
+  ctx.font = '11px Verdana';
+  ctx.fillText('Observer', obsX + 10, obsY - 4);
+  
+  // ── CONSTRUCTION LINES ──
+  if (state.showConstruction) {
+    // Horizontal line from observer to tower (the shared distance)
+    drawDashedLine(ctx, obsX, obsY, towerX, obsY, 'rgba(42, 124, 111, 0.5)');
+    drawDimensionLabel(ctx, (obsX + towerX) / 2, obsY + 16, `d = ${d.toFixed(2)}m`, 'center', '#2A7C6F');
+    
+    // Vertical line from that point down to ground
+    drawDashedLine(ctx, towerX, obsY, towerX, groundY, 'rgba(42, 124, 111, 0.3)');
+    
+    // Horizontal line from observer to tower top projection
+    drawDashedLine(ctx, obsX, obsY, towerX, obsY, 'rgba(196, 98, 45, 0.3)');
+    
+    // Right angle at observer-tower horizontal meeting
+    drawRightAngle(ctx, towerX - 16, obsY, 16, 'rgba(42, 124, 111, 0.4)');
+    
+    // Right angle at building base
+    drawRightAngle(ctx, buildingX + buildingW, groundY - 16, 16, 'rgba(42, 124, 111, 0.4)');
+  }
+  
+  // ── ANGLE OF DEPRESSION (to tower base) ──
+  const depAngleRad = beta;
+  const depStart = 0; // horizontal right
+  const depEnd = depAngleRad; // down from horizontal
+  
+  // Line of sight to base
+  ctx.strokeStyle = '#C4622D';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([4, 3]);
+  ctx.beginPath();
+  ctx.moveTo(obsX, obsY);
+  ctx.lineTo(towerX, groundY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  
+  // Angle arc for depression
+  drawAngleArc(ctx, obsX, obsY, 50, depStart, depEnd, '#C4622D', `${state.angleDep.toFixed(0)}°`, 22);
+  
+  // Depression label
+  ctx.fillStyle = '#C4622D';
+  ctx.font = '11px Verdana';
+  ctx.fillText('angle of depression', obsX + 55, obsY + 35);
+  
+  // ── ANGLE OF ELEVATION (to tower top) ──
+  const elevAngleRad = -alpha; // negative because up in canvas is negative Y
+  
+  // Line of sight to top
+  ctx.strokeStyle = '#3B5B8C';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([4, 3]);
+  ctx.beginPath();
+  ctx.moveTo(obsX, obsY);
+  ctx.lineTo(towerX, tTopY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  
+  // Angle arc for elevation
+  drawAngleArc(ctx, obsX, obsY, 70, elevAngleRad, 0, '#3B5B8C', `${state.angleElev.toFixed(0)}°`, 22);
+  
+  // Elevation label
+  ctx.fillStyle = '#3B5B8C';
+  ctx.font = '11px Verdana';
+  ctx.fillText('angle of elevation', obsX + 75, obsY - 55);
+  
+  // ── HORIZONTAL DISTANCE MARKER ──
+  ctx.strokeStyle = '#2A7C6F';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(buildingX + buildingW, groundY + 25);
+  ctx.lineTo(towerX, groundY + 25);
+  ctx.stroke();
+  
+  // Tick marks
+  ctx.beginPath();
+  ctx.moveTo(buildingX + buildingW, groundY + 20);
+  ctx.lineTo(buildingX + buildingW, groundY + 30);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(towerX, groundY + 20);
+  ctx.lineTo(towerX, groundY + 30);
+  ctx.stroke();
+  
+  drawDimensionLabel(ctx, (buildingX + buildingW + towerX) / 2, groundY + 38, `horizontal distance = ${d.toFixed(2)}m`, 'center', '#2A7C6F');
+  
+  // ── HEIGHT DIFFERENCE MARKER ──
+  ctx.strokeStyle = '#3B5B8C';
+  ctx.lineWidth = 1.5;
+  const markX = towerX + towerW/2 + 15;
+  ctx.beginPath();
+  ctx.moveTo(markX, obsY);
+  ctx.lineTo(markX, tTopY);
+  ctx.stroke();
+  
+  // Tick marks
+  ctx.beginPath();
+  ctx.moveTo(markX - 5, obsY);
+  ctx.lineTo(markX + 5, obsY);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(markX - 5, tTopY);
+  ctx.lineTo(markX + 5, tTopY);
+  ctx.stroke();
+  
+  drawDimensionLabel(ctx, markX + 10, (obsY + tTopY) / 2, `h₂ = ${h2.toFixed(2)}m`, 'left', '#3B5B8C');
+  
+  // ── TRIANGLE LABELS ──
+  // Lower triangle
+  ctx.fillStyle = 'rgba(196, 98, 45, 0.7)';
+  ctx.font = '12px Georgia';
+  ctx.fillText('Lower triangle', buildingX + buildingW + 20, groundY - buildingH * sceneScale / 2);
+  
+  // Upper triangle
+  ctx.fillStyle = 'rgba(59, 91, 140, 0.7)';
+  ctx.fillText('Upper triangle', towerX - 80, obsY - h2 * sceneScale / 2);
+  
+  // ── DID YOU KNOW (subtle, bottom) ──
+  ctx.fillStyle = 'rgba(107, 101, 96, 0.6)';
+  ctx.font = 'italic 11px Georgia';
+  ctx.fillText(`tan ${state.angleDep.toFixed(0)}° = √3 ≈ 1.732    |    tan ${state.angleElev.toFixed(0)}° = 1/√3 ≈ 0.577    |    d = ${d.toFixed(2)}m`, originX, h - 20);
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  UNIT CIRCLE DRAWING                     ║
+// ╚══════════════════════════════════════════╝
+
+function drawUnitCircle() {
+  const w = 140, h = 140;
+  const cx = w / 2, cy = h / 2;
+  const r = 45;
+  const t = state.time;
+  
+  ucCtx.clearRect(0, 0, w, h);
+  
+  // Background
+  ucCtx.fillStyle = 'rgba(250,250,245,0.95)';
+  ucCtx.fillRect(0, 0, w, h);
+  
+  // Circle
+  ucCtx.strokeStyle = 'rgba(28, 25, 23, 0.25)';
+  ucCtx.lineWidth = 2;
+  ucCtx.beginPath();
+  ucCtx.arc(cx, cy, r, 0, Math.PI * 2);
+  ucCtx.stroke();
+  
+  // Axes
+  ucCtx.strokeStyle = 'rgba(28, 25, 23, 0.2)';
+  ucCtx.lineWidth = 1.5;
+  ucCtx.beginPath(); ucCtx.moveTo(cx - r - 10, cy); ucCtx.lineTo(cx + r + 10, cy); ucCtx.stroke();
+  ucCtx.beginPath(); ucCtx.moveTo(cx, cy - r - 10); ucCtx.lineTo(cx, cy + r + 10); ucCtx.stroke();
+  
+  // Current angle (use elevation angle for demo, animated)
+  const angle = (state.angleElev * Math.PI / 180) + Math.sin(t * 0.5) * 0.05;
+  
+  const ex = cx + r * Math.cos(angle);
+  const ey = cy - r * Math.sin(angle); // canvas Y inverted
+  
+  // Radius line
+  ucCtx.strokeStyle = '#3B5B8C';
+  ucCtx.lineWidth = 2.5;
+  ucCtx.beginPath();
+  ucCtx.moveTo(cx, cy);
+  ucCtx.lineTo(ex, ey);
+  ucCtx.stroke();
+  
+  // Sin component (vertical drop)
+  ucCtx.setLineDash([4, 2]);
+  ucCtx.strokeStyle = '#C4622D';
+  ucCtx.lineWidth = 1.5;
+  ucCtx.beginPath();
+  ucCtx.moveTo(ex, ey);
+  ucCtx.lineTo(ex, cy);
+  ucCtx.stroke();
+  
+  // Cos component (horizontal)
+  ucCtx.strokeStyle = '#2A7C6F';
+  ucCtx.beginPath();
+  ucCtx.moveTo(cx, cy);
+  ucCtx.lineTo(ex, cy);
+  ucCtx.stroke();
+  ucCtx.setLineDash([]);
+  
+  // Point
+  ucCtx.fillStyle = '#D4A843';
+  ucCtx.beginPath();
+  ucCtx.arc(ex, ey, 4, 0, Math.PI * 2);
+  ucCtx.fill();
+  
+  // Labels
+  ucCtx.fillStyle = '#3B5B8C';
+  ucCtx.font = 'bold 10px Georgia';
+  ucCtx.textAlign = 'center';
+  ucCtx.fillText(`θ = ${state.angleElev.toFixed(0)}°`, cx, cy - r - 14);
+  
+  ucCtx.fillStyle = '#2A7C6F';
+  ucCtx.font = '10px Georgia';
+  ucCtx.fillText(`cos = ${Math.cos(angle).toFixed(2)}`, cx + r/2, cy + 14);
+  
+  ucCtx.fillStyle = '#C4622D';
+  ucCtx.fillText(`sin = ${Math.sin(angle).toFixed(2)}`, ex + 2, cy - r * Math.sin(angle) / 2 + 4);
+  
+  ucCtx.textAlign = 'left';
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  ANIMATION LOOP                          ║
+// ╚══════════════════════════════════════════╝
+
+function loop() {
+  state.time += 0.016;
+  drawScene();
+  drawUnitCircle();
+  requestAnimationFrame(loop);
+}
+loop();
+
+// ╔══════════════════════════════════════════╗
+// ║  PHASE NAVIGATION                        ║
+// ╚══════════════════════════════════════════╝
+
+function showPhase(p) {
+  state.phase = p;
+  
+  // Update dots
+  document.querySelectorAll('.phase-dot').forEach((dot, i) => {
+    dot.classList.remove('active', 'completed');
+    if (i + 1 < p) dot.classList.add('completed');
+    else if (i + 1 === p) dot.classList.add('active');
+  });
+  
+  // Update progress
+  const progress = [10, 30, 50, 75, 100][p - 1];
+  document.getElementById('progressFill').style.width = progress + '%';
+  
+  // Hide all steps
+  document.querySelectorAll('.step-card').forEach(s => s.classList.remove('active'));
+  
+  // Show current
+  const stepIds = ['step-hook', 'step-explore', 'step-challenge', 'step-reveal', 'step-master'];
+  document.getElementById(stepIds[p - 1]).classList.add('active');
+  
+  // Update nav buttons
+  const btnBack = document.getElementById('btnBack');
+  const btnNext = document.getElementById('btnNext');
+  
+  if (p === 1) {
+    btnBack.disabled = true;
+    btnNext.textContent = 'Explore →';
+    btnNext.onclick = startExplore;
+  } else if (p === 2) {
+    btnBack.disabled = false;
+    btnBack.onclick = () => showPhase(1);
+    btnNext.textContent = 'Challenge →';
+    btnNext.onclick = startChallenge;
+  } else if (p === 3) {
+    btnBack.onclick = () => showPhase(2);
+    btnNext.textContent = 'Solve It →';
+    btnNext.onclick = startReveal;
+  } else if (p === 4) {
+    btnBack.onclick = () => showPhase(3);
+    btnNext.textContent = 'Master →';
+    btnNext.onclick = startMaster;
+  } else {
+    btnBack.onclick = () => showPhase(4);
+    btnNext.textContent = 'Done';
+    btnNext.onclick = () => alert('Great work! You can reset to practice again.');
+  }
+}
+
+function startExplore() {
+  document.getElementById('hookOverlay').style.display = 'none';
+  showPhase(2);
+}
+
+function startChallenge() {
+  showPhase(3);
+  // Reset to problem values
+  updateSlider('building', (9 - 3) / (20 - 3));
+  updateSlider('elev', (30 - 10) / (80 - 10));
+  updateSlider('dep', (60 - 10) / (80 - 10));
+}
+
+function startReveal() {
+  showPhase(4);
+  state.revealStep = 1;
+  showRevealStep(1);
+}
+
+function showRevealStep(n) {
+  state.revealStep = n;
+  for (let i = 1; i <= 5; i++) {
+    document.getElementById(`reveal-step-${i}`).style.display = i === n ? 'block' : 'none';
+  }
+}
+
+function nextRevealStep(n) {
+  showRevealStep(n);
+}
+
+function prevRevealStep(n) {
+  showRevealStep(n);
+}
+
+function startMaster() {
+  showPhase(5);
+}
+
+function goBack() {
+  if (state.phase > 1) showPhase(state.phase - 1);
+}
+
+function goNext() {
+  if (state.phase < 5) {
+    if (state.phase === 1) startExplore();
+    else if (state.phase === 2) startChallenge();
+    else if (state.phase === 3) startReveal();
+    else if (state.phase === 4) startMaster();
+  }
+}
+
+function resetAll() {
+  state.prediction = null;
+  document.getElementById('predictionInput').value = '';
+  document.getElementById('predictionResult').textContent = '';
+  document.getElementById('predictionWidget').style.display = 'block';
+  document.getElementById('challengeBtns').style.display = 'none';
+  document.getElementById('predictionCompare').textContent = '';
+  
+  // Reset self-test styles
+  document.querySelectorAll('.self-test-option').forEach(el => {
+    el.classList.remove('correct', 'wrong');
+  });
+  
+  showPhase(1);
+  document.getElementById('hookOverlay').style.display = 'flex';
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  PREDICTION SYSTEM                       ║
+// ╚══════════════════════════════════════════╝
+
+function submitPrediction() {
+  const val = parseFloat(document.getElementById('predictionInput').value);
+  if (isNaN(val) || val <= 0) {
+    document.getElementById('predictionResult').textContent = 'Please enter a valid number.';
+    return;
+  }
+  
+  state.prediction = val;
+  document.getElementById('predictionResult').innerHTML = 
+    `You guessed <strong>${val} metres</strong>. Let's see if you're right!`;
+  document.getElementById('predictionWidget').style.display = 'none';
+  document.getElementById('challengeBtns').style.display = 'flex';
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  SELF-TEST CHECKER                       ║
+// ╚══════════════════════════════════════════╝
+
+function checkVariant(num, el, isCorrect) {
+  // Remove previous classes from siblings
+  el.parentElement.querySelectorAll('.self-test-option').forEach(sib => {
+    sib.classList.remove('correct', 'wrong');
+    sib.style.pointerEvents = 'none';
+  });
+  
+  if (isCorrect) {
+    el.classList.add('correct');
+    el.innerHTML += ' ✓';
+  } else {
+    el.classList.add('wrong');
+    el.innerHTML += ' ✗';
+  }
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  TEACHER DASHBOARD                       ║
+// ╚══════════════════════════════════════════╝
+
+function toggleTeacher() {
+  const dash = document.getElementById('teacherDash');
+  dash.classList.toggle('show');
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  MOBILE PANEL TOGGLE                     ║
+// ╚══════════════════════════════════════════╝
+
+function togglePanel() {
+  document.getElementById('panel').classList.toggle('open');
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  KEYBOARD SHORTCUTS                      ║
+// ╚══════════════════════════════════════════╝
+
+window.addEventListener('keydown', (e) => {
+  if (e.key === ' ') {
+    state.animating = !state.animating;
+  } else if (e.key === 'r' || e.key === 'R') {
+    resetAll();
+  } else if (e.key === 'n' || e.key === 'N') {
+    goNext();
+  } else if (e.key === 'p' || e.key === 'P') {
+    goBack();
+  } else if (e.key === '?') {
+    alert('Keyboard Shortcuts:\nSpace: Pause/Play\nR: Reset\nN: Next\nP: Previous\n?: Help');
+  }
+});
+
+// ╔══════════════════════════════════════════╗
+// ║  FINAL ANSWER DISPLAY                    ║
+// ╚══════════════════════════════════════════╝
+
+function showFinalAnswer() {
+  const compare = document.getElementById('predictionCompare');
+  if (state.prediction !== null) {
+    const diff = Math.abs(state.prediction - 12);
+    const pct = ((diff / 12) * 100).toFixed(0);
+    if (diff < 1) {
+      compare.textContent = `🎯 Amazing! You guessed ${state.prediction}m — within ${pct}%!`;
+    } else if (diff < 3) {
+      compare.textContent = `👍 Good guess! You said ${state.prediction}m. Off by ${diff.toFixed(1)}m.`;
+    } else {
+      compare.textContent = `You guessed ${state.prediction}m. The tower is taller than it might seem!`;
+    }
+  } else {
+    compare.textContent = 'No prediction made — but you still learned the method!';
+  }
+}
+
+// Hook into reveal step 5
+const origNextRevealStep5 = nextRevealStep;
+nextRevealStep = function(n) {
+  if (n === 5) showFinalAnswer();
+  origNextRevealStep5(n);
+};
+
+// Override for step 5 specifically
+const origShowRevealStep = showRevealStep;
+showRevealStep = function(n) {
+  origShowRevealStep(n);
+  if (n === 5) showFinalAnswer();
+};
+
+// ╔══════════════════════════════════════════╗
+// ║  INIT                                     ║
+// ╚══════════════════════════════════════════╝
+
+showPhase(1);
+</script>
+</body>
+</html>

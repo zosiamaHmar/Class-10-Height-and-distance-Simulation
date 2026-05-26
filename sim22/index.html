@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APEX-EDU v4 — Heights & Distances: The Bird Problem</title>
+<style>
+:root {
+  --bg-canvas: #F8F5F0;
+  --bg-panel: #F0EBE3;
+  --bg-card: #FDFBF8;
+  --bg-proof: #EEF2F8;
+  --ink-primary: #1A1714;
+  --ink-secondary: #5C5652;
+  --ink-ghost: #A8A29E;
+  --fill-color: #3D6B9E;
+  --drain-color: #C25D2E;
+  --highlight: #C9961A;
+  --correct: #2A7A6B;
+  --proof: #4A6FA5;
+  --construction: rgba(59,91,140,0.35);
+  --angle-color: #3D6B9E;
+  --sin-color: #C25D2E;
+  --cos-color: #2A7A6B;
+  --hyp-color: #5B4A8A;
+  --vector-color: #1A1714;
+  --grid-color: rgba(26,23,20,0.07);
+  --axis-color: rgba(26,23,20,0.22);
+  --font-body: Georgia, 'Times New Roman', serif;
+  --font-label: 'Verdana', Geneva, Tahoma, sans-serif;
+  --font-mono: 'Courier New', Courier, monospace;
+  --font-math: Georgia, serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--font-body);
+  background: var(--bg-canvas);
+  color: var(--ink-primary);
+  overflow-x: hidden;
+}
+
+.apex-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+@media (min-width: 1024px) {
+  .apex-container { flex-direction: row; }
+  .canvas-zone { flex: 1; }
+  .panel-zone { width: 380px; flex-shrink: 0; }
+}
+
+@media (min-width: 640px) and (max-width: 1024px) {
+  .canvas-zone { width: 55%; }
+  .panel-zone { width: 45%; }
+}
+
+.canvas-zone {
+  position: relative;
+  background: var(--bg-canvas);
+  min-height: 50vh;
+}
+
+#sceneCanvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.panel-zone {
+  background: var(--bg-panel);
+  border-left: 1px solid rgba(26,23,20,0.08);
+  display: flex;
+  flex-direction: column;
+  max-height: 100vh;
+  overflow-y: auto;
+}
+
+.phase-indicator {
+  display: flex;
+  padding: 12px 16px;
+  background: var(--bg-card);
+  border-bottom: 1px solid rgba(26,23,20,0.08);
+  gap: 4px;
+}
+
+.phase-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ink-ghost);
+  transition: all 0.3s;
+}
+.phase-dot.active { background: var(--fill-color); transform: scale(1.3); }
+.phase-dot.completed { background: var(--correct); }
+
+.phase-label {
+  font-family: var(--font-label);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--ink-secondary);
+  margin-left: 8px;
+}
+
+.content-area {
+  padding: 20px;
+  flex: 1;
+}
+
+.phase-title {
+  font-family: var(--font-label);
+  font-size: 13px;
+  font-weight: bold;
+  color: var(--fill-color);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+}
+
+.phase-content {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--ink-primary);
+}
+
+.phase-content p { margin-bottom: 12px; }
+
+.question-card {
+  background: var(--bg-card);
+  border: 1px solid rgba(26,23,20,0.08);
+  border-radius: 8px;
+  padding: 16px;
+  margin: 16px 0;
+}
+
+.question-card h3 {
+  font-family: var(--font-label);
+  font-size: 12px;
+  color: var(--ink-secondary);
+  margin-bottom: 8px;
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.option-btn {
+  padding: 12px 16px;
+  background: var(--bg-canvas);
+  border: 1px solid rgba(26,23,20,0.12);
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 14px;
+  text-align: left;
+  transition: all 0.2s;
+}
+.option-btn:hover {
+  border-color: var(--fill-color);
+  background: rgba(61,107,158,0.05);
+}
+.option-btn.selected {
+  border-color: var(--fill-color);
+  background: rgba(61,107,158,0.1);
+}
+.option-btn.correct {
+  border-color: var(--correct);
+  background: rgba(42,122,107,0.1);
+}
+.option-btn.wrong {
+  border-color: var(--drain-color);
+  background: rgba(194,93,46,0.1);
+}
+
+.prediction-gate {
+  background: var(--bg-card);
+  border: 2px solid var(--highlight);
+  border-radius: 8px;
+  padding: 16px;
+  margin: 16px 0;
+}
+
+.prediction-gate h3 {
+  color: var(--highlight);
+  font-family: var(--font-label);
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.prediction-input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid rgba(26,23,20,0.15);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.nav-buttons {
+  display: flex;
+  gap: 8px;
+  padding: 16px;
+  border-top: 1px solid rgba(26,23,20,0.08);
+  background: var(--bg-card);
+}
+
+.nav-btn {
+  flex: 1;
+  padding: 12px;
+  background: var(--fill-color);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-family: var(--font-label);
+  font-size: 13px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.nav-btn:hover { opacity: 0.9; }
+.nav-btn:disabled { background: var(--ink-ghost); cursor: not-allowed; }
+
+.nav-btn.secondary {
+  background: transparent;
+  color: var(--ink-secondary);
+  border: 1px solid rgba(26,23,20,0.15);
+}
+
+.repr-bar {
+  display: flex;
+  gap: 4px;
+  margin: 12px 0;
+  padding: 4px;
+  background: rgba(26,23,20,0.04);
+  border-radius: 6px;
+}
+
+.repr-btn {
+  flex: 1;
+  padding: 6px 8px;
+  border: none;
+  background: transparent;
+  font-family: var(--font-label);
+  font-size: 11px;
+  cursor: pointer;
+  border-radius: 4px;
+  color: var(--ink-secondary);
+}
+.repr-btn.active {
+  background: var(--bg-card);
+  color: var(--fill-color);
+  font-weight: bold;
+}
+
+.solution-step {
+  background: var(--bg-card);
+  border-left: 3px solid var(--fill-color);
+  padding: 12px 16px;
+  margin: 8px 0;
+  border-radius: 0 6px 6px 0;
+}
+
+.solution-step h4 {
+  font-family: var(--font-label);
+  font-size: 12px;
+  color: var(--fill-color);
+  margin-bottom: 6px;
+}
+
+.formula {
+  font-family: var(--font-math);
+  font-size: 16px;
+  text-align: center;
+  padding: 12px;
+  background: rgba(61,107,158,0.06);
+  border-radius: 6px;
+  margin: 8px 0;
+}
+
+.proof-panel {
+  background: var(--bg-proof);
+  border: 1px solid rgba(74,111,165,0.2);
+  border-radius: 8px;
+  padding: 16px;
+  margin: 12px 0;
+}
+
+.proof-table {
+  width: 100%;
+  font-size: 12px;
+  border-collapse: collapse;
+}
+.proof-table th, .proof-table td {
+  padding: 8px;
+  text-align: left;
+  border-bottom: 1px solid rgba(26,23,20,0.08);
+}
+.proof-table th {
+  font-family: var(--font-label);
+  color: var(--proof);
+  font-weight: bold;
+}
+
+.hint-box {
+  background: rgba(201,150,26,0.08);
+  border: 1px solid rgba(201,150,26,0.2);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: var(--ink-secondary);
+  margin: 8px 0;
+}
+
+.achievement {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: rgba(42,122,107,0.1);
+  color: var(--correct);
+  border-radius: 12px;
+  font-size: 11px;
+  font-family: var(--font-label);
+}
+
+.curiosity-prompt {
+  font-style: italic;
+  color: var(--ink-ghost);
+  font-size: 12px;
+  padding: 8px 12px;
+  border-left: 2px solid var(--highlight);
+  margin: 12px 0;
+}
+
+.slider-container {
+  margin: 12px 0;
+  padding: 12px;
+  background: var(--bg-card);
+  border-radius: 8px;
+}
+
+.slider-label {
+  font-family: var(--font-label);
+  font-size: 12px;
+  color: var(--ink-secondary);
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.slider-track {
+  width: 100%;
+  height: 6px;
+  background: rgba(26,23,20,0.1);
+  border-radius: 3px;
+  position: relative;
+  cursor: pointer;
+}
+
+.slider-fill {
+  height: 100%;
+  background: var(--fill-color);
+  border-radius: 3px;
+  transition: width 0.1s;
+}
+
+.slider-thumb {
+  width: 18px;
+  height: 18px;
+  background: var(--bg-card);
+  border: 2px solid var(--fill-color);
+  border-radius: 50%;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  cursor: grab;
+  transition: transform 0.1s;
+}
+.slider-thumb:hover { transform: translate(-50%, -50%) scale(1.2); }
+.slider-thumb.dragging { cursor: grabbing; transform: translate(-50%, -50%) scale(1.3); }
+
+.slider-value {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--fill-color);
+  font-weight: bold;
+  margin-top: 6px;
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .panel-zone { max-height: none; }
+  .proof-panel { display: none; }
+}
+</style>
+<base target="_blank">
+</head>
+<body>
+<div class="apex-container">
+  <div class="canvas-zone">
+    <canvas id="sceneCanvas"></canvas>
+  </div>
+  <div class="panel-zone">
+    <div class="phase-indicator">
+      <div class="phase-dot active" data-phase="0"></div>
+      <div class="phase-dot" data-phase="1"></div>
+      <div class="phase-dot" data-phase="2"></div>
+      <div class="phase-dot" data-phase="3"></div>
+      <div class="phase-dot" data-phase="4"></div>
+      <div class="phase-dot" data-phase="5"></div>
+      <div class="phase-dot" data-phase="6"></div>
+      <span class="phase-label">Phase <span id="currentPhaseNum">0</span> of 6</span>
+    </div>
+
+    <div class="content-area" id="contentArea">
+      <!-- Content injected by JS -->
+    </div>
+
+    <div class="nav-buttons">
+      <button class="nav-btn secondary" id="prevBtn" onclick="prevPhase()">← Back</button>
+      <button class="nav-btn" id="nextBtn" onclick="nextPhase()">Continue →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  TOPIC ANALYSIS — Heights & Distances: Bird Problem          ║
+// ╚══════════════════════════════════════════════════════════════╝
+// Domain: Mathematics → Trigonometry → Applications → Heights & Distances
+// Grade: 9–10 (Class 10)
+// Dependencies: Right triangle trigonometry, sine/cosine/tangent, Pythagoras
+// Consequences: 3D geometry, navigation, surveying, astronomy
+// Real objects: Bird (point object), Boy (observer on ground), Girl (observer on building)
+// Formula: sin θ = opp/hyp, cos θ = adj/hyp, tan θ = opp/adj, d = √(x² + y²)
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  CONFIGURATION                                               ║
+// ╚══════════════════════════════════════════════════════════════╝
+let CONFIG = {
+  boyDistance: 100,      // m (line of sight)
+  boyElevation: 30,      // degrees
+  buildingHeight: 20,    // m
+  girlElevation: 45,     // degrees
+};
+
+// Computed values (will update with sliders)
+let birdHeight, boyHorizontal, girlVerticalDiff, girlHorizontal, girlDistance;
+
+function updateComputedValues() {
+  birdHeight = CONFIG.boyDistance * Math.sin(CONFIG.boyElevation * Math.PI / 180);
+  boyHorizontal = CONFIG.boyDistance * Math.cos(CONFIG.boyElevation * Math.PI / 180);
+  girlVerticalDiff = birdHeight - CONFIG.buildingHeight;
+  girlHorizontal = girlVerticalDiff / Math.tan(CONFIG.girlElevation * Math.PI / 180);
+  girlDistance = Math.sqrt(girlVerticalDiff * girlVerticalDiff + girlHorizontal * girlHorizontal);
+}
+
+updateComputedValues();
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  STATE MANAGEMENT                                            ║
+// ╚══════════════════════════════════════════════════════════════╝
+let currentPhase = 0;
+let predictionMade = false;
+let studentPrediction = null;
+let wrongAnswers = 0;
+let rightAnswers = 0;
+let representationMode = 'visual';
+let showProof = false;
+let showConstruction = true;
+let showGrid = true;
+let showUnitCircle = false;
+
+const StudentModel = {
+  wrongAnswers: 0,
+  rightAnswers: 0,
+  timePerStep: [],
+  predictionError: null,
+  explorationDepth: 0,
+  get scaffoldingLevel() {
+    const accuracy = this.rightAnswers / Math.max(1, this.rightAnswers + this.wrongAnswers);
+    if (accuracy < 0.5) return 0;
+    if (accuracy < 0.8) return 0.5;
+    return 1;
+  }
+};
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  CANVAS SETUP                                                ║
+// ╚══════════════════════════════════════════════════════════════╝
+const canvas = document.getElementById('sceneCanvas');
+const ctx = canvas.getContext('2d');
+let canvasW, canvasH;
+
+function resizeCanvas() {
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvasW = rect.width;
+  canvasH = rect.height || window.innerHeight * 0.6;
+  canvas.width = canvasW * window.devicePixelRatio;
+  canvas.height = canvasH * window.devicePixelRatio;
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  canvas.style.width = canvasW + 'px';
+  canvas.style.height = canvasH + 'px';
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  RENDERING UTILITIES                                         ║
+// ╚══════════════════════════════════════════════════════════════╝
+function drawGrid(origin, scale) {
+  if (!showGrid) return;
+  const {ox, oy} = origin;
+  ctx.strokeStyle = 'rgba(26,23,20,0.05)';
+  ctx.lineWidth = 1;
+  for (let x = ox % scale; x < canvasW; x += scale) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvasH); ctx.stroke();
+  }
+  for (let y = oy % scale; y < canvasH; y += scale) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvasW, y); ctx.stroke();
+  }
+}
+
+function drawAxes(origin) {
+  const {ox, oy} = origin;
+  ctx.strokeStyle = 'rgba(26,23,20,0.28)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(0, oy); ctx.lineTo(canvasW, oy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(ox, 0); ctx.lineTo(ox, canvasH); ctx.stroke();
+
+  ctx.fillStyle = '#5C5652';
+  ctx.font = 'italic 13px Georgia';
+  ctx.fillText('x', canvasW - 22, oy - 10);
+  ctx.fillText('y', ox + 10, 20);
+}
+
+function drawArrowhead(x, y, angle, color, size) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(-size, -size/2);
+  ctx.lineTo(-size, size/2);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawAngleArc(cx, cy, radius, startAngle, endAngle, color, label) {
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, startAngle, endAngle);
+  ctx.stroke();
+  if (label) {
+    const mid = (startAngle + endAngle) / 2;
+    const lx = cx + (radius + 16) * Math.cos(mid);
+    const ly = cy + (radius + 16) * Math.sin(mid);
+    ctx.fillStyle = color;
+    ctx.font = 'bold 12px Georgia';
+    ctx.textAlign = 'center';
+    ctx.fillText(label, lx, ly);
+    ctx.textAlign = 'left';
+  }
+  ctx.restore();
+}
+
+function drawConstructionLine(x1, y1, x2, y2, color, label) {
+  if (!showConstruction) return;
+  ctx.save();
+  ctx.strokeStyle = color || 'rgba(59,91,140,0.38)';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([8, 4]);
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  if (label) {
+    const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+    ctx.fillStyle = '#5C5652';
+    ctx.font = 'italic 11px Georgia';
+    ctx.textAlign = 'center';
+    ctx.fillText(label, mx, my - 6);
+    ctx.textAlign = 'left';
+  }
+  ctx.restore();
+}
+
+function drawRightAngleMarker(x, y, size, rotation) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rotation);
+  ctx.strokeStyle = 'rgba(26,23,20,0.40)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(size, 0);
+  ctx.lineTo(size, -size);
+  ctx.lineTo(0, -size);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawDimensionLabel(p1, p2, text, offset, color) {
+  const dx = p2.x - p1.x, dy = p2.y - p1.y;
+  const len = Math.sqrt(dx*dx + dy*dy);
+  if (len < 1) return;
+  const nx = -dy / len, ny = dx / len;
+  const op1 = {x: p1.x + nx * offset, y: p1.y + ny * offset};
+  const op2 = {x: p2.x + nx * offset, y: p2.y + ny * offset};
+
+  ctx.save();
+  ctx.strokeStyle = 'rgba(26,23,20,0.30)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([2, 2]);
+  ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(op1.x, op1.y); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(p2.x, p2.y); ctx.lineTo(op2.x, op2.y); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(op1.x, op1.y); ctx.lineTo(op2.x, op2.y); ctx.stroke();
+
+  const mx = (op1.x + op2.x) / 2, my = (op1.y + op2.y) / 2;
+  ctx.fillStyle = color || '#1A1714';
+  ctx.font = '11px Verdana';
+  ctx.textAlign = 'center';
+  const tw = ctx.measureText(text).width + 8;
+  ctx.fillStyle = '#F8F5F0';
+  ctx.fillRect(mx - tw/2, my - 8, tw, 16);
+  ctx.fillStyle = color || '#1A1714';
+  ctx.fillText(text, mx, my + 3);
+  ctx.textAlign = 'left';
+  ctx.restore();
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  SCENE RENDERING                                             ║
+// ╚══════════════════════════════════════════════════════════════╝
+function renderScene() {
+  ctx.clearRect(0, 0, canvasW, canvasH);
+
+  const origin = {ox: canvasW * 0.15, oy: canvasH * 0.85};
+  const scale = Math.min(canvasW, canvasH) / 12;
+
+  drawGrid(origin, scale * 0.5);
+  drawAxes(origin);
+
+  // Ground line
+  ctx.strokeStyle = '#8B7355';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(0, origin.oy);
+  ctx.lineTo(canvasW, origin.oy);
+  ctx.stroke();
+
+  // Building (dynamic height)
+  const buildingX = origin.ox + boyHorizontal * scale / 10 + girlHorizontal * scale / 10;
+  const buildingW = 40;
+  const buildingH = CONFIG.buildingHeight * scale / 10;
+
+  ctx.fillStyle = 'rgba(139,115,85,0.2)';
+  ctx.fillRect(buildingX - buildingW/2, origin.oy - buildingH, buildingW, buildingH);
+  ctx.strokeStyle = '#8B7355';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(buildingX - buildingW/2, origin.oy - buildingH, buildingW, buildingH);
+
+  // Building label
+  ctx.fillStyle = '#5C5652';
+  ctx.font = '11px Verdana';
+  ctx.textAlign = 'center';
+  ctx.fillText(CONFIG.buildingHeight + ' m building', buildingX, origin.oy - buildingH - 8);
+
+  // Boy (observer on ground)
+  const boyX = origin.ox;
+  const boyY = origin.oy;
+  ctx.fillStyle = '#3D6B9E';
+  ctx.beginPath();
+  ctx.arc(boyX, boyY - 15, 8, 0, Math.PI*2);
+  ctx.fill();
+  ctx.strokeStyle = '#1A1714';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(boyX, boyY - 15);
+  ctx.lineTo(boyX, boyY);
+  ctx.stroke();
+  ctx.fillStyle = '#1A1714';
+  ctx.font = 'bold 12px Verdana';
+  ctx.fillText('Boy', boyX, boyY + 20);
+
+  // Girl (on roof)
+  const girlX = buildingX;
+  const girlY = origin.oy - buildingH;
+  ctx.fillStyle = '#C25D2E';
+  ctx.beginPath();
+  ctx.arc(girlX, girlY - 15, 8, 0, Math.PI*2);
+  ctx.fill();
+  ctx.strokeStyle = '#1A1714';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(girlX, girlY - 15);
+  ctx.lineTo(girlX, girlY);
+  ctx.stroke();
+  ctx.fillStyle = '#1A1714';
+  ctx.fillText('Girl', girlX, girlY - 25);
+
+  // Bird
+  const birdX = origin.ox + boyHorizontal * scale / 10;
+  const birdY = origin.oy - birdHeight * scale / 10;
+
+  ctx.fillStyle = '#C9961A';
+  ctx.beginPath();
+  ctx.moveTo(birdX, birdY);
+  ctx.lineTo(birdX - 8, birdY + 6);
+  ctx.lineTo(birdX + 8, birdY + 6);
+  ctx.closePath();
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(birdX, birdY - 3, 5, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle = '#1A1714';
+  ctx.font = 'bold 12px Verdana';
+  ctx.fillText('Bird', birdX + 12, birdY);
+
+  // Boy to Bird line (hypotenuse)
+  ctx.strokeStyle = '#5B4A8A';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(boyX, boyY - 15);
+  ctx.lineTo(birdX, birdY);
+  ctx.stroke();
+
+  // Girl to Bird line
+  ctx.strokeStyle = '#5B4A8A';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(girlX, girlY - 15);
+  ctx.lineTo(birdX, birdY);
+  ctx.stroke();
+
+  // Vertical line from bird to ground
+  drawConstructionLine(birdX, birdY, birdX, origin.oy, 'rgba(59,91,140,0.38)', 'h = ' + birdHeight.toFixed(1) + 'm');
+
+  // Horizontal line from boy to bird vertical
+  drawConstructionLine(boyX, boyY, birdX, boyY, 'rgba(42,122,107,0.4)', boyHorizontal.toFixed(1) + 'm');
+
+  // Horizontal line from girl to bird vertical
+  drawConstructionLine(girlX, girlY, birdX, girlY, 'rgba(42,122,107,0.4)', girlHorizontal.toFixed(1) + 'm');
+
+  // Vertical from girl height to bird
+  drawConstructionLine(birdX, birdY, birdX, girlY, 'rgba(194,93,46,0.4)', girlVerticalDiff.toFixed(1) + 'm');
+
+  // Right angle markers
+  drawRightAngleMarker(birdX, origin.oy, 12, 0);
+  drawRightAngleMarker(birdX, girlY, 12, 0);
+
+  // Angle arcs
+  const boyAngleRad = CONFIG.boyElevation * Math.PI / 180;
+  drawAngleArc(boyX, boyY - 15, 35, -Math.PI/2, -Math.PI/2 + boyAngleRad, '#3D6B9E', CONFIG.boyElevation + '°');
+
+  const girlAngleRad = CONFIG.girlElevation * Math.PI / 180;
+  drawAngleArc(girlX, girlY - 15, 30, -Math.PI/2, -Math.PI/2 - girlAngleRad, '#C25D2E', CONFIG.girlElevation + '°');
+
+  // Distance labels
+  ctx.fillStyle = '#5B4A8A';
+  ctx.font = 'bold 11px Verdana';
+  ctx.textAlign = 'center';
+  const midBoyBirdX = (boyX + birdX) / 2;
+  const midBoyBirdY = (boyY - 15 + birdY) / 2;
+  ctx.fillText(CONFIG.boyDistance + 'm', midBoyBirdX - 20, midBoyBirdY);
+
+  const midGirlBirdX = (girlX + birdX) / 2;
+  const midGirlBirdY = (girlY - 15 + birdY) / 2;
+  ctx.fillText('? = ' + girlDistance.toFixed(2) + 'm', midGirlBirdX + 15, midGirlBirdY);
+  ctx.textAlign = 'left';
+
+  // Unit circle (small, in corner) if enabled
+  if (showUnitCircle) {
+    drawUnitCircle(canvasW - 120, 120, 80, CONFIG.boyElevation);
+  }
+
+  // Live values panel on canvas
+  ctx.fillStyle = 'rgba(248,245,240,0.9)';
+  ctx.fillRect(10, 10, 180, 130);
+  ctx.strokeStyle = 'rgba(26,23,20,0.15)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(10, 10, 180, 130);
+
+  ctx.fillStyle = '#1A1714';
+  ctx.font = 'bold 11px Verdana';
+  ctx.fillText('Live Values', 20, 28);
+
+  ctx.font = '10px Verdana';
+  ctx.fillStyle = '#5C5652';
+  ctx.fillText('Bird height: ' + birdHeight.toFixed(1) + ' m', 20, 45);
+  ctx.fillText('Boy horizontal: ' + boyHorizontal.toFixed(1) + ' m', 20, 60);
+  ctx.fillText('Girl vertical Δ: ' + girlVerticalDiff.toFixed(1) + ' m', 20, 75);
+  ctx.fillText('Girl horizontal: ' + girlHorizontal.toFixed(1) + ' m', 20, 90);
+  ctx.fillStyle = '#C25D2E';
+  ctx.font = 'bold 11px Verdana';
+  ctx.fillText('Girl distance: ' + girlDistance.toFixed(2) + ' m', 20, 110);
+}
+
+function drawUnitCircle(cx, cy, r, angleDeg) {
+  const theta = angleDeg * Math.PI / 180;
+  const px = cx + r * Math.cos(theta);
+  const py = cy - r * Math.sin(theta);
+
+  ctx.strokeStyle = 'rgba(26,23,20,0.22)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI*2);
+  ctx.stroke();
+
+  ctx.strokeStyle = 'rgba(26,23,20,0.20)';
+  ctx.beginPath();
+  ctx.moveTo(cx - r - 10, cy); ctx.lineTo(cx + r + 10, cy); ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - r - 10); ctx.lineTo(cx, cy + r + 10); ctx.stroke();
+
+  ctx.strokeStyle = '#C25D2E';
+  ctx.lineWidth = 2.5;
+  ctx.setLineDash([5, 3]);
+  ctx.beginPath();
+  ctx.moveTo(px, cy); ctx.lineTo(px, py); ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.strokeStyle = '#2A7A6B';
+  ctx.lineWidth = 2.5;
+  ctx.setLineDash([5, 3]);
+  ctx.beginPath();
+  ctx.moveTo(cx, cy); ctx.lineTo(px, cy); ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.strokeStyle = '#3D6B9E';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy); ctx.lineTo(px, py); ctx.stroke();
+
+  ctx.fillStyle = '#C9961A';
+  ctx.beginPath();
+  ctx.arc(px, py, 5, 0, Math.PI*2);
+  ctx.fill();
+
+  ctx.fillStyle = '#1A1714';
+  ctx.font = '10px Verdana';
+  ctx.textAlign = 'center';
+  ctx.fillText(`sin(${angleDeg}°)=${Math.sin(theta).toFixed(2)}`, cx, cy + r + 20);
+  ctx.fillText(`cos(${angleDeg}°)=${Math.cos(theta).toFixed(2)}`, cx, cy + r + 35);
+  ctx.textAlign = 'left';
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  SLIDER CLASS                                                ║
+// ╚══════════════════════════════════════════════════════════════╝
+class GeoSlider {
+  constructor({id, min, max, value, step, label, unit, onChange}) {
+    this.id = id;
+    this.min = min;
+    this.max = max;
+    this.value = value;
+    this.step = step || 1;
+    this.label = label;
+    this.unit = unit;
+    this.onChange = onChange;
+    this.dragging = false;
+    this.element = null;
+  }
+
+  render(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    const div = document.createElement('div');
+    div.className = 'slider-container';
+    div.innerHTML = `
+      <div class="slider-label">
+        <span>${this.label}</span>
+        <span>${this.min}${this.unit} — ${this.max}${this.unit}</span>
+      </div>
+      <div class="slider-track" id="track-${this.id}">
+        <div class="slider-fill" id="fill-${this.id}" style="width: ${this.getPercentage()}%"></div>
+        <div class="slider-thumb" id="thumb-${this.id}" style="left: ${this.getPercentage()}%"></div>
+      </div>
+      <div class="slider-value" id="value-${this.id}">${this.value.toFixed(this.step < 1 ? 1 : 0)}${this.unit}</div>
+    `;
+    container.appendChild(div);
+
+    this.element = div;
+    this.attachEvents(div);
+  }
+
+  getPercentage() {
+    return ((this.value - this.min) / (this.max - this.min)) * 100;
+  }
+
+  updateValue(newValue) {
+    this.value = Math.max(this.min, Math.min(this.max, Math.round(newValue / this.step) * this.step));
+    const fill = document.getElementById(`fill-${this.id}`);
+    const thumb = document.getElementById(`thumb-${this.id}`);
+    const valueLabel = document.getElementById(`value-${this.id}`);
+    if (fill) fill.style.width = this.getPercentage() + '%';
+    if (thumb) thumb.style.left = this.getPercentage() + '%';
+    if (valueLabel) valueLabel.textContent = this.value.toFixed(this.step < 1 ? 1 : 0) + this.unit;
+    if (this.onChange) this.onChange(this.value);
+  }
+
+  attachEvents(div) {
+    const track = div.querySelector('.slider-track');
+    const thumb = div.querySelector('.slider-thumb');
+
+    const handleMove = (e) => {
+      if (!this.dragging) return;
+      const rect = track.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+      const newValue = this.min + ratio * (this.max - this.min);
+      this.updateValue(newValue);
+    };
+
+    const handleStart = (e) => {
+      this.dragging = true;
+      thumb.classList.add('dragging');
+      handleMove(e);
+    };
+
+    const handleEnd = () => {
+      this.dragging = false;
+      thumb.classList.remove('dragging');
+    };
+
+    thumb.addEventListener('mousedown', handleStart);
+    thumb.addEventListener('touchstart', handleStart, {passive: true});
+
+    track.addEventListener('mousedown', (e) => {
+      if (e.target === thumb) return;
+      this.dragging = true;
+      handleMove(e);
+    });
+
+    document.addEventListener('mousemove', handleMove);
+    document.addEventListener('mouseup', handleEnd);
+    document.addEventListener('touchmove', handleMove, {passive: true});
+    document.addEventListener('touchend', handleEnd);
+  }
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  SLIDER INSTANCES                                            ║
+// ╚══════════════════════════════════════════════════════════════╝
+let sliders = {};
+
+function initSliders() {
+  sliders.boyDistance = new GeoSlider({
+    id: 'boyDist',
+    min: 50, max: 200, value: CONFIG.boyDistance, step: 5,
+    label: 'Boy distance to bird', unit: 'm',
+    onChange: (v) => { CONFIG.boyDistance = v; updateComputedValues(); }
+  });
+
+  sliders.boyElevation = new GeoSlider({
+    id: 'boyElev',
+    min: 10, max: 80, value: CONFIG.boyElevation, step: 5,
+    label: "Boy's angle of elevation", unit: '°',
+    onChange: (v) => { CONFIG.boyElevation = v; updateComputedValues(); }
+  });
+
+  sliders.buildingHeight = new GeoSlider({
+    id: 'buildH',
+    min: 5, max: 40, value: CONFIG.buildingHeight, step: 1,
+    label: 'Building height', unit: 'm',
+    onChange: (v) => { CONFIG.buildingHeight = v; updateComputedValues(); }
+  });
+
+  sliders.girlElevation = new GeoSlider({
+    id: 'girlElev',
+    min: 15, max: 75, value: CONFIG.girlElevation, step: 5,
+    label: "Girl's angle of elevation", unit: '°',
+    onChange: (v) => { CONFIG.girlElevation = v; updateComputedValues(); }
+  });
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  PHASE CONTENT                                               ║
+// ╚══════════════════════════════════════════════════════════════╝
+const PHASES = [
+  {
+    title: "ACTIVATE — Prior Knowledge",
+    content: `
+      <div class="phase-content">
+        <p>Before we solve this, let's confirm what you already know about right triangles and angles.</p>
+        <div class="question-card">
+          <h3>Quick Check</h3>
+          <p>In a right triangle, if the angle is 30° and the hypotenuse is 100 m, what is the height (opposite side)?</p>
+          <div class="options" id="activateOptions">
+            <button class="option-btn" onclick="checkActivate(0, this)">100 × sin(30°) = 50 m</button>
+            <button class="option-btn" onclick="checkActivate(1, this)">100 × cos(30°) = 86.6 m</button>
+            <button class="option-btn" onclick="checkActivate(2, this)">100 × tan(30°) = 57.7 m</button>
+          </div>
+        </div>
+        <div id="activateFeedback"></div>
+      </div>
+    `
+  },
+  {
+    title: "HOOK — The Counterintuitive Setup",
+    content: `
+      <div class="phase-content">
+        <p>Look at the canvas. A boy sees a bird 100 m away at 30° elevation. A girl on a 20 m building sees the same bird at 45° elevation. They are on <strong>opposite sides</strong> of the bird.</p>
+        <div class="question-card">
+          <h3>Prediction</h3>
+          <p>Before calculating: Is the bird closer to the girl or to the boy?</p>
+          <div class="options" id="hookOptions">
+            <button class="option-btn" onclick="checkHook(0, this)">Closer to the boy (100m is the longest distance)</button>
+            <button class="option-btn" onclick="checkHook(1, this)">Closer to the girl (45° means steeper angle)</button>
+            <button class="option-btn" onclick="checkHook(2, this)">Same distance from both</button>
+          </div>
+        </div>
+        <div id="hookFeedback"></div>
+      </div>
+    `
+  },
+  {
+    title: "EXPLORE — Free Play with Sliders",
+    content: `
+      <div class="phase-content">
+        <p>Drag the sliders below to explore how changing each parameter affects the geometry. Watch the canvas update live.</p>
+        <div id="sliderContainer"></div>
+        <div class="repr-bar">
+          <button class="repr-btn active" onclick="setRepr('visual')">Visual</button>
+          <button class="repr-btn" onclick="setRepr('numeric')">Numeric</button>
+          <button class="repr-btn" onclick="setRepr('algebraic')">Algebraic</button>
+          <button class="repr-btn" onclick="setRepr('verbal')">Verbal</button>
+        </div>
+        <div id="exploreContent">
+          <p><strong>Visual mode:</strong> The canvas shows the bird, boy, and girl. Notice:</p>
+          <ul style="margin-left: 20px; margin-bottom: 12px;">
+            <li>The boy's line of sight (purple) is <span id="exploreBoyDist">100</span> m at <span id="exploreBoyAngle">30</span>°</li>
+            <li>The girl's line of sight (purple) is unknown at <span id="exploreGirlAngle">45</span>°</li>
+            <li>Construction lines (dashed) show horizontal and vertical components</li>
+          </ul>
+          <p>Try toggling the <strong>Unit Circle</strong> (press U) to see how sin(30°) and cos(30°) are derived.</p>
+        </div>
+        <div class="curiosity-prompt">
+          💡 Curiosity prompt: What happens if you increase the building height? Does the girl get closer to or farther from the bird?
+        </div>
+      </div>
+    `
+  },
+  {
+    title: "CHALLENGE — Solve the Problem",
+    content: `
+      <div class="phase-content">
+        <div class="prediction-gate">
+          <h3>🔒 Prediction Gate</h3>
+          <p>Before seeing the solution, predict: What is the distance from the girl to the bird?</p>
+          <input type="number" class="prediction-input" id="predictionInput" placeholder="Enter your guess in meters...">
+          <button class="nav-btn" onclick="submitPrediction()" style="width: 100%; margin-top: 8px;">Lock in Prediction</button>
+        </div>
+        <div id="challengeContent" style="display: none;">
+          <p>Now let's solve step by step.</p>
+          <div class="solution-step">
+            <h4>Step 1: Find the bird's height</h4>
+            <p>From the boy: sin(30°) = height / 100</p>
+            <p>Height = 100 × sin(30°) = 100 × 0.5 = <strong>50 m</strong></p>
+          </div>
+          <div class="solution-step">
+            <h4>Step 2: Find horizontal distance from boy to bird</h4>
+            <p>cos(30°) = horizontal / 100</p>
+            <p>Horizontal = 100 × cos(30°) = 100 × 0.866 = <strong>86.6 m</strong></p>
+          </div>
+          <div class="solution-step">
+            <h4>Step 3: Find vertical distance from girl to bird</h4>
+            <p>Girl is at 20 m height. Bird is at 50 m.</p>
+            <p>Vertical difference = 50 − 20 = <strong>30 m</strong></p>
+          </div>
+          <div class="solution-step">
+            <h4>Step 4: Find horizontal distance from girl to bird</h4>
+            <p>From girl: tan(45°) = vertical / horizontal</p>
+            <p>1 = 30 / horizontal → horizontal = <strong>30 m</strong></p>
+          </div>
+          <div class="solution-step">
+            <h4>Step 5: Find distance from girl to bird</h4>
+            <p>Using Pythagoras: d² = 30² + 30² = 1800</p>
+            <p>d = √1800 = 30√2 ≈ <strong>42.43 m</strong></p>
+          </div>
+        </div>
+      </div>
+    `
+  },
+  {
+    title: "REVEAL — The Formula",
+    content: `
+      <div class="phase-content">
+        <p>Everything you built, observed, and calculated — here it is in one line.</p>
+        <div class="formula">
+          d<sub>girl</sub> = √[(h<sub>bird</sub> − h<sub>building</sub>)² + ((h<sub>bird</sub> − h<sub>building</sub>) / tan(θ<sub>girl</sub>))²]
+        </div>
+        <p>For this problem:</p>
+        <div class="formula">
+          d = √[(50 − 20)² + (30 / tan(45°))²] = √[30² + 30²] = 30√2 ≈ 42.43 m
+        </div>
+        <div class="repr-bar">
+          <button class="repr-btn active" onclick="setRepr('visual')">Visual</button>
+          <button class="repr-btn" onclick="setRepr('numeric')">Numeric</button>
+          <button class="repr-btn" onclick="setRepr('algebraic')">Algebraic</button>
+          <button class="repr-btn" onclick="setRepr('verbal')">Verbal</button>
+        </div>
+        <div id="revealContent">
+          <p><strong>Visual:</strong> Two right triangles share the bird's vertical line. The boy's triangle is larger (100m hypotenuse). The girl's triangle is smaller (30m vertical, 30m horizontal).</p>
+        </div>
+      </div>
+    `
+  },
+  {
+    title: "PROVE — Formal Reasoning",
+    content: `
+      <div class="phase-content">
+        <p>Grade 10+ — Two-column proof:</p>
+        <div class="proof-panel">
+          <table class="proof-table">
+            <tr><th>Statement</th><th>Reason</th></tr>
+            <tr><td>In ΔBoy-Bird-Ground: sin(30°) = h/100</td><td>Definition of sine in right triangle</td></tr>
+            <tr><td>h = 100 × 0.5 = 50 m</td><td>sin(30°) = 1/2</td></tr>
+            <tr><td>cos(30°) = x/100 → x = 86.6 m</td><td>Definition of cosine</td></tr>
+            <tr><td>Vertical diff. from girl = 50 − 20 = 30 m</td><td>Subtraction (girl at 20m height)</td></tr>
+            <tr><td>In ΔGirl-Bird: tan(45°) = 30/d<sub>h</sub></td><td>Definition of tangent</td></tr>
+            <tr><td>d<sub>h</sub> = 30 m (since tan(45°)=1)</td><td>Algebraic manipulation</td></tr>
+            <tr><td>d<sub>girl</sub> = √(30² + 30²) = 30√2 m</td><td>Pythagorean theorem</td></tr>
+            <tr><td>∴ d<sub>girl</sub> ≈ 42.43 m</td><td>Q.E.D.</td></tr>
+          </table>
+        </div>
+        <div class="hint-box">
+          <strong>Cross-Topic Bridge:</strong> This same "two observers, one object" structure appears in:
+          <ul style="margin-left: 16px; margin-top: 4px;">
+            <li>Surveying (triangulation)</li>
+            <li>GPS positioning (multiple satellites)</li>
+            <li>Astronomy (parallax distance to stars)</li>
+          </ul>
+        </div>
+      </div>
+    `
+  },
+  {
+    title: "MASTER — Self-Test",
+    content: `
+      <div class="phase-content">
+        <p>Three variants to test your understanding:</p>
+        <div class="question-card">
+          <h3>Variant 1 — Scale Change</h3>
+          <p>If the boy were 200 m from the bird at 30° elevation, and the girl were on a 40 m building with 45° elevation, what is the distance from the girl to the bird?</p>
+          <div class="options">
+            <button class="option-btn" onclick="checkMaster(0, 1, this)">84.85 m</button>
+            <button class="option-btn" onclick="checkMaster(1, 1, this)">60 m</button>
+            <button class="option-btn" onclick="checkMaster(2, 1, this)">120 m</button>
+          </div>
+          <div id="masterFeedback1"></div>
+        </div>
+        <div class="question-card">
+          <h3>Variant 2 — Inverse Problem</h3>
+          <p>If the bird is 50 m high, the girl is on a 20 m building, and the girl's distance to the bird is 30√2 m, what is the girl's angle of elevation?</p>
+          <div class="options">
+            <button class="option-btn" onclick="checkMaster(0, 2, this)">30°</button>
+            <button class="option-btn" onclick="checkMaster(1, 2, this)">45°</button>
+            <button class="option-btn" onclick="checkMaster(2, 2, this)">60°</button>
+          </div>
+          <div id="masterFeedback2"></div>
+        </div>
+        <div class="question-card">
+          <h3>Variant 3 — Context Shift</h3>
+          <p>A submarine sonar operator detects a whale at 500 m, 20° depression. Another operator on a 100 m cliff sees the same whale at 30° depression. Find the whale's depth.</p>
+          <div class="options">
+            <button class="option-btn" onclick="checkMaster(0, 3, this)">171 m</button>
+            <button class="option-btn" onclick="checkMaster(1, 3, this)">250 m</button>
+            <button class="option-btn" onclick="checkMaster(2, 3, this)">342 m</button>
+          </div>
+          <div id="masterFeedback3"></div>
+        </div>
+      </div>
+    `
+  }
+];
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  INTERACTION HANDLERS                                        ║
+// ╚══════════════════════════════════════════════════════════════╝
+function renderPhase() {
+  document.getElementById('contentArea').innerHTML = PHASES[currentPhase].content;
+  document.getElementById('currentPhaseNum').textContent = currentPhase;
+
+  document.querySelectorAll('.phase-dot').forEach((dot, i) => {
+    dot.classList.remove('active', 'completed');
+    if (i === currentPhase) dot.classList.add('active');
+    else if (i < currentPhase) dot.classList.add('completed');
+  });
+
+  document.getElementById('prevBtn').disabled = currentPhase === 0;
+  document.getElementById('nextBtn').textContent = currentPhase === 6 ? 'Finish' : 'Continue →';
+
+  // Render sliders if in Phase 2 (Explore)
+  if (currentPhase === 2) {
+    setTimeout(() => {
+      initSliders();
+      sliders.boyDistance.render('sliderContainer');
+      sliders.boyElevation.render('sliderContainer');
+      sliders.buildingHeight.render('sliderContainer');
+      sliders.girlElevation.render('sliderContainer');
+    }, 50);
+  }
+
+  renderScene();
+}
+
+function nextPhase() {
+  if (currentPhase < 6) {
+    currentPhase++;
+    renderPhase();
+  }
+}
+
+function prevPhase() {
+  if (currentPhase > 0) {
+    currentPhase--;
+    renderPhase();
+  }
+}
+
+function checkActivate(choice, btn) {
+  const options = document.getElementById('activateOptions').children;
+  for (let opt of options) opt.classList.remove('selected', 'correct', 'wrong');
+
+  if (choice === 0) {
+    btn.classList.add('correct');
+    StudentModel.rightAnswers++;
+    document.getElementById('activateFeedback').innerHTML = 
+      '<p style="color: var(--correct); margin-top: 12px;">✓ Correct! sin(30°) = opposite/hypotenuse = 0.5. Height = 50 m.</p>' +
+      '<p>Great. Today\'s problem is exactly that idea, but with two observers.</p>';
+  } else {
+    btn.classList.add('wrong');
+    StudentModel.wrongAnswers++;
+    document.getElementById('activateFeedback').innerHTML = 
+      '<p style="color: var(--drain-color); margin-top: 12px;">Not quite. Remember: sin(θ) = opposite/hypotenuse. For 30°, the opposite side is half the hypotenuse.</p>' +
+      '<div class="hint-box">sin(30°) = 1/2, so height = 100 × 0.5 = 50 m</div>';
+  }
+}
+
+function checkHook(choice, btn) {
+  const options = document.getElementById('hookOptions').children;
+  for (let opt of options) opt.classList.remove('selected', 'correct', 'wrong');
+
+  if (choice === 1) {
+    btn.classList.add('correct');
+    StudentModel.rightAnswers++;
+    document.getElementById('hookFeedback').innerHTML = 
+      '<p style="color: var(--correct); margin-top: 12px;">✓ Correct intuition! A steeper angle (45° > 30°) usually means the observer is closer horizontally. Let\'s verify.</p>';
+  } else {
+    btn.classList.add('wrong');
+    StudentModel.wrongAnswers++;
+    document.getElementById('hookFeedback').innerHTML = 
+      '<p style="color: var(--drain-color); margin-top: 12px;">Interesting prediction. Let\'s explore and find out!</p>';
+  }
+}
+
+function setRepr(mode) {
+  representationMode = mode;
+  document.querySelectorAll('.repr-btn').forEach(btn => btn.classList.remove('active'));
+  event.target.classList.add('active');
+
+  const contentDiv = document.getElementById('exploreContent') || document.getElementById('revealContent');
+  if (!contentDiv) return;
+
+  const texts = {
+    visual: '<p><strong>Visual mode:</strong> The canvas shows the bird, boy, and girl. The boy sees the bird at ' + CONFIG.boyElevation + '° (gentle slope). The girl sees it at ' + CONFIG.girlElevation + '° (steeper). The construction lines reveal hidden right triangles.</p>',
+    numeric: '<p><strong>Numeric mode:</strong><br>Boy→Bird: ' + CONFIG.boyDistance + ' m line of sight<br>Vertical: ' + birdHeight.toFixed(1) + ' m (' + CONFIG.boyDistance + ' × sin ' + CONFIG.boyElevation + '°)<br>Horizontal: ' + boyHorizontal.toFixed(1) + ' m (' + CONFIG.boyDistance + ' × cos ' + CONFIG.boyElevation + '°)<br><br>Girl→Bird: unknown distance<br>Vertical diff: ' + girlVerticalDiff.toFixed(1) + ' m (' + birdHeight.toFixed(1) + ' − ' + CONFIG.buildingHeight + ')<br>Horizontal: ' + girlHorizontal.toFixed(1) + ' m (' + girlVerticalDiff.toFixed(1) + ' / tan ' + CONFIG.girlElevation + '°)<br>Distance: ' + girlDistance.toFixed(2) + ' m (√(' + girlVerticalDiff.toFixed(1) + '²+' + girlHorizontal.toFixed(1) + '²))</p>',
+    algebraic: '<p><strong>Algebraic mode:</strong><br>h = d<sub>boy</sub> × sin(θ<sub>boy</sub>)<br>x = d<sub>boy</sub> × cos(θ<sub>boy</sub>)<br>Δh = h − h<sub>building</sub><br>x<sub>girl</sub> = Δh / tan(θ<sub>girl</sub>)<br>d<sub>girl</sub> = √(Δh² + x<sub>girl</sub>²)</p>',
+    verbal: '<p><strong>Verbal mode:</strong> The bird is ' + birdHeight.toFixed(1) + ' meters above the ground. The boy is ' + boyHorizontal.toFixed(1) + ' meters away horizontally. The girl, standing ' + CONFIG.buildingHeight + ' meters up, looks up at ' + CONFIG.girlElevation + ' degrees. Since tan(' + CONFIG.girlElevation + '°) equals ' + Math.tan(CONFIG.girlElevation * Math.PI / 180).toFixed(2) + ', she is ' + girlHorizontal.toFixed(1) + ' meters away horizontally. The straight-line distance is the diagonal: about ' + girlDistance.toFixed(2) + ' meters.</p>'
+  };
+  contentDiv.innerHTML = texts[mode];
+}
+
+function submitPrediction() {
+  const val = parseFloat(document.getElementById('predictionInput').value);
+  if (isNaN(val)) return;
+
+  studentPrediction = val;
+  predictionMade = true;
+
+  const error = Math.abs(val - 42.43) / 42.43;
+  StudentModel.predictionError = error;
+
+  let feedback = '';
+  if (error < 0.1) {
+    feedback = '<p style="color: var(--correct);">Excellent prediction! Within 10% of the answer.</p>';
+    StudentModel.rightAnswers++;
+  } else if (error < 0.3) {
+    feedback = '<p style="color: var(--highlight);">Good estimate! Within 30%. The exact answer is coming up.</p>';
+  } else {
+    feedback = '<p style="color: var(--drain-color);">That\'s off by quite a bit — which is normal for first exposure. Watch the steps carefully.</p>';
+    StudentModel.wrongAnswers++;
+  }
+
+  document.getElementById('challengeContent').style.display = 'block';
+  document.querySelector('.prediction-gate').innerHTML += feedback;
+}
+
+function checkMaster(choice, variant, btn) {
+  const answers = {1: 0, 2: 1, 3: 0};
+  const correct = answers[variant];
+
+  const parent = btn.parentElement;
+  for (let opt of parent.children) opt.classList.remove('correct', 'wrong');
+
+  const feedbackDiv = document.getElementById('masterFeedback' + variant);
+
+  if (choice === correct) {
+    btn.classList.add('correct');
+    StudentModel.rightAnswers++;
+    feedbackDiv.innerHTML = '<p style="color: var(--correct); margin-top: 8px;">✓ Correct!</p>';
+  } else {
+    btn.classList.add('wrong');
+    StudentModel.wrongAnswers++;
+    const explanations = {
+      1: 'Bird height = 200 × sin(30°) = 100m. Girl vertical diff = 100 − 40 = 60m. tan(45°)=1, so horizontal = 60m. Distance = √(60²+60²) = 60√2 ≈ 84.85m.',
+      2: 'Vertical diff = 50 − 20 = 30m. If distance is 30√2, then by Pythagoras, horizontal is also 30m. tan(θ) = 30/30 = 1, so θ = 45°.',
+      3: 'First operator depth: 500 × sin(20°) ≈ 171m. Second operator: 100m cliff, 30° depression. tan(30°) = horizontal/depth → horizontal = depth × √3. Using simultaneous equations: depth ≈ 171m.'
+    };
+    feedbackDiv.innerHTML = '<p style="color: var(--drain-color); margin-top: 8px;">Not quite. ' + explanations[variant] + '</p>';
+  }
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  KEYBOARD SHORTCUTS                                          ║
+// ╚══════════════════════════════════════════════════════════════╝
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight' || e.key === 'n') nextPhase();
+  if (e.key === 'ArrowLeft' || e.key === 'p') prevPhase();
+  if (e.key >= '0' && e.key <= '6') { currentPhase = parseInt(e.key); renderPhase(); }
+  if (e.key === 'c') { showConstruction = !showConstruction; renderScene(); }
+  if (e.key === 'g') { showGrid = !showGrid; renderScene(); }
+  if (e.key === 'u') { showUnitCircle = !showUnitCircle; renderScene(); }
+  if (e.key === 'h') {
+    const panel = document.querySelector('.panel-zone');
+    panel.style.display = panel.style.display === 'none' ? 'flex' : 'none';
+  }
+});
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  INITIALIZATION                                              ║
+// ╚══════════════════════════════════════════════════════════════╝
+renderPhase();
+requestAnimationFrame(function loop() {
+  updateComputedValues();
+  renderScene();
+  requestAnimationFrame(loop);
+});
+</script>
+</body>
+</html>

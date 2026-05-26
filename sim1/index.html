@@ -1,0 +1,1524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APEX-EDU · Kite Flying · Interactive Trigonometry</title>
+<style>
+/* ╔══════════════════════════════════════════╗
+   ║  CSS VARIABLES & RESET                   ║
+   ╚══════════════════════════════════════════╝ */
+:root {
+  --bg:          #FAFAF5;
+  --ink:         #1C1917;
+  --ink-light:   #6B6560;
+  --accent:      #3B5B8C;
+  --accent-warm: #C4622D;
+  --highlight:   #D4A843;
+  --panel-bg:    #F2EDE5;
+  --panel-border:#DDD5C8;
+  --success:     #2A7C6F;
+  --canvas-bg:   #E8E4DC;
+  --sky-day:     #B8D4E3;
+  --sky-dusk:    #E8C8A0;
+  --ground:      #8B7355;
+  --tower:       #6B6560;
+  --shadow:      #3A3530;
+  --sun:         #F4D03F;
+  --sun-glow:    #F9E79F;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: Georgia, 'Times New Roman', serif;
+  background: var(--bg);
+  color: var(--ink);
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* ╔══════════════════════════════════════════╗
+   ║  LAYOUT                                  ║
+   ╚══════════════════════════════════════════╝ */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.header-bar {
+  background: var(--ink);
+  color: var(--bg);
+  padding: 8px 20px;
+  font-size: 13px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-bar .topic-tag {
+  color: var(--highlight);
+  font-weight: bold;
+}
+
+.main-stage {
+  display: flex;
+  flex: 1;
+  position: relative;
+}
+
+/* Canvas area */
+.canvas-wrapper {
+  flex: 1;
+  position: relative;
+  background: var(--canvas-bg);
+  min-height: 500px;
+  overflow: hidden;
+}
+
+#simCanvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Solution Panel */
+.solution-panel {
+  width: 380px;
+  background: var(--panel-bg);
+  border-left: 2px solid var(--panel-border);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  max-height: calc(100vh - 40px);
+}
+
+.panel-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--panel-border);
+  background: linear-gradient(135deg, var(--panel-bg) 0%, #E8E0D4 100%);
+}
+
+.panel-header h2 {
+  font-size: 18px;
+  margin-bottom: 4px;
+  color: var(--ink);
+}
+
+.panel-header .meta {
+  font-size: 12px;
+  color: var(--ink-light);
+  font-family: Verdana, Geneva, sans-serif;
+}
+
+.progress-track {
+  padding: 12px 20px;
+  background: rgba(0,0,0,0.03);
+}
+
+.progress-bar {
+  height: 4px;
+  background: var(--panel-border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  width: 0%;
+  transition: width 0.6s ease;
+}
+
+.step-label {
+  font-size: 11px;
+  color: var(--ink-light);
+  margin-top: 6px;
+  font-family: Verdana, Geneva, sans-serif;
+}
+
+/* Step Cards */
+.step-content {
+  flex: 1;
+  padding: 0;
+}
+
+.step-card {
+  padding: 20px;
+  border-bottom: 1px solid var(--panel-border);
+  display: none;
+  animation: fadeIn 0.4s ease;
+}
+
+.step-card.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.step-number {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--accent);
+  font-weight: bold;
+  margin-bottom: 12px;
+  font-family: Verdana, Geneva, sans-serif;
+}
+
+.step-title {
+  font-size: 20px;
+  margin-bottom: 16px;
+  line-height: 1.3;
+}
+
+.step-body {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--ink);
+}
+
+.step-body p {
+  margin-bottom: 14px;
+}
+
+.formula-box {
+  background: var(--bg);
+  border: 2px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin: 16px 0;
+  text-align: center;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 18px;
+  position: relative;
+}
+
+.formula-box .formula-label {
+  position: absolute;
+  top: -10px;
+  left: 16px;
+  background: var(--panel-bg);
+  padding: 0 8px;
+  font-size: 11px;
+  color: var(--ink-light);
+  font-family: Verdana, Geneva, sans-serif;
+}
+
+.inline-formula {
+  font-family: 'Courier New', Courier, monospace;
+  background: rgba(59,91,140,0.08);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.95em;
+}
+
+/* Interactive Elements */
+.prediction-widget {
+  background: var(--bg);
+  border: 2px solid var(--highlight);
+  border-radius: 10px;
+  padding: 20px;
+  margin: 16px 0;
+}
+
+.prediction-widget h4 {
+  font-size: 14px;
+  margin-bottom: 12px;
+  color: var(--ink);
+}
+
+.slider-container {
+  margin: 12px 0;
+}
+
+.slider-container input[type="range"] {
+  width: 100%;
+  height: 6px;
+  -webkit-appearance: none;
+  background: var(--panel-border);
+  border-radius: 3px;
+  outline: none;
+}
+
+.slider-container input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  background: var(--highlight);
+  border-radius: 50%;
+  cursor: pointer;
+  border: 3px solid var(--bg);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+.slider-value {
+  text-align: center;
+  font-size: 24px;
+  font-weight: bold;
+  color: var(--accent);
+  margin-top: 8px;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.btn {
+  display: inline-block;
+  padding: 10px 24px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: Georgia, serif;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 12px;
+}
+
+.btn:hover {
+  background: #2A4A6E;
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: var(--ink-light);
+  margin-left: 8px;
+}
+
+.btn-secondary:hover {
+  background: var(--ink);
+}
+
+/* Challenge Card */
+.challenge-card {
+  background: linear-gradient(135deg, var(--accent) 0%, #2A4A6E 100%);
+  color: white;
+  padding: 20px;
+  border-radius: 10px;
+  margin: 16px 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.challenge-card::before {
+  content: "🏆";
+  position: absolute;
+  top: 10px;
+  right: 16px;
+  font-size: 28px;
+  opacity: 0.3;
+}
+
+.challenge-card h3 {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 10px;
+  opacity: 0.9;
+}
+
+.challenge-card p {
+  font-size: 15px;
+  line-height: 1.6;
+  font-style: italic;
+}
+
+.challenge-card .difficulty {
+  margin-top: 12px;
+  font-size: 12px;
+  font-family: Verdana, Geneva, sans-serif;
+}
+
+/* Watch on Canvas button */
+.watch-canvas {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--accent);
+  font-size: 13px;
+  cursor: pointer;
+  margin-top: 12px;
+  font-family: Verdana, Geneva, sans-serif;
+}
+
+.watch-canvas:hover {
+  color: var(--highlight);
+}
+
+/* Warning/Note */
+.warning-box {
+  background: rgba(196,98,45,0.08);
+  border-left: 3px solid var(--accent-warm);
+  padding: 12px 16px;
+  margin: 14px 0;
+  font-size: 14px;
+  border-radius: 0 6px 6px 0;
+}
+
+.warning-box::before {
+  content: "⚠ ";
+  color: var(--accent-warm);
+  font-weight: bold;
+}
+
+/* Answer reveal */
+.answer-reveal {
+  background: linear-gradient(135deg, var(--success) 0%, #1E5C50 100%);
+  color: white;
+  padding: 20px;
+  border-radius: 10px;
+  margin: 16px 0;
+  text-align: center;
+}
+
+.answer-reveal .big-answer {
+  font-size: 32px;
+  font-weight: bold;
+  margin: 8px 0;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.answer-reveal .prediction-compare {
+  font-size: 13px;
+  opacity: 0.9;
+  margin-top: 8px;
+}
+
+/* Navigation */
+.panel-nav {
+  padding: 16px 20px;
+  border-top: 1px solid var(--panel-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--panel-bg);
+  position: sticky;
+  bottom: 0;
+}
+
+.nav-btn {
+  padding: 8px 16px;
+  background: var(--bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: Georgia, serif;
+  transition: all 0.2s;
+}
+
+.nav-btn:hover:not(:disabled) {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.nav-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Teacher Dashboard Toggle */
+.teacher-toggle {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 44px;
+  height: 44px;
+  background: var(--ink);
+  color: var(--bg);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  z-index: 100;
+  transition: transform 0.2s;
+}
+
+.teacher-toggle:hover {
+  transform: scale(1.1);
+}
+
+/* Teacher Dashboard */
+.teacher-dashboard {
+  display: none;
+  position: fixed;
+  bottom: 70px;
+  right: 20px;
+  width: 340px;
+  max-height: 500px;
+  background: white;
+  border: 2px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+  z-index: 99;
+  overflow-y: auto;
+}
+
+.teacher-dashboard.visible {
+  display: block;
+}
+
+.teacher-dashboard h3 {
+  font-size: 14px;
+  margin-bottom: 12px;
+  color: var(--ink);
+  border-bottom: 1px solid var(--panel-border);
+  padding-bottom: 8px;
+}
+
+.teacher-dashboard ul {
+  list-style: none;
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.teacher-dashboard li::before {
+  content: "✓ ";
+  color: var(--success);
+  font-weight: bold;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .main-stage { flex-direction: column; }
+  .solution-panel { width: 100%; max-height: none; border-left: none; border-top: 2px solid var(--panel-border); }
+  .canvas-wrapper { min-height: 400px; }
+}
+
+/* Achievement toast */
+.achievement-toast {
+  position: fixed;
+  top: 60px;
+  right: 20px;
+  background: var(--ink);
+  color: var(--bg);
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  display: none;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  z-index: 200;
+  animation: slideIn 0.4s ease;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* Controls overlay on canvas */
+.canvas-controls {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  display: flex;
+  gap: 8px;
+  z-index: 10;
+  flex-wrap: wrap;
+}
+
+.canvas-control-btn {
+  background: rgba(28,25,23,0.8);
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: Verdana, Geneva, sans-serif;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.canvas-control-btn:hover {
+  background: var(--accent);
+}
+
+/* Did You Know */
+.did-you-know {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  max-width: 280px;
+  background: rgba(250,250,245,0.95);
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-style: italic;
+  color: var(--ink-light);
+  border: 1px solid var(--panel-border);
+  line-height: 1.5;
+  z-index: 10;
+}
+
+/* Hint system */
+.hint-box {
+  background: rgba(212,168,67,0.1);
+  border: 1px dashed var(--highlight);
+  padding: 12px;
+  border-radius: 6px;
+  margin: 12px 0;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.hint-box .hint-content {
+  display: none;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--highlight);
+}
+
+.hint-box.expanded .hint-content {
+  display: block;
+}
+
+/* Score display */
+.score-display {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(28,25,23,0.85);
+  color: white;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: Verdana, Geneva, sans-serif;
+  z-index: 10;
+}
+</style>
+<base target="_blank">
+</head>
+<body>
+
+<div class="app-container">
+  <div class="header-bar">
+    <div><span class="topic-tag">APEX-EDU</span> · Trigonometry · Height & Distance</div>
+    <div style="font-size:11px;opacity:0.7;">Class 10 · NCERT Ch.8</div>
+  </div>
+
+  <div class="main-stage">
+    <!-- CANVAS AREA -->
+    <div class="canvas-wrapper">
+      <canvas id="simCanvas"></canvas>
+
+      <div class="canvas-controls">
+        <button class="canvas-control-btn" onclick="sim.togglePlay()">⏯ Play/Pause</button>
+        <button class="canvas-control-btn" onclick="sim.reset()">↺ Reset</button>
+        <button class="canvas-control-btn" onclick="sim.setAngle(30)">30°</button>
+        <button class="canvas-control-btn" onclick="sim.setAngle(45)">45°</button>
+        <button class="canvas-control-btn" onclick="sim.setAngle(60)">60°</button>
+        <button class="canvas-control-btn" onclick="sim.animateKite()">🪁 Fly!</button>
+      </div>
+
+      <div class="score-display" id="scoreDisplay">
+        ✓ <span id="correctCount">0</span> correct | streak: <span id="streakCount">0</span>
+      </div>
+
+      <div class="did-you-know" id="didYouKnow">
+        💡 The longest kite ever flown had a string over 3.7 km long — but it still follows the same sin(θ) = height/string rule!
+      </div>
+    </div>
+
+    <!-- SOLUTION PANEL -->
+    <div class="solution-panel">
+      <div class="panel-header">
+        <h2>🪁 The Kite's String</h2>
+        <div class="meta">Mathematics · Applications of Trigonometry · Class 10</div>
+      </div>
+
+      <div class="progress-track">
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="step-label" id="stepLabel">Step 1 of 7</div>
+      </div>
+
+      <div class="step-content" id="stepContent">
+
+        <!-- STEP 1: HOOK -->
+        <div class="step-card active" data-step="1">
+          <div class="step-number">Phase 1 · The Hook</div>
+          <div class="step-title">How Long Is That String?</div>
+          <div class="step-body">
+            <p>A kite soars <strong>60 metres</strong> above the ground. You hold the string, looking up at a <strong>60°</strong> angle. The string is pulled tight — no slack at all.</p>
+            <p><strong>The question:</strong> How many metres of string are between your hand and the kite?</p>
+            <p>It looks shorter than 60 m from below... but trigonometry tells a different story.</p>
+
+            <div class="watch-canvas" onclick="sim.highlightKite()">
+              👁 Watch the kite on canvas →
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 2: EXPLORE -->
+        <div class="step-card" data-step="2">
+          <div class="step-number">Phase 2 · Explore</div>
+          <div class="step-title">Play with the Angle Slider</div>
+          <div class="step-body">
+            <p>Drag the slider to change the string's angle. Watch how the string length changes — even though the kite stays at 60 m height!</p>
+
+            <div class="slider-container">
+              <label style="font-size:12px;color:var(--ink-light);">String Angle (θ)</label>
+              <input type="range" id="angleSlider" min="15" max="85" value="60" oninput="sim.setAngle(this.value)">
+              <div class="slider-value"><span id="angleValue">60</span>°</div>
+            </div>
+
+            <div style="margin-top:12px;padding:12px;background:var(--bg);border-radius:8px;">
+              <div style="font-size:12px;color:var(--ink-light);margin-bottom:6px;">Live Measurements:</div>
+              <div style="font-size:14px;line-height:2;">
+                String length: <span id="stringLength" class="inline-formula">69.28</span> m<br>
+                Horizontal distance: <span id="horizontalDist" class="inline-formula">34.64</span> m<br>
+                Kite height: <span class="inline-formula">60</span> m (fixed)
+              </div>
+            </div>
+
+            <p style="margin-top:16px;"><em>Notice: at 30° the string is much longer! At 90° it would be exactly 60 m.</em></p>
+
+            <button class="btn" onclick="advanceToStep(3)">I'm Ready →</button>
+          </div>
+        </div>
+
+        <!-- STEP 3: CHALLENGE -->
+        <div class="step-card" data-step="3">
+          <div class="step-number">Phase 3 · Challenge</div>
+          <div class="step-title">The Exam Problem</div>
+          <div class="step-body">
+            <div class="challenge-card">
+              <h3>🏆 Challenge</h3>
+              <p>"A kite is flying at a height of <strong>60 m</strong> above the ground. The string attached to the kite is temporarily tied to a point on the ground. The inclination of the string with the ground is <strong>60°</strong>. Find the length of the string, assuming that there is no slack in the string."</p>
+              <div class="difficulty">Difficulty: ●●○○○ · Class 10 · CBSE/NCERT</div>
+            </div>
+
+            <div class="prediction-widget">
+              <h4>🔮 Make Your Prediction</h4>
+              <p style="font-size:13px;margin-bottom:8px;">Before solving — how long is the string?</p>
+              <div class="slider-container">
+                <input type="range" id="predictionSlider" min="40" max="120" value="70" oninput="updatePrediction(this.value)">
+                <div class="slider-value"><span id="predictionValue">70</span> m</div>
+              </div>
+              <button class="btn" onclick="submitPrediction()">Lock Prediction & Solve</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 4: THE SCENE -->
+        <div class="step-card" data-step="4">
+          <div class="step-number">Step 1 · The Scene</div>
+          <div class="step-title">The Right Triangle in the Sky</div>
+          <div class="step-body">
+            <p>Let <strong>A</strong> be the point on the ground where the string is tied.</p>
+            <p>Let <strong>B</strong> be the point directly below the kite (at ground level).</p>
+            <p>Let <strong>C</strong> be the kite itself.</p>
+
+            <div class="formula-box">
+              <div class="formula-label">Right Triangle ABC</div>
+              AB = horizontal distance (unknown)<br>
+              BC = height = <strong>60 m</strong> (given)<br>
+              AC = string length = <strong>?</strong> (what we need)<br>
+              ∠CAB = <strong>60°</strong> (angle with ground)
+            </div>
+
+            <div class="watch-canvas" onclick="sim.showTriangle()">
+              👁 Highlight the triangle on canvas →
+            </div>
+
+            <button class="btn" onclick="advanceToStep(5)">Continue →</button>
+          </div>
+        </div>
+
+        <!-- STEP 5: THE KEY INSIGHT -->
+        <div class="step-card" data-step="5">
+          <div class="step-number">Step 2 · The Key Insight</div>
+          <div class="step-title">Which Trig Ratio to Use?</div>
+          <div class="step-body">
+            <p>We know:</p>
+            <ul style="margin-left:20px;line-height:2;">
+              <li><strong>Angle</strong> with ground = 60°</li>
+              <li><strong>Opposite</strong> side to this angle = height = 60 m</li>
+              <li><strong>Hypotenuse</strong> = string length (unknown)</li>
+            </ul>
+
+            <p>The ratio connecting <span class="inline-formula">opposite</span> and <span class="inline-formula">hypotenuse</span> is <strong>sine</strong>:</p>
+
+            <div class="formula-box">
+              <div class="formula-label">The Key Formula</div>
+              sin(θ) = opposite / hypotenuse<br>
+              sin(60°) = BC / AC = 60 / string
+            </div>
+
+            <div class="hint-box" onclick="this.classList.toggle('expanded')">
+              💡 Why sine and not tan? Click to see.
+              <div class="hint-content">
+                We need the hypotenuse (string). Sine connects opposite and hypotenuse. Tangent connects opposite and adjacent — that would give us the horizontal distance, not the string length!
+              </div>
+            </div>
+
+            <button class="btn" onclick="advanceToStep(6)">Continue →</button>
+          </div>
+        </div>
+
+        <!-- STEP 6: THE CALCULATION -->
+        <div class="step-card" data-step="6">
+          <div class="step-number">Step 3 · The Calculation</div>
+          <div class="step-title">Solving for String Length</div>
+          <div class="step-body">
+            <p>From sin(60°) = 60 / AC:</p>
+
+            <div class="formula-box">
+              <div class="formula-label">Rearrange for AC</div>
+              AC = 60 / sin(60°)
+            </div>
+
+            <p>We know <span class="inline-formula">sin(60°) = √3/2</span>:</p>
+            <div class="formula-box">
+              AC = 60 / (√3/2)<br>
+              AC = 60 × 2/√3<br>
+              AC = 120/√3<br>
+              AC = <span class="inline-formula">120√3/3</span><br>
+              AC = <span class="inline-formula">40√3</span> metres
+            </div>
+
+            <p>Therefore:</p>
+            <div class="formula-box" style="border-color:var(--success);">
+              <div class="formula-label" style="color:var(--success);">Final Answer</div>
+              <strong>String length = 40√3 metres</strong><br>
+              <span style="font-size:14px;opacity:0.8;">≈ 69.28 metres</span>
+            </div>
+
+            <div class="warning-box">
+              Do NOT use tan(60°) here — that gives the horizontal distance (20√3 ≈ 34.64 m), not the string length!
+            </div>
+
+            <button class="btn" onclick="advanceToStep(7)">Verify Answer →</button>
+          </div>
+        </div>
+
+        <!-- STEP 7: VERIFICATION -->
+        <div class="step-card" data-step="7">
+          <div class="step-number">Step 4 · Verification</div>
+          <div class="step-title">Does 40√3 Make Sense?</div>
+          <div class="step-body">
+            <div class="answer-reveal">
+              <div style="font-size:13px;opacity:0.9;">Length of String</div>
+              <div class="big-answer">40√3 m</div>
+              <div style="font-size:14px;">≈ 69.28 metres</div>
+              <div class="prediction-compare" id="predictionCompare">
+                You guessed: -- · Actual: 40√3 m
+              </div>
+            </div>
+
+            <p><strong>Check:</strong> If string = 40√3 m</p>
+            <ul style="margin-left:20px;line-height:2;">
+              <li>sin(60°) = 60 / (40√3) = 60√3 / 120 = √3/2</li>
+              <li>But sin(60°) = √3/2 ✓</li>
+              <li>Horizontal distance = 40√3 × cos(60°) = 40√3 × 0.5 = 20√3 ≈ 34.64 m ✓</li>
+              <li>Check: tan(60°) = 60 / (20√3) = 3/√3 = √3 ✓</li>
+            </ul>
+
+            <div class="watch-canvas" onclick="sim.animateVerification()">
+              👁 Watch the verification on canvas →
+            </div>
+
+            <button class="btn" onclick="advanceToStep(8)">Master Phase →</button>
+          </div>
+        </div>
+
+        <!-- STEP 8: MASTER -->
+        <div class="step-card" data-step="8">
+          <div class="step-number">Phase 5 · Master</div>
+          <div class="step-title">Three Variants to Test Yourself</div>
+          <div class="step-body">
+
+            <div style="background:var(--bg);border:1px solid var(--panel-border);border-radius:8px;padding:16px;margin-bottom:12px;">
+              <div style="font-size:12px;color:var(--accent);font-weight:bold;margin-bottom:8px;">Variant 1 · Different Angle</div>
+              <p style="font-size:14px;">Kite at 60 m height, string angle = 30°. Find string length.</p>
+              <div class="hint-box" onclick="this.classList.toggle('expanded')">
+                💡 Show solution
+                <div class="hint-content">
+                  String = 60 / sin(30°) = 60 / 0.5 = 120 m. Much longer! Lower angle = longer string needed.
+                </div>
+              </div>
+            </div>
+
+            <div style="background:var(--bg);border:1px solid var(--panel-border);border-radius:8px;padding:16px;margin-bottom:12px;">
+              <div style="font-size:12px;color:var(--accent);font-weight:bold;margin-bottom:8px;">Variant 2 · Different Height</div>
+              <p style="font-size:14px;">String angle = 45°, string length = 80 m. Find kite height.</p>
+              <div class="hint-box" onclick="this.classList.toggle('expanded')">
+                💡 Show solution
+                <div class="hint-content">
+                  h = 80 × sin(45°) = 80 × 1/√2 = 40√2 ≈ 56.57 m
+                </div>
+              </div>
+            </div>
+
+            <div style="background:var(--bg);border:1px solid var(--panel-border);border-radius:8px;padding:16px;margin-bottom:12px;">
+              <div style="font-size:12px;color:var(--accent);font-weight:bold;margin-bottom:8px;">Variant 3 · Real World</div>
+              <p style="font-size:14px;">A drone is flying with a tether at 75° angle. The tether is 100 m long. How high is the drone?</p>
+              <div class="hint-box" onclick="this.classList.toggle('expanded')">
+                💡 Show answer
+                <div class="hint-content">
+                  h = 100 × sin(75°) ≈ 100 × 0.966 = 96.6 m
+                </div>
+              </div>
+            </div>
+
+            <button class="btn" onclick="sim.reset();advanceToStep(1)">↺ Start Over</button>
+            <button class="btn btn-secondary" onclick="window.print()">🖨 Print Summary</button>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="panel-nav">
+        <button class="nav-btn" id="btnPrev" onclick="prevStep()">← Back</button>
+        <button class="nav-btn" id="btnNext" onclick="nextStep()">Next →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Achievement Toast -->
+<div class="achievement-toast" id="achievementToast">
+  <span id="achievementIcon">🏅</span>
+  <span id="achievementText">Achievement Unlocked!</span>
+</div>
+
+<!-- Teacher Dashboard -->
+<button class="teacher-toggle" onclick="toggleTeacher()" title="Teacher & Parent Dashboard">📋</button>
+<div class="teacher-dashboard" id="teacherDashboard">
+  <h3>📋 For Teachers & Parents</h3>
+  <p style="font-size:12px;color:var(--ink-light);margin-bottom:12px;">Topic: Height & Distance — Kite Problem (Class 10 Mathematics)<br>Curriculum: NCERT Ch.8, CBSE, ICSE</p>
+
+  <h3>Learning Objectives</h3>
+  <ul>
+    <li>Visualize angle of elevation in a right triangle</li>
+    <li>Identify opposite side and hypotenuse correctly</li>
+    <li>Apply sin(θ) = opposite/hypotenuse</li>
+    <li>Work with special angle values (sin 60° = √3/2)</li>
+    <li>Verify answer using multiple trig ratios</li>
+  </ul>
+
+  <h3>Common Errors</h3>
+  <ul style="margin-bottom:12px;">
+    <li style="color:var(--accent-warm);"><span style="color:var(--accent-warm);">✗</span> Using tan instead of sin (finds horizontal distance)</li>
+    <li style="color:var(--accent-warm);"><span style="color:var(--accent-warm);">✗</span> Forgetting sin(60°) = √3/2, using 1/2 instead</li>
+    <li style="color:var(--accent-warm);"><span style="color:var(--accent-warm);">✗</span> Not rationalizing (leaving answer as 120/√3)</li>
+  </ul>
+
+  <h3>Extension Activities</h3>
+  <ul>
+    <li>Fly a real kite and estimate the string angle using a protractor</li>
+    <li>Measure the string length and verify with trigonometry</li>
+    <li>Research: How do kite festivals use geometry for safety?</li>
+  </ul>
+</div>
+
+<script>
+// ╔══════════════════════════════════════════╗
+// ║  SIMULATION ENGINE                       ║
+// ╚══════════════════════════════════════════╝
+
+class KiteSimulation {
+  constructor() {
+    this.canvas = document.getElementById('simCanvas');
+    this.ctx = this.canvas.getContext('2d');
+    this.angle = 60; // string angle in degrees
+    this.targetAngle = 60;
+    this.height = 60; // metres above ground
+    this.isPlaying = true;
+    this.animationId = null;
+    this.time = 0;
+    this.showTriangle = false;
+    this.verificationMode = false;
+    this.kiteWobble = 0;
+    this.clouds = [];
+    this.birds = [];
+    this.stringVibration = 0;
+
+    this.resize();
+    window.addEventListener('resize', () => this.resize());
+
+    this.initClouds();
+    this.initBirds();
+    this.gameLoop();
+  }
+
+  resize() {
+    const rect = this.canvas.parentElement.getBoundingClientRect();
+    this.canvas.width = rect.width;
+    this.canvas.height = rect.height;
+    this.groundY = this.canvas.height * 0.75;
+    this.personX = this.canvas.width * 0.2;
+    this.scale = Math.min(this.canvas.width, this.canvas.height) / 200;
+  }
+
+  initClouds() {
+    for (let i = 0; i < 5; i++) {
+      this.clouds.push({
+        x: Math.random() * 0.8 + 0.1,
+        y: Math.random() * 0.2 + 0.05,
+        size: Math.random() * 30 + 20,
+        speed: Math.random() * 0.0002 + 0.0001
+      });
+    }
+  }
+
+  initBirds() {
+    for (let i = 0; i < 3; i++) {
+      this.birds.push({
+        x: Math.random(),
+        y: Math.random() * 0.25 + 0.1,
+        speed: Math.random() * 0.0004 + 0.0002,
+        wingPhase: Math.random() * Math.PI * 2
+      });
+    }
+  }
+
+  setAngle(deg) {
+    this.targetAngle = parseFloat(deg);
+    document.getElementById('angleSlider').value = this.targetAngle;
+    document.getElementById('angleValue').textContent = Math.round(this.targetAngle);
+    this.updateMeasurements();
+  }
+
+  updateMeasurements() {
+    const rad = this.targetAngle * Math.PI / 180;
+    const stringLen = this.height / Math.sin(rad);
+    const horizDist = this.height / Math.tan(rad);
+    document.getElementById('stringLength').textContent = stringLen.toFixed(2);
+    document.getElementById('horizontalDist').textContent = horizDist.toFixed(2);
+  }
+
+  togglePlay() {
+    this.isPlaying = !this.isPlaying;
+  }
+
+  reset() {
+    this.angle = 60;
+    this.targetAngle = 60;
+    this.showTriangle = false;
+    this.verificationMode = false;
+    this.setAngle(60);
+  }
+
+  animateKite() {
+    // Animate the kite flying up and settling
+    let startAngle = 15;
+    let endAngle = 60;
+    let duration = 2500;
+    let startTime = null;
+
+    const animate = (timestamp) => {
+      if (!startTime) startTime = timestamp;
+      let progress = Math.min((timestamp - startTime) / duration, 1);
+      progress = 1 - Math.pow(1 - progress, 3); // ease out cubic
+      this.angle = startAngle + (endAngle - startAngle) * progress;
+      this.targetAngle = this.angle;
+      document.getElementById('angleSlider').value = this.angle;
+      document.getElementById('angleValue').textContent = Math.round(this.angle);
+      this.updateMeasurements();
+
+      if (progress < 1) requestAnimationFrame(animate);
+    };
+    requestAnimationFrame(animate);
+  }
+
+  highlightKite() {
+    this.highlightTimer = 90;
+  }
+
+  showTriangle() {
+    this.showTriangle = true;
+  }
+
+  animateVerification() {
+    this.verificationMode = true;
+    this.verificationTimer = 0;
+  }
+
+  gameLoop() {
+    if (this.isPlaying) {
+      this.time += 0.016;
+
+      // Smooth angle transition
+      const diff = this.targetAngle - this.angle;
+      if (Math.abs(diff) > 0.1) {
+        this.angle += diff * 0.08;
+      }
+
+      // Kite wobble (wind effect)
+      this.kiteWobble = Math.sin(this.time * 2) * 3;
+      this.stringVibration = Math.sin(this.time * 8) * 1;
+
+      if (this.highlightTimer > 0) this.highlightTimer--;
+      if (this.verificationMode) this.verificationTimer++;
+
+      this.draw();
+    }
+    this.animationId = requestAnimationFrame(() => this.gameLoop());
+  }
+
+  draw() {
+    const ctx = this.ctx;
+    const w = this.canvas.width;
+    const h = this.canvas.height;
+    const s = this.scale;
+
+    // Sky gradient
+    const skyGrad = ctx.createLinearGradient(0, 0, 0, this.groundY);
+    skyGrad.addColorStop(0, '#87CEEB');
+    skyGrad.addColorStop(0.5, '#B8D4E3');
+    skyGrad.addColorStop(1, '#D4E8F0');
+    ctx.fillStyle = skyGrad;
+    ctx.fillRect(0, 0, w, this.groundY);
+
+    // Sun
+    const sunX = w * 0.85;
+    const sunY = h * 0.1;
+    const sunGlow = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, 45);
+    sunGlow.addColorStop(0, 'rgba(244,208,63,0.5)');
+    sunGlow.addColorStop(1, 'rgba(244,208,63,0)');
+    ctx.fillStyle = sunGlow;
+    ctx.beginPath();
+    ctx.arc(sunX, sunY, 45, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#F4D03F';
+    ctx.beginPath();
+    ctx.arc(sunX, sunY, 20, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Clouds
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    this.clouds.forEach(cloud => {
+      const cx = (cloud.x + this.time * cloud.speed) % 1.2 - 0.1;
+      const cy = cloud.y;
+      ctx.beginPath();
+      ctx.arc(cx * w, cy * h, cloud.size, 0, Math.PI * 2);
+      ctx.arc(cx * w + cloud.size * 0.6, cy * h + 5, cloud.size * 0.7, 0, Math.PI * 2);
+      ctx.arc(cx * w - cloud.size * 0.5, cy * h + 8, cloud.size * 0.6, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    // Birds
+    ctx.strokeStyle = 'rgba(60,60,60,0.5)';
+    ctx.lineWidth = 1.5;
+    this.birds.forEach(bird => {
+      const bx = (bird.x + this.time * bird.speed) % 1.2 - 0.1;
+      const by = bird.y;
+      const wingY = Math.sin(this.time * 3 + bird.wingPhase) * 4;
+      ctx.beginPath();
+      ctx.moveTo(bx * w - 10, by * h + wingY);
+      ctx.quadraticCurveTo(bx * w, by * h - 4, bx * w + 10, by * h + wingY);
+      ctx.stroke();
+    });
+
+    // GROUND
+    ctx.fillStyle = '#7DA878';
+    ctx.fillRect(0, this.groundY, w, h - this.groundY);
+
+    // Grass texture
+    ctx.strokeStyle = '#6A9665';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < w; i += 25) {
+      ctx.beginPath();
+      ctx.moveTo(i, this.groundY);
+      ctx.lineTo(i + 8, this.groundY - 8);
+      ctx.lineTo(i + 16, this.groundY);
+      ctx.stroke();
+    }
+
+    // Ground line
+    ctx.strokeStyle = '#5A8A55';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, this.groundY);
+    ctx.lineTo(w, this.groundY);
+    ctx.stroke();
+
+    // PERSON (holding string)
+    const personY = this.groundY - 5;
+
+    // Body
+    ctx.fillStyle = '#3B5B8C';
+    ctx.fillRect(this.personX - 8, personY - 45, 16, 30);
+    // Head
+    ctx.beginPath();
+    ctx.arc(this.personX, personY - 55, 10, 0, Math.PI * 2);
+    ctx.fill();
+    // Arms (holding up)
+    ctx.strokeStyle = '#3B5B8C';
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(this.personX - 5, personY - 40);
+    ctx.lineTo(this.personX + 15, personY - 55);
+    ctx.stroke();
+    // Legs
+    ctx.beginPath();
+    ctx.moveTo(this.personX - 5, personY - 15);
+    ctx.lineTo(this.personX - 8, personY);
+    ctx.moveTo(this.personX + 5, personY - 15);
+    ctx.lineTo(this.personX + 8, personY);
+    ctx.stroke();
+
+    // Person label
+    ctx.fillStyle = '#1C1917';
+    ctx.font = 'bold 12px Georgia';
+    ctx.textAlign = 'center';
+    ctx.fillText('You', this.personX, personY + 18);
+
+    // KITE POSITION
+    const rad = this.angle * Math.PI / 180;
+    const stringLenPx = (this.height / Math.sin(rad)) * s;
+    const kiteX = this.personX + Math.cos(rad) * stringLenPx + this.kiteWobble;
+    const kiteY = this.groundY - this.height * s + Math.sin(this.time) * 2;
+
+    // STRING
+    ctx.strokeStyle = 'rgba(200,200,200,0.9)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 3]);
+    ctx.beginPath();
+    ctx.moveTo(this.personX + 15, personY - 55);
+    // Add slight curve for realism
+    const midX = (this.personX + 15 + kiteX) / 2;
+    const midY = (personY - 55 + kiteY) / 2 + this.stringVibration;
+    ctx.quadraticCurveTo(midX, midY, kiteX, kiteY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // String length label (along the string)
+    ctx.save();
+    ctx.translate(midX, midY);
+    ctx.rotate(-rad);
+    ctx.fillStyle = 'rgba(100,100,100,0.8)';
+    ctx.font = '11px Verdana';
+    ctx.textAlign = 'center';
+    const currentStringLen = this.height / Math.sin(rad);
+    ctx.fillText(`string = ${currentStringLen.toFixed(1)}m`, 0, -8);
+    ctx.restore();
+
+    // KITE (diamond shape)
+    const kiteSize = 22;
+    ctx.fillStyle = '#C4622D';
+    ctx.beginPath();
+    ctx.moveTo(kiteX, kiteY - kiteSize);
+    ctx.lineTo(kiteX + kiteSize * 0.7, kiteY);
+    ctx.lineTo(kiteX, kiteY + kiteSize * 0.5);
+    ctx.lineTo(kiteX - kiteSize * 0.7, kiteY);
+    ctx.closePath();
+    ctx.fill();
+
+    // Kite cross sticks
+    ctx.strokeStyle = 'rgba(60,40,20,0.6)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(kiteX, kiteY - kiteSize);
+    ctx.lineTo(kiteX, kiteY + kiteSize * 0.5);
+    ctx.moveTo(kiteX - kiteSize * 0.7, kiteY);
+    ctx.lineTo(kiteX + kiteSize * 0.7, kiteY);
+    ctx.stroke();
+
+    // Kite tail (flowing in wind)
+    ctx.strokeStyle = '#C4622D';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(kiteX, kiteY + kiteSize * 0.5);
+    for (let i = 1; i <= 6; i++) {
+      const tx = kiteX + Math.sin(this.time * 2 + i * 0.5) * (i * 3);
+      const ty = kiteY + kiteSize * 0.5 + i * 8;
+      ctx.lineTo(tx, ty);
+    }
+    ctx.stroke();
+
+    // Kite label
+    ctx.fillStyle = '#C4622D';
+    ctx.font = 'bold 12px Georgia';
+    ctx.textAlign = 'center';
+    ctx.fillText('Kite', kiteX, kiteY - kiteSize - 8);
+    ctx.font = '11px Georgia';
+    ctx.fillText('60 m high', kiteX, kiteY - kiteSize - 22);
+
+    // HEIGHT measurement (vertical dashed line)
+    ctx.strokeStyle = 'rgba(59,91,140,0.5)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([6, 4]);
+    ctx.beginPath();
+    ctx.moveTo(this.personX, this.groundY);
+    ctx.lineTo(this.personX, kiteY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Height arrows
+    ctx.fillStyle = '#3B5B8C';
+    ctx.beginPath();
+    ctx.moveTo(this.personX - 4, this.groundY);
+    ctx.lineTo(this.personX + 4, this.groundY);
+    ctx.lineTo(this.personX, this.groundY - 6);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(this.personX - 4, kiteY);
+    ctx.lineTo(this.personX + 4, kiteY);
+    ctx.lineTo(this.personX, kiteY + 6);
+    ctx.closePath();
+    ctx.fill();
+
+    // Height label
+    ctx.fillStyle = '#3B5B8C';
+    ctx.font = 'bold 11px Georgia';
+    ctx.textAlign = 'right';
+    ctx.fillText('60 m', this.personX - 10, (this.groundY + kiteY) / 2 + 4);
+
+    // HORIZONTAL distance
+    const groundX = this.personX + (this.height / Math.tan(rad)) * s;
+    ctx.strokeStyle = 'rgba(59,91,140,0.4)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(this.personX, this.groundY + 15);
+    ctx.lineTo(groundX, this.groundY + 15);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = '#3B5B8C';
+    ctx.font = '11px Georgia';
+    ctx.textAlign = 'center';
+    const horizM = this.height / Math.tan(rad);
+    ctx.fillText(`d = ${horizM.toFixed(1)}m`, (this.personX + groundX) / 2, this.groundY + 28);
+
+    // ANGLE arc
+    const arcRadius = 35;
+    ctx.strokeStyle = '#3B5B8C';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(this.personX + 15, personY - 55, arcRadius, -rad, 0, false);
+    ctx.stroke();
+
+    // Angle label
+    ctx.fillStyle = '#3B5B8C';
+    ctx.font = 'bold 13px Georgia';
+    ctx.textAlign = 'left';
+    ctx.fillText(`${this.angle.toFixed(0)}°`, this.personX + 20, personY - 65);
+
+    // RIGHT TRIANGLE overlay
+    if (this.showTriangle) {
+      ctx.strokeStyle = 'rgba(59,91,140,0.7)';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(this.personX + 15, personY - 55);
+      ctx.lineTo(kiteX, kiteY);
+      ctx.lineTo(kiteX, personY - 55);
+      ctx.closePath();
+      ctx.stroke();
+
+      ctx.fillStyle = 'rgba(59,91,140,0.1)';
+      ctx.fill();
+
+      // Right angle marker
+      ctx.strokeStyle = '#3B5B8C';
+      ctx.lineWidth = 1.5;
+      const rSize = 12;
+      ctx.beginPath();
+      ctx.moveTo(kiteX - rSize, personY - 55);
+      ctx.lineTo(kiteX - rSize, personY - 55 + rSize);
+      ctx.lineTo(kiteX, personY - 55 + rSize);
+      ctx.stroke();
+
+      // Labels
+      ctx.fillStyle = '#3B5B8C';
+      ctx.font = 'bold 11px Verdana';
+      ctx.textAlign = 'center';
+      ctx.fillText('HYPOTENUSE', (this.personX + 15 + kiteX) / 2, (personY - 55 + kiteY) / 2 - 10);
+      ctx.fillText('(string)', (this.personX + 15 + kiteX) / 2, (personY - 55 + kiteY) / 2 + 5);
+
+      ctx.fillStyle = '#3B5B8C';
+      ctx.font = '11px Georgia';
+      ctx.textAlign = 'left';
+      ctx.fillText('Opposite', kiteX + 10, (personY - 55 + kiteY) / 2);
+      ctx.fillText('(height)', kiteX + 10, (personY - 55 + kiteY) / 2 + 14);
+    }
+
+    // Verification overlay
+    if (this.verificationMode && this.verificationTimer < 250) {
+      this.drawVerification(ctx, w, h);
+    }
+
+    // Highlight effect
+    if (this.highlightTimer > 0) {
+      ctx.strokeStyle = `rgba(212,168,67,${this.highlightTimer/90})`;
+      ctx.lineWidth = 4;
+      ctx.strokeRect(kiteX - 30, kiteY - 40, 60, 80);
+    }
+
+    // Ground label
+    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+    ctx.font = '11px Verdana';
+    ctx.textAlign = 'left';
+    ctx.fillText('Ground level', 20, this.groundY + 20);
+  }
+
+  drawVerification(ctx, w, h) {
+    const progress = Math.min(this.verificationTimer / 180, 1);
+
+    const yStart = h * 0.08;
+    const panelWidth = 300;
+    const panelX = (w - panelWidth) / 2;
+
+    // Background panel
+    ctx.fillStyle = 'rgba(250,250,245,0.95)';
+    ctx.strokeStyle = 'rgba(42,124,111,0.5)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(panelX, yStart - 10, panelWidth, 110, 10);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#2A7C6F';
+    ctx.font = 'bold 15px Georgia';
+    ctx.textAlign = 'center';
+
+    if (progress > 0.2) {
+      ctx.fillText('✓ sin(60°) = √3/2', w/2, yStart + 20);
+    }
+    if (progress > 0.5) {
+      ctx.fillText('✓ String = 60 / (√3/2) = 40√3', w/2, yStart + 48);
+    }
+    if (progress > 0.8) {
+      ctx.font = 'bold 17px Georgia';
+      ctx.fillText('✓ Answer: 40√3 ≈ 69.28 m', w/2, yStart + 80);
+    }
+  }
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  STEP MANAGEMENT                         ║
+// ╚══════════════════════════════════════════╝
+
+let currentStep = 1;
+const totalSteps = 8;
+let studentPrediction = null;
+let correctCount = 0;
+let streakCount = 0;
+
+function updateProgress() {
+  const pct = (currentStep / totalSteps) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('stepLabel').textContent = `Step ${Math.min(currentStep, 7)} of 7`;
+
+  document.getElementById('btnPrev').disabled = currentStep === 1;
+  document.getElementById('btnNext').disabled = currentStep === totalSteps;
+
+  document.querySelectorAll('.step-card').forEach(card => {
+    card.classList.remove('active');
+    if (parseInt(card.dataset.step) === currentStep) {
+      card.classList.add('active');
+    }
+  });
+}
+
+function advanceToStep(n) {
+  currentStep = n;
+  updateProgress();
+
+  if (n === 2) sim.setAngle(60);
+  if (n === 4) sim.showTriangle = true;
+  if (n === 7) sim.animateVerification();
+}
+
+function nextStep() {
+  if (currentStep < totalSteps) {
+    advanceToStep(currentStep + 1);
+  }
+}
+
+function prevStep() {
+  if (currentStep > 1) {
+    advanceToStep(currentStep - 1);
+  }
+}
+
+function updatePrediction(val) {
+  document.getElementById('predictionValue').textContent = val;
+}
+
+function submitPrediction() {
+  studentPrediction = parseFloat(document.getElementById('predictionSlider').value);
+  const actual = 40 * Math.sqrt(3);
+  const diff = Math.abs(studentPrediction - actual);
+  const pctOff = (diff / actual) * 100;
+
+  let message = '';
+  let icon = '🏅';
+
+  if (pctOff < 10) {
+    message = 'Sharp Eye! Within 10%!';
+    icon = '👁';
+    correctCount++;
+    streakCount++;
+    showAchievement(icon, message);
+  } else if (pctOff < 25) {
+    message = 'Good intuition! Close guess.';
+    icon = '⭐';
+    streakCount++;
+    showAchievement(icon, message);
+  } else {
+    message = 'Interesting guess — the string is longer than it looks!';
+    streakCount = 0;
+  }
+
+  document.getElementById('correctCount').textContent = correctCount;
+  document.getElementById('streakCount').textContent = streakCount;
+
+  document.getElementById('predictionCompare').innerHTML = 
+    `You guessed: ${studentPrediction}m · Actual: 40√3 ≈ ${actual.toFixed(2)}m · Off by ${pctOff.toFixed(1)}%`;
+
+  advanceToStep(4);
+}
+
+function showAchievement(icon, text) {
+  const toast = document.getElementById('achievementToast');
+  document.getElementById('achievementIcon').textContent = icon;
+  document.getElementById('achievementText').textContent = text;
+  toast.style.display = 'flex';
+  setTimeout(() => {
+    toast.style.display = 'none';
+  }, 3000);
+}
+
+function toggleTeacher() {
+  document.getElementById('teacherDashboard').classList.toggle('visible');
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  KEYBOARD SHORTCUTS                      ║
+// ╚══════════════════════════════════════════╝
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === ' ') { e.preventDefault(); sim.togglePlay(); }
+  if (e.key === 'r' || e.key === 'R') sim.reset();
+  if (e.key === 'n' || e.key === 'N') nextStep();
+  if (e.key === 'p' || e.key === 'P') prevStep();
+  if (e.key === 't' || e.key === 'T') toggleTeacher();
+});
+
+// ╔══════════════════════════════════════════╗
+// ║  INITIALIZATION                          ║
+// ╚══════════════════════════════════════════╝
+
+const sim = new KiteSimulation();
+updateProgress();
+</script>
+
+</body>
+</html>

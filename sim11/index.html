@@ -1,0 +1,1310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APEX-EDU · Heights & Distances · Lighthouse & Ships</title>
+<style>
+:root {
+  --bg: #FAFAF5;
+  --ink: #1C1917;
+  --ink-light: #6B6560;
+  --accent: #3B5B8C;
+  --accent-warm: #C4622D;
+  --highlight: #D4A843;
+  --panel-bg: #F2EDE5;
+  --panel-border: #DDD5C8;
+  --success: #2A7C6F;
+  --danger: #B44A3A;
+  --font-body: Georgia, 'Times New Roman', serif;
+  --font-mono: 'Courier New', Courier, monospace;
+  --font-label: Verdana, Geneva, sans-serif;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--ink);
+  overflow: hidden;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.top-bar {
+  background: var(--ink);
+  color: var(--bg);
+  padding: 8px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  z-index: 100;
+}
+.top-bar .brand { font-weight: bold; letter-spacing: 1px; }
+.top-bar .topic { opacity: 0.7; }
+.top-bar .badge-row { display: flex; gap: 8px; }
+.badge {
+  background: rgba(255,255,255,0.12);
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-family: var(--font-label);
+}
+.main-container {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+.canvas-area {
+  flex: 1;
+  position: relative;
+  background: var(--bg);
+}
+#simCanvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.panel {
+  width: 360px;
+  min-width: 320px;
+  background: var(--panel-bg);
+  border-left: 1px solid var(--panel-border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.panel-header {
+  padding: 16px 20px 8px;
+  border-bottom: 1px solid var(--panel-border);
+}
+.panel-header h2 {
+  font-size: 18px;
+  font-weight: normal;
+  margin-bottom: 4px;
+}
+.panel-header .phase-label {
+  font-size: 11px;
+  font-family: var(--font-label);
+  color: var(--ink-light);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.progress-bar {
+  height: 3px;
+  background: rgba(28,25,23,0.08);
+  margin: 12px 0 0;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.4s ease;
+  border-radius: 2px;
+}
+.panel-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+}
+.panel-content::-webkit-scrollbar { width: 6px; }
+.panel-content::-webkit-scrollbar-thumb { background: var(--panel-border); border-radius: 3px; }
+.phase-card {
+  display: none;
+  animation: fadeIn 0.4s ease;
+}
+.phase-card.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.challenge-box {
+  background: var(--bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  position: relative;
+}
+.challenge-box::before {
+  content: "CHALLENGE";
+  position: absolute;
+  top: -10px;
+  left: 12px;
+  background: var(--panel-bg);
+  padding: 0 8px;
+  font-size: 10px;
+  font-family: var(--font-label);
+  font-weight: bold;
+  color: var(--accent);
+  letter-spacing: 1px;
+}
+.challenge-text {
+  font-size: 15px;
+  line-height: 1.6;
+  margin-top: 6px;
+}
+.difficulty {
+  margin-top: 10px;
+  font-size: 11px;
+  font-family: var(--font-label);
+  color: var(--ink-light);
+}
+.prediction-widget {
+  background: var(--bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.prediction-widget h4 {
+  font-size: 14px;
+  margin-bottom: 12px;
+  color: var(--accent);
+}
+.prediction-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+  align-items: flex-end;
+}
+.prediction-field { flex: 1; }
+.prediction-field label {
+  display: block;
+  font-size: 11px;
+  font-family: var(--font-label);
+  color: var(--ink-light);
+  margin-bottom: 4px;
+}
+.prediction-field input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  background: var(--bg);
+  color: var(--ink);
+}
+.prediction-field input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-family: var(--font-label);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-primary {
+  background: var(--accent);
+  color: white;
+}
+.btn-primary:hover { background: #2d4a70; }
+.btn-secondary {
+  background: transparent;
+  border: 1px solid var(--panel-border);
+  color: var(--ink);
+}
+.btn-secondary:hover { background: var(--panel-border); }
+.btn-success {
+  background: var(--success);
+  color: white;
+}
+.btn-success:hover { background: #1f5e52; }
+.btn-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+.step-card {
+  background: var(--bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.step-card h3 {
+  font-size: 15px;
+  margin-bottom: 10px;
+  color: var(--accent);
+}
+.step-card p, .step-card li {
+  font-size: 14px;
+  line-height: 1.7;
+  margin-bottom: 8px;
+}
+.step-card ul { padding-left: 20px; }
+.formula-box {
+  background: rgba(59,91,140,0.06);
+  border-left: 3px solid var(--accent);
+  padding: 12px 16px;
+  margin: 12px 0;
+  border-radius: 0 6px 6px 0;
+  font-family: var(--font-mono);
+  font-size: 15px;
+}
+.formula-box .formula-line {
+  display: block;
+  margin: 4px 0;
+}
+.answer-reveal {
+  background: rgba(42,124,111,0.08);
+  border: 1px solid var(--success);
+  border-radius: 8px;
+  padding: 16px;
+  margin: 12px 0;
+  text-align: center;
+}
+.answer-reveal .big-answer {
+  font-size: 28px;
+  font-weight: bold;
+  color: var(--success);
+  font-family: var(--font-mono);
+}
+.answer-reveal .answer-label {
+  font-size: 12px;
+  color: var(--ink-light);
+  margin-top: 4px;
+}
+.prediction-result {
+  background: rgba(212,168,67,0.08);
+  border: 1px solid var(--highlight);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 12px 0;
+  font-size: 13px;
+}
+.fill-blank {
+  display: inline-block;
+  width: 50px;
+  padding: 2px 6px;
+  border: none;
+  border-bottom: 2px solid var(--accent);
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 15px;
+  text-align: center;
+  color: var(--accent);
+  margin: 0 2px;
+}
+.fill-blank:focus { outline: none; background: rgba(59,91,140,0.08); }
+.fill-blank.correct { border-color: var(--success); color: var(--success); }
+.fill-blank.wrong { border-color: var(--danger); color: var(--danger); }
+.why-toggle {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--accent);
+  cursor: pointer;
+  font-family: var(--font-label);
+}
+.why-toggle:hover { text-decoration: underline; }
+.why-content {
+  display: none;
+  margin-top: 8px;
+  padding: 10px;
+  background: rgba(59,91,140,0.04);
+  border-radius: 6px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink-light);
+}
+.why-content.show { display: block; }
+.did-you-know {
+  font-style: italic;
+  font-size: 12px;
+  color: var(--ink-light);
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--panel-border);
+  line-height: 1.6;
+}
+.test-option {
+  display: block;
+  width: 100%;
+  padding: 10px 14px;
+  margin: 6px 0;
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  background: var(--bg);
+  text-align: left;
+  font-family: var(--font-body);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.test-option:hover { border-color: var(--accent); background: rgba(59,91,140,0.04); }
+.test-option.correct { border-color: var(--success); background: rgba(42,124,111,0.08); }
+.test-option.wrong { border-color: var(--danger); background: rgba(180,74,58,0.08); }
+.teacher-btn {
+  position: fixed;
+  bottom: 16px;
+  right: 376px;
+  background: var(--ink);
+  color: var(--bg);
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-family: var(--font-label);
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+  z-index: 50;
+}
+.teacher-btn:hover { opacity: 1; }
+.teacher-panel {
+  display: none;
+  position: fixed;
+  bottom: 50px;
+  right: 376px;
+  width: 320px;
+  background: var(--bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  z-index: 51;
+  font-size: 12px;
+  line-height: 1.7;
+  max-height: 400px;
+  overflow-y: auto;
+}
+.teacher-panel.show { display: block; }
+.teacher-panel h4 {
+  font-size: 13px;
+  margin-bottom: 8px;
+  color: var(--accent);
+}
+.teacher-panel ul { padding-left: 18px; margin-bottom: 10px; }
+.hint-toast {
+  position: fixed;
+  top: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--ink);
+  color: var(--bg);
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: var(--font-label);
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+  z-index: 200;
+}
+.hint-toast.show { opacity: 1; }
+@media (max-width: 768px) {
+  .main-container { flex-direction: column; }
+  .panel {
+    width: 100%;
+    min-width: auto;
+    max-height: 45vh;
+    border-left: none;
+    border-top: 1px solid var(--panel-border);
+  }
+  .teacher-btn { right: 16px; bottom: auto; top: 50px; }
+  .teacher-panel { right: 16px; top: 85px; bottom: auto; width: calc(100% - 32px); }
+}
+</style>
+<base target="_blank">
+</head>
+<body>
+
+<div class="top-bar">
+  <div>
+    <span class="brand">APEX-EDU</span>
+    <span class="topic"> · Trigonometry · Heights & Distances</span>
+  </div>
+  <div class="badge-row">
+    <span class="badge">Class 9-10</span>
+    <span class="badge">Lighthouse & Ships</span>
+    <span class="badge" id="phaseBadge">Phase 1: Hook</span>
+  </div>
+</div>
+
+<div class="main-container">
+  <div class="canvas-area">
+    <canvas id="simCanvas"></canvas>
+  </div>
+  <div class="panel">
+    <div class="panel-header">
+      <h2 id="panelTitle">The Lighthouse Keeper's View</h2>
+      <div class="phase-label" id="phaseLabel">Phase 1 · Hook</div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width: 10%"></div></div>
+    </div>
+    <div class="panel-content" id="panelContent">
+
+      <!-- PHASE 1: HOOK -->
+      <div class="phase-card active" id="phase1">
+        <div class="challenge-box">
+          <div class="challenge-text">
+            A lighthouse keeper stands 75 metres above the sea, scanning the horizon. Two ships appear — one closer, one farther — both on the same line from the tower. The keeper's line of sight drops <strong>45 degrees</strong> to the nearer ship, and <strong>30 degrees</strong> to the farther one.<br><br>
+            How far apart are those two ships?
+          </div>
+          <div class="difficulty">Difficulty: ●●●○○ · Class 9-10 · NCERT Ch. 9</div>
+        </div>
+        <p style="font-size:14px; line-height:1.7; margin-bottom:12px;">
+          <strong>First, a quick prediction:</strong> Before we solve this, take a guess. How far apart do you think the two ships are?
+        </p>
+        <div class="prediction-widget">
+          <h4>Your Prediction</h4>
+          <div class="prediction-row">
+            <div class="prediction-field">
+              <label>Distance between ships (m)</label>
+              <input type="number" id="predDistance" placeholder="e.g. 50" min="1" max="200" step="1">
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="app.submitPrediction()">Make Prediction & Explore</button>
+        </div>
+        <div class="did-you-know">
+          Did you know? The tallest lighthouse in the world is the Jeddah Light in Saudi Arabia, standing 133 metres tall. Its beam can be seen from 46 kilometres away — and trigonometry exactly like this problem is used to calculate that range.
+        </div>
+      </div>
+
+      <!-- PHASE 2: EXPLORE -->
+      <div class="phase-card" id="phase2">
+        <p style="font-size:14px; line-height:1.7; margin-bottom:12px;">
+          <strong>Explore freely.</strong> The scene shows a lighthouse, the sea, and two ships. From the keeper's eye at the top, two lines of sight sweep down to each ship.
+        </p>
+        <div class="step-card">
+          <h3>Try These</h3>
+          <ul>
+            <li>Drag the <strong>Lighthouse Height</strong> slider — watch both angles change</li>
+            <li>Drag the <strong>Nearer Ship Angle</strong> slider — see how its distance changes</li>
+            <li>Drag the <strong>Farther Ship Angle</strong> slider — notice the gap between ships</li>
+            <li>Observe: the <strong>smaller</strong> the angle of depression, the <strong>farther</strong> the ship</li>
+          </ul>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="app.advanceToPhase(3)">I'm Ready — Solve the Challenge</button>
+        </div>
+        <div class="did-you-know">
+          Did you know? Before radar, lighthouse keepers used precisely this method — measuring angles of depression through a sextant-like device called a "depression protractor" — to estimate ship distances and warn of collisions.
+        </div>
+      </div>
+
+      <!-- PHASE 3: CHALLENGE -->
+      <div class="phase-card" id="phase3">
+        <div class="challenge-box">
+          <div class="challenge-text">
+            As observed from the top of a <strong>75 m</strong> high lighthouse from the sea-level, the angles of depression of two ships are <strong>30 degrees</strong> and <strong>45 degrees</strong>. If one ship is exactly behind the other on the same side of the lighthouse, find the <strong>distance between the two ships</strong>.
+          </div>
+        </div>
+        <p style="font-size:13px; color:var(--ink-light); margin-bottom:12px;">
+          Your prediction: <span id="predDDisplay">--</span> m
+        </p>
+        <div class="step-card">
+          <h3>Step 1 · The Scene</h3>
+          <p>Imagine a lighthouse rising 75 metres above the calm sea. Two ships sail on the same line from the tower — one closer, one farther away.</p>
+          <p>From the keeper's eye:</p>
+          <ul>
+            <li>The <strong>nearer ship</strong> is seen at 45 degrees below horizontal</li>
+            <li>The <strong>farther ship</strong> is seen at 30 degrees below horizontal</li>
+          </ul>
+          <p>Two right triangles are formed — one for each ship. Can you see them on the canvas?</p>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="app.advanceStep()">Continue to Step 2</button>
+        </div>
+      </div>
+
+      <!-- PHASE 4: REVEAL -->
+      <div class="phase-card" id="phase4">
+        <div id="stepContainer"></div>
+      </div>
+
+      <!-- PHASE 5: MASTER -->
+      <div class="phase-card" id="phase5">
+        <div class="step-card">
+          <h3>Self-Test — Same Math, New Scenes</h3>
+          <p style="font-size:13px; color:var(--ink-light); margin-bottom:12px;">Test your understanding with three variations:</p>
+          <div id="testContainer"></div>
+        </div>
+        <div class="step-card">
+          <h3>The Bigger Picture</h3>
+          <p>This same mathematics powers:</p>
+          <ul>
+            <li><strong>Maritime Navigation:</strong> Sextants measure angles of elevation to celestial bodies to find a ship's position at sea</li>
+            <li><strong>Aerial Surveying:</strong> Aircraft altimeters combined with depression angles calculate ground feature distances</li>
+            <li><strong>Coastal Engineering:</strong> Determining safe anchorage distances from shore-based observation posts</li>
+            <li><strong>Astronomy:</strong> Parallax measurements use the same triangle geometry to measure distances to stars</li>
+          </ul>
+        </div>
+        <div class="did-you-know">
+          Did you know? The ancient Greek astronomer Hipparchus (190-120 BC) created the first trigonometric table — a "chord table" — to calculate the distances to the Moon and Sun using exactly this kind of angle measurement from two different observation points.
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-secondary" onclick="app.reset()">Start Over</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="teacher-btn" onclick="app.toggleTeacher()">For Teachers</div>
+<div class="teacher-panel" id="teacherPanel">
+  <h4>NCERT / CBSE Alignment</h4>
+  <p>Chapter 9 · Some Applications of Trigonometry · Exercise 9.1 · Q11</p>
+  <h4>Learning Objectives</h4>
+  <ul>
+    <li>Understand angle of depression as measured below the horizontal</li>
+    <li>Apply alternate interior angles: angle of depression = angle of elevation</li>
+    <li>Use tan theta = opposite/adjacent to find horizontal distances</li>
+    <li>Calculate the difference between two distances to find separation</li>
+    <li>Work with exact values involving root 3</li>
+  </ul>
+  <h4>Common Errors</h4>
+  <ul>
+    <li>Adding the two angles (30 + 45 = 75) instead of using them separately</li>
+    <li>Calculating individual distances but forgetting to subtract them</li>
+    <li>Using sin or cos instead of tan for opposite/adjacent ratios</li>
+    <li>Confusing which angle corresponds to which ship (smaller angle = farther)</li>
+  </ul>
+  <h4>Prerequisites</h4>
+  <ul>
+    <li>Trigonometric ratios: sin, cos, tan</li>
+    <li>Special angles: 30, 45, 60 and their exact values</li>
+    <li>Alternate interior angles theorem</li>
+    <li>Working with surds (radical expressions)</li>
+  </ul>
+</div>
+
+<div class="hint-toast" id="hintToast"></div>
+
+<script>
+// Math constants
+const DEG = Math.PI / 180;
+const RAD = 180 / Math.PI;
+const SQRT3 = Math.sqrt(3);
+
+// Application state
+const app = {
+  phase: 1,
+  step: 0,
+  totalSteps: 7,
+  predDistance: null,
+  showConstruction: true,
+  showUnitCircle: false,
+  showGrid: true,
+  lighthouseHeight: 75,
+  angleNear: 45,
+  angleFar: 30,
+  dNear: 75,
+  dFar: 75 * SQRT3,
+  distanceBetween: 75 * (SQRT3 - 1),
+  sliderHeight: { value: 75, min: 30, max: 150, label: "Lighthouse Height", unit: "m" },
+  sliderAngleNear: { value: 45, min: 10, max: 80, label: "Nearer Ship Angle", unit: "deg" },
+  sliderAngleFar: { value: 30, min: 5, max: 40, label: "Farther Ship Angle", unit: "deg" },
+  draggingSlider: null,
+  canvas: null,
+  ctx: null,
+  width: 0,
+  height: 0,
+  animTime: 0,
+  currentTest: 0,
+  testScore: 0,
+};
+
+function init() {
+  app.canvas = document.getElementById('simCanvas');
+  app.ctx = app.canvas.getContext('2d');
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+  app.canvas.addEventListener('mousedown', onPointerDown);
+  app.canvas.addEventListener('mousemove', onPointerMove);
+  app.canvas.addEventListener('mouseup', onPointerUp);
+  app.canvas.addEventListener('touchstart', e => { e.preventDefault(); onPointerDown(e.touches[0]); });
+  app.canvas.addEventListener('touchmove', e => { e.preventDefault(); onPointerMove(e.touches[0]); });
+  app.canvas.addEventListener('touchend', onPointerUp);
+  document.addEventListener('keydown', onKeyDown);
+  requestAnimationFrame(gameLoop);
+}
+
+function resizeCanvas() {
+  const area = document.querySelector('.canvas-area');
+  app.width = area.clientWidth;
+  app.height = area.clientHeight;
+  const dpr = window.devicePixelRatio || 1;
+  app.canvas.width = app.width * dpr;
+  app.canvas.height = app.height * dpr;
+  app.ctx.scale(dpr, dpr);
+  app.canvas.style.width = app.width + 'px';
+  app.canvas.style.height = app.height + 'px';
+}
+
+function gameLoop(timestamp) {
+  app.animTime = timestamp / 1000;
+  draw();
+  requestAnimationFrame(gameLoop);
+}
+
+function draw() {
+  const ctx = app.ctx;
+  const W = app.width;
+  const H = app.height;
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#FAFAF5';
+  ctx.fillRect(0, 0, W, H);
+  if (app.showGrid) drawGrid(ctx, W, H);
+
+  const seaY = H * 0.72;
+  const lighthouseX = W * 0.25;
+  const lighthouseW = Math.min(50, W * 0.06);
+
+  let h, aNear, aFar;
+  if (app.phase <= 2) {
+    h = app.sliderHeight.value;
+    aNear = app.sliderAngleNear.value;
+    aFar = app.sliderAngleFar.value;
+  } else {
+    h = app.lighthouseHeight;
+    aNear = app.angleNear;
+    aFar = app.angleFar;
+  }
+
+  const maxHeight = h * 1.4;
+  const ppm = (seaY - H * 0.08) / maxHeight;
+  const topY = seaY - h * ppm;
+
+  // Calculate ship positions
+  const dNearVal = h / Math.tan(aNear * DEG);
+  const dFarVal = h / Math.tan(aFar * DEG);
+  const shipNearX = lighthouseX + dNearVal * ppm;
+  const shipFarX = lighthouseX + dFarVal * ppm;
+
+  // SEA
+  drawSea(ctx, 0, seaY, W, H - seaY);
+
+  // CONSTRUCTION LINES
+  if (app.showConstruction) {
+    ctx.save();
+    ctx.setLineDash([8, 4]);
+    ctx.strokeStyle = 'rgba(59, 91, 140, 0.35)';
+    ctx.lineWidth = 1.5;
+    // Horizontal from eye to nearer ship
+    ctx.beginPath();
+    ctx.moveTo(lighthouseX + lighthouseW / 2, topY);
+    ctx.lineTo(shipNearX, topY);
+    ctx.stroke();
+    // Horizontal from eye to farther ship
+    ctx.beginPath();
+    ctx.moveTo(lighthouseX + lighthouseW / 2, topY);
+    ctx.lineTo(shipFarX, topY);
+    ctx.stroke();
+    // Vertical from nearer ship down
+    ctx.beginPath();
+    ctx.moveTo(shipNearX, topY);
+    ctx.lineTo(shipNearX, seaY);
+    ctx.stroke();
+    // Vertical from farther ship down
+    ctx.beginPath();
+    ctx.moveTo(shipFarX, topY);
+    ctx.lineTo(shipFarX, seaY);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // LIGHTHOUSE
+  drawLighthouse(ctx, lighthouseX, seaY, lighthouseW, h * ppm);
+
+  // SHIPS
+  drawShip(ctx, shipNearX, seaY, 30, false, "Ship A (nearer)");
+  drawShip(ctx, shipFarX, seaY, 30, true, "Ship B (farther)");
+
+  // OBSERVER (eye at top)
+  const eyeX = lighthouseX + lighthouseW / 2;
+  const eyeY = topY;
+  ctx.fillStyle = '#1C1917';
+  ctx.beginPath();
+  ctx.arc(eyeX, eyeY, 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#1C1917';
+  ctx.font = 'bold 12px Verdana';
+  ctx.fillText("Observer", eyeX - 25, eyeY - 12);
+
+  // LINES OF SIGHT
+  ctx.strokeStyle = '#2A7C6F';
+  ctx.lineWidth = 2.5;
+  ctx.setLineDash([]);
+  ctx.beginPath();
+  ctx.moveTo(eyeX, eyeY);
+  ctx.lineTo(shipNearX, seaY);
+  ctx.stroke();
+
+  ctx.strokeStyle = '#3B5B8C';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(eyeX, eyeY);
+  ctx.lineTo(shipFarX, seaY);
+  ctx.stroke();
+
+  // ANGLE ARCS
+  const arcR = 55;
+  // 45 deg arc (nearer)
+  ctx.strokeStyle = '#2A7C6F';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(eyeX, eyeY, arcR, 0, aNear * DEG);
+  ctx.stroke();
+  const laNear = aNear * DEG / 2;
+  ctx.fillStyle = '#2A7C6F';
+  ctx.font = 'bold 13px Verdana';
+  ctx.fillText(aNear.toFixed(1) + " deg", eyeX + (arcR + 15) * Math.cos(laNear) + 5, eyeY + (arcR + 15) * Math.sin(laNear));
+
+  // 30 deg arc (farther)
+  ctx.strokeStyle = '#3B5B8C';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(eyeX, eyeY, arcR + 22, 0, aFar * DEG);
+  ctx.stroke();
+  const laFar = aFar * DEG / 2;
+  ctx.fillStyle = '#3B5B8C';
+  ctx.font = 'bold 13px Verdana';
+  ctx.fillText(aFar.toFixed(1) + " deg", eyeX + (arcR + 37) * Math.cos(laFar) + 5, eyeY + (arcR + 37) * Math.sin(laFar));
+
+  // DIMENSION LABELS
+  ctx.fillStyle = '#1C1917';
+  ctx.font = '13px Georgia';
+  ctx.fillText("H = " + h.toFixed(0) + " m", lighthouseX + lighthouseW + 8, (seaY + topY) / 2);
+  ctx.fillText("d1 = " + dNearVal.toFixed(1) + " m", (lighthouseX + shipNearX) / 2 - 30, seaY + 22);
+  ctx.fillText("d2 = " + dFarVal.toFixed(1) + " m", (lighthouseX + shipFarX) / 2 - 30, seaY + 36);
+
+  // Distance between ships label
+  const gap = dFarVal - dNearVal;
+  ctx.fillStyle = '#C4622D';
+  ctx.font = 'bold 13px Georgia';
+  ctx.fillText("gap = " + gap.toFixed(1) + " m", (shipNearX + shipFarX) / 2 - 35, seaY - 8);
+
+  // Horizontal reference
+  ctx.strokeStyle = 'rgba(28, 25, 23, 0.15)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(eyeX, eyeY);
+  ctx.lineTo(eyeX + 100, eyeY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = 'rgba(28, 25, 23, 0.4)';
+  ctx.font = '11px Verdana';
+  ctx.fillText("horizontal", eyeX + 50, eyeY - 4);
+
+  // Unit circle inset
+  if (app.phase >= 3 || app.showUnitCircle) {
+    drawUnitCircleInset(ctx, W - 140, 80, 55, aFar);
+  }
+
+  // Sliders (Phase 1 & 2)
+  if (app.phase <= 2) {
+    drawSlider(ctx, W * 0.05, H - 80, W * 0.25, app.sliderHeight, 0);
+    drawSlider(ctx, W * 0.35, H - 80, W * 0.25, app.sliderAngleNear, 1);
+    drawSlider(ctx, W * 0.65, H - 80, W * 0.25, app.sliderAngleFar, 2);
+  }
+
+  if (app.phase === 1) {
+    ctx.fillStyle = 'rgba(28, 25, 23, 0.7)';
+    ctx.font = 'bold 18px Georgia';
+    ctx.fillText("Drag the sliders to explore the scene", W / 2 - 160, H * 0.12);
+  }
+}
+
+function drawGrid(ctx, W, H) {
+  ctx.strokeStyle = 'rgba(28, 25, 23, 0.04)';
+  ctx.lineWidth = 1;
+  const step = 40;
+  for (let x = 0; x < W; x += step) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+  for (let y = 0; y < H; y += step) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+}
+
+function drawSea(ctx, x, y, w, h) {
+  // Water gradient
+  const grad = ctx.createLinearGradient(x, y, x, y + h);
+  grad.addColorStop(0, '#8BB8C8');
+  grad.addColorStop(0.3, '#7BA7BC');
+  grad.addColorStop(1, '#5A8A9E');
+  ctx.fillStyle = grad;
+  ctx.fillRect(x, y, w, h);
+  // Surface ripple
+  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  ctx.lineWidth = 1.5;
+  const t = app.animTime * 1.2;
+  for (let wave = 0; wave < 3; wave++) {
+    ctx.beginPath();
+    for (let px = x; px <= x + w; px += 3) {
+      const wy = y + 4 + wave * 6 + Math.sin((px * 0.03) + t + wave) * 2;
+      if (px === x) ctx.moveTo(px, wy); else ctx.lineTo(px, wy);
+    }
+    ctx.stroke();
+  }
+  // Horizon line
+  ctx.strokeStyle = 'rgba(28, 25, 23, 0.12)';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + w, y); ctx.stroke();
+}
+
+function drawLighthouse(ctx, x, y, w, h) {
+  // Base
+  ctx.fillStyle = '#C4B9A8';
+  ctx.fillRect(x - 5, y - 15, w + 10, 15);
+  // Tower body
+  const grad = ctx.createLinearGradient(x, y - h, x + w, y - h);
+  grad.addColorStop(0, '#E8E0D4');
+  grad.addColorStop(0.5, '#D4C8B8');
+  grad.addColorStop(1, '#B8A890');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.moveTo(x + w * 0.15, y);
+  ctx.lineTo(x + w * 0.85, y);
+  ctx.lineTo(x + w * 0.7, y - h);
+  ctx.lineTo(x + w * 0.3, y - h);
+  ctx.closePath();
+  ctx.fill();
+  // Stripes
+  ctx.strokeStyle = 'rgba(180, 60, 40, 0.3)';
+  ctx.lineWidth = 3;
+  for (let i = 1; i <= 4; i++) {
+    const sy = y - h * 0.2 * i;
+    ctx.beginPath();
+    ctx.moveTo(x + w * 0.15 + (w * 0.7 - w * 0.15) * 0.2 * i / 4, sy);
+    ctx.lineTo(x + w * 0.85 - (w * 0.85 - w * 0.7) * 0.2 * i / 4, sy);
+    ctx.stroke();
+  }
+  // Lantern room
+  ctx.fillStyle = '#F5E6A3';
+  ctx.fillRect(x + w * 0.25, y - h - 12, w * 0.5, 12);
+  // Roof
+  ctx.fillStyle = '#8B4513';
+  ctx.beginPath();
+  ctx.moveTo(x + w * 0.2, y - h - 12);
+  ctx.lineTo(x + w * 0.5, y - h - 25);
+  ctx.lineTo(x + w * 0.8, y - h - 12);
+  ctx.closePath();
+  ctx.fill();
+  // Light beam (subtle glow)
+  ctx.fillStyle = 'rgba(245, 230, 163, 0.08)';
+  ctx.beginPath();
+  ctx.moveTo(x + w * 0.5, y - h - 18);
+  ctx.lineTo(x + w * 2, y - h * 0.3);
+  ctx.lineTo(x + w * 2, y - h * 0.7);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawShip(ctx, x, y, size, isFarther, label) {
+  const s = size;
+  // Hull
+  ctx.fillStyle = isFarther ? '#8B7355' : '#A08060';
+  ctx.beginPath();
+  ctx.moveTo(x - s * 0.6, y);
+  ctx.lineTo(x + s * 0.6, y);
+  ctx.lineTo(x + s * 0.4, y - s * 0.25);
+  ctx.lineTo(x - s * 0.4, y - s * 0.25);
+  ctx.closePath();
+  ctx.fill();
+  // Deck
+  ctx.fillStyle = isFarther ? '#6B5B45' : '#8B7050';
+  ctx.fillRect(x - s * 0.2, y - s * 0.45, s * 0.4, s * 0.2);
+  // Mast
+  ctx.strokeStyle = isFarther ? '#5A4A3A' : '#7A6A5A';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(x, y - s * 0.25);
+  ctx.lineTo(x, y - s * 0.9);
+  ctx.stroke();
+  // Sail
+  ctx.fillStyle = isFarther ? 'rgba(240,235,220,0.6)' : 'rgba(255,250,240,0.8)';
+  ctx.beginPath();
+  ctx.moveTo(x + 2, y - s * 0.85);
+  ctx.lineTo(x + s * 0.35, y - s * 0.5);
+  ctx.lineTo(x + 2, y - s * 0.35);
+  ctx.closePath();
+  ctx.fill();
+  // Label
+  ctx.fillStyle = '#1C1917';
+  ctx.font = '11px Verdana';
+  ctx.fillText(label, x - 30, y + 16);
+}
+
+function drawUnitCircleInset(ctx, cx, cy, r, angleDeg) {
+  const angle = angleDeg * DEG;
+  ctx.fillStyle = 'rgba(250, 250, 245, 0.9)';
+  ctx.strokeStyle = 'rgba(28, 25, 23, 0.15)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(cx - r - 10, cy - r - 10, r * 2 + 20, r * 2 + 40, 8);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#6B6560';
+  ctx.font = '10px Verdana';
+  ctx.fillText("Unit Circle", cx - 20, cy - r - 2);
+  ctx.strokeStyle = 'rgba(28, 25, 23, 0.3)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.strokeStyle = 'rgba(28, 25, 23, 0.2)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(cx - r - 5, cy); ctx.lineTo(cx + r + 5, cy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx, cy + r + 5); ctx.lineTo(cx, cy - r - 5); ctx.stroke();
+  const endX = cx + r * Math.cos(angle);
+  const endY = cy + r * Math.sin(angle);
+  ctx.strokeStyle = '#3B5B8C';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(endX, endY);
+  ctx.stroke();
+  ctx.setLineDash([4, 3]);
+  ctx.strokeStyle = '#C4622D';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(endX, endY);
+  ctx.lineTo(endX, cy);
+  ctx.stroke();
+  ctx.strokeStyle = '#2A7C6F';
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(endX, cy);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#D4A843';
+  ctx.beginPath();
+  ctx.arc(endX, endY, 4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#3B5B8C';
+  ctx.font = 'bold 10px Verdana';
+  ctx.fillText("theta = " + angleDeg.toFixed(1) + " deg", cx - 25, cy + r + 18);
+  ctx.fillStyle = '#2A7C6F';
+  ctx.font = '9px Verdana';
+  ctx.fillText("cos = " + Math.cos(angle).toFixed(2), cx - 30, cy + r + 30);
+  ctx.fillStyle = '#C4622D';
+  ctx.fillText("sin = " + Math.sin(angle).toFixed(2), cx + 5, cy + r + 30);
+}
+
+function drawSlider(ctx, x, y, width, slider, index) {
+  const trackY = y;
+  const fillW = ((slider.value - slider.min) / (slider.max - slider.min)) * width;
+  const thumbX = x + fillW;
+  ctx.strokeStyle = 'rgba(28, 25, 23, 0.12)';
+  ctx.lineWidth = 4;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(x, trackY);
+  ctx.lineTo(x + width, trackY);
+  ctx.stroke();
+  ctx.strokeStyle = '#3B5B8C';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(x, trackY);
+  ctx.lineTo(x + fillW, trackY);
+  ctx.stroke();
+  ctx.fillStyle = '#FAFAF5';
+  ctx.strokeStyle = '#3B5B8C';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(thumbX, trackY, 10, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#1C1917';
+  ctx.font = '12px Verdana';
+  ctx.fillText(slider.label + ": " + slider.value.toFixed(1) + slider.unit, x, trackY - 18);
+  ctx.fillStyle = '#6B6560';
+  ctx.font = '10px Verdana';
+  ctx.fillText(slider.min, x - 8, trackY + 18);
+  ctx.fillText(slider.max, x + width + 2, trackY + 18);
+  slider._hitX = x;
+  slider._hitY = trackY;
+  slider._hitW = width;
+  slider._index = index;
+}
+
+function onPointerDown(e) {
+  const rect = app.canvas.getBoundingClientRect();
+  const mx = (e.clientX - rect.left);
+  const my = (e.clientY - rect.top);
+  if (app.phase <= 2) {
+    for (const slider of [app.sliderHeight, app.sliderAngleNear, app.sliderAngleFar]) {
+      const thumbX = slider._hitX + ((slider.value - slider.min) / (slider.max - slider.min)) * slider._hitW;
+      if (Math.abs(mx - thumbX) < 20 && Math.abs(my - slider._hitY) < 20) {
+        app.draggingSlider = slider;
+        return;
+      }
+    }
+  }
+}
+
+function onPointerMove(e) {
+  if (!app.draggingSlider) return;
+  const rect = app.canvas.getBoundingClientRect();
+  const mx = (e.clientX - rect.left);
+  const s = app.draggingSlider;
+  let ratio = (mx - s._hitX) / s._hitW;
+  ratio = Math.max(0, Math.min(1, ratio));
+  s.value = s.min + ratio * (s.max - s.min);
+}
+
+function onPointerUp() { app.draggingSlider = null; }
+
+function onKeyDown(e) {
+  if (e.key === 'r' || e.key === 'R') app.reset();
+  if (e.key === 'n' || e.key === 'N') {
+    if (app.phase === 3) app.advanceStep();
+    else if (app.phase < 5) app.advanceToPhase(app.phase + 1);
+  }
+  if (e.key === 'g' || e.key === 'G') app.showGrid = !app.showGrid;
+  if (e.key === 'c' || e.key === 'C') app.showConstruction = !app.showConstruction;
+}
+
+app.submitPrediction = function() {
+  const d = parseFloat(document.getElementById('predDistance').value);
+  if (!d) { showHint("Please enter your prediction first!"); return; }
+  app.predDistance = d;
+  document.getElementById('predDDisplay').textContent = d.toFixed(1);
+  app.sliderHeight.value = app.lighthouseHeight;
+  app.sliderAngleNear.value = app.angleNear;
+  app.sliderAngleFar.value = app.angleFar;
+  app.advanceToPhase(2);
+};
+
+app.advanceToPhase = function(phase) {
+  document.querySelectorAll('.phase-card').forEach(c => c.classList.remove('active'));
+  document.getElementById('phase' + phase).classList.add('active');
+  app.phase = phase;
+  const phaseNames = ['', 'Hook', 'Explore', 'Challenge', 'Reveal', 'Master'];
+  document.getElementById('phaseBadge').textContent = 'Phase ' + phase + ': ' + phaseNames[phase];
+  document.getElementById('phaseLabel').textContent = 'Phase ' + phase + ' · ' + phaseNames[phase];
+  document.getElementById('progressFill').style.width = (phase / 5 * 100) + '%';
+  const titles = ['', "The Lighthouse Keeper's View", 'Free Exploration', 'The Challenge', 'Step-by-Step Solution', 'Master the Concept'];
+  document.getElementById('panelTitle').textContent = titles[phase];
+  if (phase === 3) { app.step = 1; renderStep1(); }
+  if (phase === 4) { renderAllSteps(); }
+  if (phase === 5) { renderSelfTests(); }
+};
+
+app.advanceStep = function() {
+  app.step++;
+  if (app.step > app.totalSteps) { app.advanceToPhase(4); return; }
+  renderStep(app.step);
+};
+
+app.reset = function() {
+  app.phase = 1;
+  app.step = 0;
+  app.currentTest = 0;
+  app.testScore = 0;
+  app.sliderHeight.value = 75;
+  app.sliderAngleNear.value = 45;
+  app.sliderAngleFar.value = 30;
+  document.querySelectorAll('.phase-card').forEach(c => c.classList.remove('active'));
+  document.getElementById('phase1').classList.add('active');
+  document.getElementById('phaseBadge').textContent = 'Phase 1: Hook';
+  document.getElementById('phaseLabel').textContent = 'Phase 1 · Hook';
+  document.getElementById('progressFill').style.width = '10%';
+  document.getElementById('panelTitle').textContent = "The Lighthouse Keeper's View";
+  document.getElementById('predDistance').value = '';
+};
+
+app.toggleTeacher = function() {
+  document.getElementById('teacherPanel').classList.toggle('show');
+};
+
+function showHint(msg) {
+  const toast = document.getElementById('hintToast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+function toggleWhy(el) {
+  const content = el.nextElementSibling;
+  content.classList.toggle('show');
+}
+
+function renderStep1() {
+  const container = document.getElementById('stepContainer');
+  container.innerHTML = `
+    <div class="step-card" id="step-1">
+      <h3>Step 1 · The Scene</h3>
+      <p>Imagine a lighthouse keeper 75 metres above the calm sea. Two ships sail on the same line from the tower — one closer, one farther away.</p>
+      <p>From the keeper's eye:</p>
+      <ul>
+        <li>The <strong>nearer ship</strong> (Ship A) is seen at 45 degrees below horizontal</li>
+        <li>The <strong>farther ship</strong> (Ship B) is seen at 30 degrees below horizontal</li>
+      </ul>
+      <p>Two right triangles are formed — one for each ship. The lighthouse height is the opposite side for both. The distances to each ship are the adjacent sides.</p>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="app.advanceStep()">Continue to Step 2</button>
+      </div>
+    </div>
+  `;
+}
+
+function renderAllSteps() {
+  const container = document.getElementById('stepContainer');
+  const h = app.lighthouseHeight;
+  const d1 = app.dNear;
+  const d2 = app.dFar;
+  const gap = app.distanceBetween;
+  container.innerHTML = `
+    <div class="step-card">
+      <h3>Step 2 · The Key Insight</h3>
+      <p>The <strong>angle of depression</strong> from the observer equals the <strong>angle of elevation</strong> from the ship — they're <em>alternate interior angles</em> between parallel horizontal lines.</p>
+      <div class="formula-box">
+        <span class="formula-line">Angle of depression = Angle of elevation</span>
+        <span class="formula-line">From Ship A (nearer): elevation = 45 deg</span>
+        <span class="formula-line">From Ship B (farther): elevation = 30 deg</span>
+      </div>
+      <div class="why-toggle" onclick="toggleWhy(this)">Why are they equal?</div>
+      <div class="why-content">
+        The observer's horizontal line of sight and the sea surface are parallel. The line of sight is a transversal cutting across them. Alternate interior angles between parallel lines are always equal. This lets us "flip" the problem and solve it from sea level.
+      </div>
+    </div>
+
+    <div class="step-card">
+      <h3>Step 3 · Setting Up the Triangles</h3>
+      <p>Let <strong>d1</strong> = distance to nearer ship, <strong>d2</strong> = distance to farther ship.</p>
+      <p><strong>Triangle 1</strong> (Ship A — 45 deg elevation):</p>
+      <div class="formula-box">
+        <span class="formula-line">tan 45 deg = opposite / adjacent = 75 / d1</span>
+        <span class="formula-line">1 = 75 / d1  →  <strong>d1 = 75 m</strong></span>
+      </div>
+      <p><strong>Triangle 2</strong> (Ship B — 30 deg elevation):</p>
+      <div class="formula-box">
+        <span class="formula-line">tan 30 deg = 75 / d2</span>
+        <span class="formula-line">1/root 3 = 75 / d2</span>
+        <span class="formula-line">d2 = 75 root 3 = <strong>75 root 3 m</strong></span>
+      </div>
+      <div class="why-toggle" onclick="toggleWhy(this)">Why tan and not sin or cos?</div>
+      <div class="why-content">
+        We know the OPPOSITE side (lighthouse height = 75 m) and we want the ADJACENT side (horizontal distance). tan = opposite/adjacent is the only ratio that connects these two sides directly. sin would need the hypotenuse (line of sight), which we don't know.
+      </div>
+    </div>
+
+    <div class="step-card">
+      <h3>Step 4 · Finding the Gap</h3>
+      <p>The ships are on the same line from the lighthouse, one behind the other. The distance <strong>between</strong> them is:</p>
+      <div class="formula-box">
+        <span class="formula-line">Distance between ships = d2 - d1</span>
+        <span class="formula-line">= 75 root 3 - 75</span>
+        <span class="formula-line">= <strong>75(root 3 - 1)</strong> metres</span>
+      </div>
+      <div class="why-toggle" onclick="toggleWhy(this)">Why subtract and not add?</div>
+      <div class="why-content">
+        Both distances are measured from the SAME point — the lighthouse. Ship A is at 75 m from the lighthouse. Ship B is at 75 root 3 m from the lighthouse. Since they're on the same line, the space between them is the difference: d2 - d1. Think of it like two people standing on a road from your house — the distance between them is their distances from you subtracted.
+      </div>
+    </div>
+
+    <div class="step-card">
+      <h3>Step 5 · Numerical Value</h3>
+      <p>Substitute root 3 ≈ 1.732:</p>
+      <div class="formula-box">
+        <span class="formula-line">75(root 3 - 1) = 75(1.732 - 1)</span>
+        <span class="formula-line">= 75 × 0.732</span>
+        <span class="formula-line">= <strong>54.90 m</strong> (approximately)</span>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <h3>Step 6 · The Answer</h3>
+      <div class="answer-reveal">
+        <div class="big-answer">75(root 3 - 1) m</div>
+        <div class="answer-label">≈ 54.90 metres</div>
+      </div>
+      <div class="prediction-result">
+        Your prediction: ${app.predDistance ? app.predDistance.toFixed(1) : '--'} m<br>
+        ${app.predDistance ? 
+          (Math.abs(app.predDistance - gap) < 5 ? "Excellent prediction! Spot on!" :
+           Math.abs(app.predDistance - gap) < 15 ? "Good guess! Pretty close." :
+           "Interesting — most people underestimate this distance!") : ""}
+      </div>
+    </div>
+
+    <div class="step-card">
+      <h3>Step 7 · Verification</h3>
+      <p>Let's check our answer makes sense:</p>
+      <div class="formula-box">
+        <span class="formula-line">Check tan 45 deg = 75/d1 = 75/75 = 1 ✓</span>
+        <span class="formula-line">Check tan 30 deg = 75/d2 = 75/${d2.toFixed(2)} = ${(75/d2).toFixed(4)} ≈ 1/root 3 = ${(1/SQRT3).toFixed(4)} ✓</span>
+        <span class="formula-line">Check gap = d2 - d1 = ${d2.toFixed(2)} - 75 = ${gap.toFixed(2)} ✓</span>
+      </div>
+      <p>All checks pass. The ships are 75(root 3 - 1) ≈ 54.9 metres apart.</p>
+      <div class="btn-row">
+        <button class="btn btn-success" onclick="app.advanceToPhase(5)">Master the Concept</button>
+      </div>
+    </div>
+  `;
+}
+
+const tests = [
+  {
+    question: "From a 60 m cliff, the angles of depression of two boats are 45 deg and 30 deg (one behind the other). Find the distance between the boats.",
+    options: ["60(root 3 - 1) m", "60(root 3 + 1) m", "60 root 3 m", "120 m"],
+    correct: 0,
+    explanation: "d1 = 60/tan 45 = 60 m. d2 = 60/tan 30 = 60 root 3 m. Gap = 60 root 3 - 60 = 60(root 3 - 1) m."
+  },
+  {
+    question: "A lighthouse 100 m high observes a ship at 60 deg depression. How far is the ship?",
+    options: ["100 root 3 m", "100/root 3 m", "100 m", "200 m"],
+    correct: 1,
+    explanation: "tan 60 = 100/d, so d = 100/tan 60 = 100/root 3 = 100 root 3/3 ≈ 57.74 m."
+  },
+  {
+    question: "From a tower, two cars on the same road have depression angles 60 deg and 30 deg. The nearer car is 50 m from the tower. How far is the farther car?",
+    options: ["50 root 3 m", "100 m", "150 m", "50(root 3 + 1) m"],
+    correct: 2,
+    explanation: "tan 60 = H/50, so H = 50 root 3. For farther car: tan 30 = H/d2 = 50 root 3/d2, so d2 = 50 root 3 / (1/root 3) = 50 × 3 = 150 m."
+  }
+];
+
+function renderSelfTests() {
+  const container = document.getElementById('testContainer');
+  container.innerHTML = '';
+  tests.forEach((test, i) => {
+    const div = document.createElement('div');
+    div.innerHTML = '<p style="font-weight:bold; margin-bottom:8px;">' + (i+1) + '. ' + test.question + '</p>';
+    test.options.forEach((opt, j) => {
+      const btn = document.createElement('button');
+      btn.className = 'test-option';
+      btn.textContent = opt;
+      btn.onclick = () => checkTestAnswer(i, j, btn);
+      div.appendChild(btn);
+    });
+    const exp = document.createElement('div');
+    exp.id = 'test-exp-' + i;
+    exp.style.cssText = 'display:none; margin-top:8px; padding:10px; background:rgba(59,91,140,0.04); border-radius:6px; font-size:13px;';
+    div.appendChild(exp);
+    container.appendChild(div);
+    if (i < tests.length - 1) {
+      const hr = document.createElement('hr');
+      hr.style.cssText = 'border:none; border-top:1px solid var(--panel-border); margin:16px 0;';
+      container.appendChild(hr);
+    }
+  });
+}
+
+function checkTestAnswer(testIdx, optionIdx, btn) {
+  const test = tests[testIdx];
+  const expDiv = document.getElementById('test-exp-' + testIdx);
+  const allBtns = btn.parentElement.querySelectorAll('.test-option');
+  allBtns.forEach(b => b.disabled = true);
+  if (optionIdx === test.correct) {
+    btn.classList.add('correct');
+    app.testScore++;
+    expDiv.innerHTML = '<span style="color:var(--success);">Correct!</span> ' + test.explanation;
+  } else {
+    btn.classList.add('wrong');
+    allBtns[test.correct].classList.add('correct');
+    expDiv.innerHTML = '<span style="color:var(--danger);">Not quite.</span> ' + test.explanation;
+  }
+  expDiv.style.display = 'block';
+}
+
+init();
+</script>
+</body>
+</html>

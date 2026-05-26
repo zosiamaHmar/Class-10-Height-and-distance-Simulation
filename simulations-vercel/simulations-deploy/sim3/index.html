@@ -1,0 +1,1556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APEX-EDU · Building & Cable Tower · Interactive Trigonometry</title>
+<style>
+/* ╔══════════════════════════════════════════╗
+   ║  CSS VARIABLES & RESET                   ║
+   ╚══════════════════════════════════════════╝ */
+:root {
+  --bg:          #FAFAF5;
+  --ink:         #1C1917;
+  --ink-light:   #6B6560;
+  --accent:      #3B5B8C;
+  --accent-warm: #C4622D;
+  --highlight:   #D4A843;
+  --panel-bg:    #F2EDE5;
+  --panel-border:#DDD5C8;
+  --success:     #2A7C6F;
+  --canvas-bg:   #E8E4DC;
+  --sky-day:     #B8D4E3;
+  --sky-dusk:    #E8C8A0;
+  --ground:      #8B7355;
+  --tower:       #6B6560;
+  --shadow:      #3A3530;
+  --sun:         #F4D03F;
+  --sun-glow:    #F9E79F;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: Georgia, 'Times New Roman', serif;
+  background: var(--bg);
+  color: var(--ink);
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* ╔══════════════════════════════════════════╗
+   ║  LAYOUT                                  ║
+   ╚══════════════════════════════════════════╝ */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.header-bar {
+  background: var(--ink);
+  color: var(--bg);
+  padding: 8px 20px;
+  font-size: 13px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-bar .topic-tag {
+  color: var(--highlight);
+  font-weight: bold;
+}
+
+.main-stage {
+  display: flex;
+  flex: 1;
+  position: relative;
+}
+
+/* Canvas area */
+.canvas-wrapper {
+  flex: 1;
+  position: relative;
+  background: var(--canvas-bg);
+  min-height: 500px;
+  overflow: hidden;
+}
+
+#simCanvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Solution Panel */
+.solution-panel {
+  width: 380px;
+  background: var(--panel-bg);
+  border-left: 2px solid var(--panel-border);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  max-height: calc(100vh - 40px);
+}
+
+.panel-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--panel-border);
+  background: linear-gradient(135deg, var(--panel-bg) 0%, #E8E0D4 100%);
+}
+
+.panel-header h2 {
+  font-size: 18px;
+  margin-bottom: 4px;
+  color: var(--ink);
+}
+
+.panel-header .meta {
+  font-size: 12px;
+  color: var(--ink-light);
+  font-family: Verdana, Geneva, sans-serif;
+}
+
+.progress-track {
+  padding: 12px 20px;
+  background: rgba(0,0,0,0.03);
+}
+
+.progress-bar {
+  height: 4px;
+  background: var(--panel-border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  width: 0%;
+  transition: width 0.6s ease;
+}
+
+.step-label {
+  font-size: 11px;
+  color: var(--ink-light);
+  margin-top: 6px;
+  font-family: Verdana, Geneva, sans-serif;
+}
+
+/* Step Cards */
+.step-content {
+  flex: 1;
+  padding: 0;
+}
+
+.step-card {
+  padding: 20px;
+  border-bottom: 1px solid var(--panel-border);
+  display: none;
+  animation: fadeIn 0.4s ease;
+}
+
+.step-card.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.step-number {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--accent);
+  font-weight: bold;
+  margin-bottom: 12px;
+  font-family: Verdana, Geneva, sans-serif;
+}
+
+.step-title {
+  font-size: 20px;
+  margin-bottom: 16px;
+  line-height: 1.3;
+}
+
+.step-body {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--ink);
+}
+
+.step-body p {
+  margin-bottom: 14px;
+}
+
+.formula-box {
+  background: var(--bg);
+  border: 2px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin: 16px 0;
+  text-align: center;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 18px;
+  position: relative;
+}
+
+.formula-box .formula-label {
+  position: absolute;
+  top: -10px;
+  left: 16px;
+  background: var(--panel-bg);
+  padding: 0 8px;
+  font-size: 11px;
+  color: var(--ink-light);
+  font-family: Verdana, Geneva, sans-serif;
+}
+
+.inline-formula {
+  font-family: 'Courier New', Courier, monospace;
+  background: rgba(59,91,140,0.08);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.95em;
+}
+
+/* Interactive Elements */
+.prediction-widget {
+  background: var(--bg);
+  border: 2px solid var(--highlight);
+  border-radius: 10px;
+  padding: 20px;
+  margin: 16px 0;
+}
+
+.prediction-widget h4 {
+  font-size: 14px;
+  margin-bottom: 12px;
+  color: var(--ink);
+}
+
+.slider-container {
+  margin: 12px 0;
+}
+
+.slider-container input[type="range"] {
+  width: 100%;
+  height: 6px;
+  -webkit-appearance: none;
+  background: var(--panel-border);
+  border-radius: 3px;
+  outline: none;
+}
+
+.slider-container input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  background: var(--highlight);
+  border-radius: 50%;
+  cursor: pointer;
+  border: 3px solid var(--bg);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+.slider-value {
+  text-align: center;
+  font-size: 24px;
+  font-weight: bold;
+  color: var(--accent);
+  margin-top: 8px;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.btn {
+  display: inline-block;
+  padding: 10px 24px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: Georgia, serif;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 12px;
+}
+
+.btn:hover {
+  background: #2A4A6E;
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: var(--ink-light);
+  margin-left: 8px;
+}
+
+.btn-secondary:hover {
+  background: var(--ink);
+}
+
+/* Challenge Card */
+.challenge-card {
+  background: linear-gradient(135deg, var(--accent) 0%, #2A4A6E 100%);
+  color: white;
+  padding: 20px;
+  border-radius: 10px;
+  margin: 16px 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.challenge-card::before {
+  content: "🏆";
+  position: absolute;
+  top: 10px;
+  right: 16px;
+  font-size: 28px;
+  opacity: 0.3;
+}
+
+.challenge-card h3 {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 10px;
+  opacity: 0.9;
+}
+
+.challenge-card p {
+  font-size: 15px;
+  line-height: 1.6;
+  font-style: italic;
+}
+
+.challenge-card .difficulty {
+  margin-top: 12px;
+  font-size: 12px;
+  font-family: Verdana, Geneva, sans-serif;
+}
+
+/* Watch on Canvas button */
+.watch-canvas {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--accent);
+  font-size: 13px;
+  cursor: pointer;
+  margin-top: 12px;
+  font-family: Verdana, Geneva, sans-serif;
+}
+
+.watch-canvas:hover {
+  color: var(--highlight);
+}
+
+/* Warning/Note */
+.warning-box {
+  background: rgba(196,98,45,0.08);
+  border-left: 3px solid var(--accent-warm);
+  padding: 12px 16px;
+  margin: 14px 0;
+  font-size: 14px;
+  border-radius: 0 6px 6px 0;
+}
+
+.warning-box::before {
+  content: "⚠ ";
+  color: var(--accent-warm);
+  font-weight: bold;
+}
+
+/* Answer reveal */
+.answer-reveal {
+  background: linear-gradient(135deg, var(--success) 0%, #1E5C50 100%);
+  color: white;
+  padding: 20px;
+  border-radius: 10px;
+  margin: 16px 0;
+  text-align: center;
+}
+
+.answer-reveal .big-answer {
+  font-size: 32px;
+  font-weight: bold;
+  margin: 8px 0;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.answer-reveal .prediction-compare {
+  font-size: 13px;
+  opacity: 0.9;
+  margin-top: 8px;
+}
+
+/* Navigation */
+.panel-nav {
+  padding: 16px 20px;
+  border-top: 1px solid var(--panel-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--panel-bg);
+  position: sticky;
+  bottom: 0;
+}
+
+.nav-btn {
+  padding: 8px 16px;
+  background: var(--bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: Georgia, serif;
+  transition: all 0.2s;
+}
+
+.nav-btn:hover:not(:disabled) {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.nav-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Teacher Dashboard Toggle */
+.teacher-toggle {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 44px;
+  height: 44px;
+  background: var(--ink);
+  color: var(--bg);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  z-index: 100;
+  transition: transform 0.2s;
+}
+
+.teacher-toggle:hover {
+  transform: scale(1.1);
+}
+
+/* Teacher Dashboard */
+.teacher-dashboard {
+  display: none;
+  position: fixed;
+  bottom: 70px;
+  right: 20px;
+  width: 340px;
+  max-height: 500px;
+  background: white;
+  border: 2px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+  z-index: 99;
+  overflow-y: auto;
+}
+
+.teacher-dashboard.visible {
+  display: block;
+}
+
+.teacher-dashboard h3 {
+  font-size: 14px;
+  margin-bottom: 12px;
+  color: var(--ink);
+  border-bottom: 1px solid var(--panel-border);
+  padding-bottom: 8px;
+}
+
+.teacher-dashboard ul {
+  list-style: none;
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.teacher-dashboard li::before {
+  content: "✓ ";
+  color: var(--success);
+  font-weight: bold;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .main-stage { flex-direction: column; }
+  .solution-panel { width: 100%; max-height: none; border-left: none; border-top: 2px solid var(--panel-border); }
+  .canvas-wrapper { min-height: 400px; }
+}
+
+/* Achievement toast */
+.achievement-toast {
+  position: fixed;
+  top: 60px;
+  right: 20px;
+  background: var(--ink);
+  color: var(--bg);
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  display: none;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  z-index: 200;
+  animation: slideIn 0.4s ease;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* Controls overlay on canvas */
+.canvas-controls {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  display: flex;
+  gap: 8px;
+  z-index: 10;
+  flex-wrap: wrap;
+}
+
+.canvas-control-btn {
+  background: rgba(28,25,23,0.8);
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: Verdana, Geneva, sans-serif;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.canvas-control-btn:hover {
+  background: var(--accent);
+}
+
+/* Did You Know */
+.did-you-know {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  max-width: 280px;
+  background: rgba(250,250,245,0.95);
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-style: italic;
+  color: var(--ink-light);
+  border: 1px solid var(--panel-border);
+  line-height: 1.5;
+  z-index: 10;
+}
+
+/* Hint system */
+.hint-box {
+  background: rgba(212,168,67,0.1);
+  border: 1px dashed var(--highlight);
+  padding: 12px;
+  border-radius: 6px;
+  margin: 12px 0;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.hint-box .hint-content {
+  display: none;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--highlight);
+}
+
+.hint-box.expanded .hint-content {
+  display: block;
+}
+
+/* Score display */
+.score-display {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(28,25,23,0.85);
+  color: white;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: Verdana, Geneva, sans-serif;
+  z-index: 10;
+}
+</style>
+<base target="_blank">
+</head>
+<body>
+
+<div class="app-container">
+  <div class="header-bar">
+    <div><span class="topic-tag">APEX-EDU</span> · Trigonometry · Height & Distance</div>
+    <div style="font-size:11px;opacity:0.7;">Class 10 · NCERT Ch.8</div>
+  </div>
+
+  <div class="main-stage">
+    <!-- CANVAS AREA -->
+    <div class="canvas-wrapper">
+      <canvas id="simCanvas"></canvas>
+
+      <div class="canvas-controls">
+        <button class="canvas-control-btn" onclick="sim.togglePlay()">⏯ Play/Pause</button>
+        <button class="canvas-control-btn" onclick="sim.reset()">↺ Reset</button>
+        <button class="canvas-control-btn" onclick="sim.setElevationAngle(30)">Elev 30°</button>
+        <button class="canvas-control-btn" onclick="sim.setElevationAngle(45)">Elev 45°</button>
+        <button class="canvas-control-btn" onclick="sim.setElevationAngle(60)">Elev 60°</button>
+        <button class="canvas-control-btn" onclick="sim.animateScan()">🔍 Scan</button>
+      </div>
+
+      <div class="score-display" id="scoreDisplay">
+        ✓ <span id="correctCount">0</span> correct | streak: <span id="streakCount">0</span>
+      </div>
+
+      <div class="did-you-know" id="didYouKnow">
+        💡 The world's tallest cable-stayed tower is the Tokyo Skytree at 634 m. Surveyors used trigonometry exactly like this to verify its height during construction.
+      </div>
+    </div>
+
+    <!-- SOLUTION PANEL -->
+    <div class="solution-panel">
+      <div class="panel-header">
+        <h2>🏗️ Building & Cable Tower</h2>
+        <div class="meta">Mathematics · Applications of Trigonometry · Class 10</div>
+      </div>
+
+      <div class="progress-track">
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="step-label" id="stepLabel">Step 1 of 7</div>
+      </div>
+
+      <div class="step-content" id="stepContent">
+
+        <!-- STEP 1: HOOK -->
+        <div class="step-card active" data-step="1">
+          <div class="step-number">Phase 1 · The Hook</div>
+          <div class="step-title">Two Angles, One Tower, One Mystery</div>
+          <div class="step-body">
+            <p>You stand on the roof of a <strong>7 metre</strong> tall building. Across the street rises a massive cable tower. You look <strong>down</strong> at its base — the angle of depression is <strong>45°</strong>. Then you look <strong>up</strong> at its peak — the angle of elevation is <strong>60°</strong>.</p>
+            <p><strong>The puzzle:</strong> How tall is that tower?</p>
+            <p>Two angles from the same spot give you everything you need...</p>
+
+            <div class="watch-canvas" onclick="sim.highlightScene()">
+              👁 Explore the scene on canvas →
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 2: EXPLORE -->
+        <div class="step-card" data-step="2">
+          <div class="step-number">Phase 2 · Explore</div>
+          <div class="step-title">Play with the Elevation Angle Slider</div>
+          <div class="step-body">
+            <p>The depression angle to the tower's foot is fixed at 45°. Drag the slider to change the elevation angle to the tower's top. Watch how the tower height changes!</p>
+
+            <div class="slider-container">
+              <label style="font-size:12px;color:var(--ink-light);">Elevation Angle to Tower Top</label>
+              <input type="range" id="elevationSlider" min="15" max="75" value="60" oninput="sim.setElevationAngle(this.value)">
+              <div class="slider-value"><span id="elevationValue">60</span>°</div>
+            </div>
+
+            <div style="margin-top:12px;padding:12px;background:var(--bg);border-radius:8px;">
+              <div style="font-size:12px;color:var(--ink-light);margin-bottom:6px;">Live Measurements:</div>
+              <div style="font-size:14px;line-height:2;">
+                Horizontal distance: <span id="distanceDisplay" class="inline-formula">7.00</span> m<br>
+                Height above building: <span id="heightAboveDisplay" class="inline-formula">12.12</span> m<br>
+                <strong>Total tower height: <span id="totalHeightDisplay" class="inline-formula">19.12</span> m</strong><br>
+                Building height: <span class="inline-formula">7</span> m (fixed)
+              </div>
+            </div>
+
+            <p style="margin-top:16px;"><em>Notice: the 45° depression angle makes the distance exactly equal to the building height!</em></p>
+
+            <button class="btn" onclick="advanceToStep(3)">I'm Ready →</button>
+          </div>
+        </div>
+
+        <!-- STEP 3: CHALLENGE -->
+        <div class="step-card" data-step="3">
+          <div class="step-number">Phase 3 · Challenge</div>
+          <div class="step-title">The Exam Problem</div>
+          <div class="step-body">
+            <div class="challenge-card">
+              <h3>🏆 Challenge</h3>
+              <p>"From the top of a <strong>7 m</strong> high building, the angle of elevation of the top of a cable tower is <strong>60°</strong> and the angle of depression of its foot is <strong>45°</strong>. Determine the height of the tower."</p>
+              <div class="difficulty">Difficulty: ●●●○○ · Class 10 · CBSE/NCERT</div>
+            </div>
+
+            <div class="prediction-widget">
+              <h4>🔮 Make Your Prediction</h4>
+              <p style="font-size:13px;margin-bottom:8px;">Before solving — how tall is the cable tower?</p>
+              <div class="slider-container">
+                <input type="range" id="predictionSlider" min="10" max="30" value="18" oninput="updatePrediction(this.value)">
+                <div class="slider-value"><span id="predictionValue">18</span> m</div>
+              </div>
+              <button class="btn" onclick="submitPrediction()">Lock Prediction & Solve</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 4: THE SCENE -->
+        <div class="step-card" data-step="4">
+          <div class="step-number">Step 1 · The Scene</div>
+          <div class="step-title">Two Right Triangles from One Point</div>
+          <div class="step-body">
+            <p>Let <strong>AB</strong> be the building = <strong>7 m</strong>.</p>
+            <p>Let <strong>CD</strong> be the cable tower = <strong>h m</strong> (unknown).</p>
+            <p>Let <strong>d</strong> be the horizontal distance between them.</p>
+            <p>From the top of the building (point <strong>B</strong>), we draw a horizontal line <strong>BE</strong> to the tower.</p>
+
+            <div class="formula-box">
+              <div class="formula-label">Two Right Triangles</div>
+              <strong>Triangle 1:</strong> Depression to foot (D)<br>
+              Angle BDA = 45° (alternate angles)<br>
+              tan(45°) = AB / AD = 7 / d<br><br>
+              <strong>Triangle 2:</strong> Elevation to top (C)<br>
+              Angle CBE = 60°<br>
+              tan(60°) = CE / BE = (h−7) / d
+            </div>
+
+            <div class="watch-canvas" onclick="sim.showBothTriangles()">
+              👁 Show both triangles on canvas →
+            </div>
+
+            <button class="btn" onclick="advanceToStep(5)">Continue →</button>
+          </div>
+        </div>
+
+        <!-- STEP 5: THE KEY INSIGHT -->
+        <div class="step-card" data-step="5">
+          <div class="step-number">Step 2 · The Key Insight</div>
+          <div class="step-title">The 45° Depression Gives the Distance</div>
+          <div class="step-body">
+            <p>From the depression angle of 45°:</p>
+
+            <div class="formula-box">
+              <div class="formula-label">From Triangle ABD (45° depression)</div>
+              tan(45°) = AB / AD = 7 / d<br>
+              1 = 7 / d<br>
+              <strong>d = 7 metres</strong>
+            </div>
+
+            <p>The 45° angle is special — it makes the horizontal distance <strong>exactly equal</strong> to the building height!</p>
+
+            <p>Now use this distance in the elevation triangle:</p>
+
+            <div class="formula-box">
+              <div class="formula-label">From Triangle BCE (60° elevation)</div>
+              tan(60°) = CE / BE = (h − 7) / 7<br>
+              √3 = (h − 7) / 7<br>
+              h − 7 = 7√3
+            </div>
+
+            <div class="hint-box" onclick="this.classList.toggle('expanded')">
+              💡 Why do we use alternate angles? Click to see.
+              <div class="hint-content">
+                The angle of depression from B to D equals the angle of elevation from D to B (alternate interior angles). This lets us use tan(45°) = opposite/adjacent = 7/d from the ground-level triangle.
+              </div>
+            </div>
+
+            <button class="btn" onclick="advanceToStep(6)">Continue →</button>
+          </div>
+        </div>
+
+        <!-- STEP 6: THE CALCULATION -->
+        <div class="step-card" data-step="6">
+          <div class="step-number">Step 3 · The Calculation</div>
+          <div class="step-title">Solving for Tower Height</div>
+          <div class="step-body">
+            <p>From the two triangles:</p>
+
+            <div class="formula-box">
+              <div class="formula-label">Step-by-Step</div>
+              d = 7 / tan(45°) = 7 / 1 = <strong>7 m</strong><br><br>
+              h − 7 = d × tan(60°)<br>
+              h − 7 = 7 × √3<br>
+              h − 7 = 7√3<br><br>
+              h = 7 + 7√3<br>
+              h = <span class="inline-formula">7(1 + √3)</span> metres
+            </div>
+
+            <p>Therefore:</p>
+            <div class="formula-box" style="border-color:var(--success);">
+              <div class="formula-label" style="color:var(--success);">Final Answer</div>
+              <strong>h = 7(1 + √3) metres</strong><br>
+              <span style="font-size:14px;opacity:0.8;">≈ 19.12 metres</span>
+            </div>
+
+            <div class="warning-box">
+              Do NOT forget to add the building height! The elevation angle gives the height ABOVE the building (7√3 ≈ 12.12 m). The total tower height includes the 7 m building underneath.
+            </div>
+
+            <button class="btn" onclick="advanceToStep(7)">Verify Answer →</button>
+          </div>
+        </div>
+
+        <!-- STEP 7: VERIFICATION -->
+        <div class="step-card" data-step="7">
+          <div class="step-number">Step 4 · Verification</div>
+          <div class="step-title">Does 7(1 + √3) Make Sense?</div>
+          <div class="step-body">
+            <div class="answer-reveal">
+              <div style="font-size:13px;opacity:0.9;">Height of Cable Tower</div>
+              <div class="big-answer">7(1 + √3) m</div>
+              <div style="font-size:14px;">≈ 19.12 metres</div>
+              <div class="prediction-compare" id="predictionCompare">
+                You guessed: -- · Actual: 7(1 + √3) m
+              </div>
+            </div>
+
+            <p><strong>Check with h = 7(1 + √3) m:</strong></p>
+            <ul style="margin-left:20px;line-height:2;">
+              <li>Horizontal distance: <span class="inline-formula">d = 7 m</span> (from tan 45° = 7/7 = 1) ✓</li>
+              <li>Height above building: <span class="inline-formula">h − 7 = 7√3 ≈ 12.12 m</span></li>
+              <li>tan(60°) = 12.12 / 7 = <span class="inline-formula">√3 ≈ 1.732</span> ✓</li>
+              <li>Total height: <span class="inline-formula">7 + 12.12 = 19.12 m</span> ✓</li>
+            </ul>
+
+            <div class="watch-canvas" onclick="sim.animateVerification()">
+              👁 Watch the verification on canvas →
+            </div>
+
+            <button class="btn" onclick="advanceToStep(8)">Master Phase →</button>
+          </div>
+        </div>
+
+        <!-- STEP 8: MASTER -->
+        <div class="step-card" data-step="8">
+          <div class="step-number">Phase 5 · Master</div>
+          <div class="step-title">Three Variants to Test Yourself</div>
+          <div class="step-body">
+
+            <div style="background:var(--bg);border:1px solid var(--panel-border);border-radius:8px;padding:16px;margin-bottom:12px;">
+              <div style="font-size:12px;color:var(--accent);font-weight:bold;margin-bottom:8px;">Variant 1 · Different Depression Angle</div>
+              <p style="font-size:14px;">Building = 7 m, elevation = 60°, depression = 30°. Find tower height.</p>
+              <div class="hint-box" onclick="this.classList.toggle('expanded')">
+                💡 Show solution
+                <div class="hint-content">
+                  d = 7 / tan(30°) = 7√3 ≈ 12.12 m. h − 7 = 7√3 × tan(60°) = 7√3 × √3 = 21. h = 28 m
+                </div>
+              </div>
+            </div>
+
+            <div style="background:var(--bg);border:1px solid var(--panel-border);border-radius:8px;padding:16px;margin-bottom:12px;">
+              <div style="font-size:12px;color:var(--accent);font-weight:bold;margin-bottom:8px;">Variant 2 · Different Building Height</div>
+              <p style="font-size:14px;">Building = 10 m, elevation = 45°, depression = 45°. Find tower height.</p>
+              <div class="hint-box" onclick="this.classList.toggle('expanded')">
+                💡 Show solution
+                <div class="hint-content">
+                  d = 10 m (from tan 45° = 1). h − 10 = 10 × tan(45°) = 10. h = 20 m
+                </div>
+              </div>
+            </div>
+
+            <div style="background:var(--bg);border:1px solid var(--panel-border);border-radius:8px;padding:16px;margin-bottom:12px;">
+              <div style="font-size:12px;color:var(--accent);font-weight:bold;margin-bottom:8px;">Variant 3 · Real World</div>
+              <p style="font-size:14px;">A surveyor on a 15 m platform measures 50° elevation to a tower top and 30° depression to its base. Find tower height.</p>
+              <div class="hint-box" onclick="this.classList.toggle('expanded')">
+                💡 Show answer
+                <div class="hint-content">
+                  d = 15 / tan(30°) = 15√3 ≈ 25.98 m. h − 15 = 15√3 × tan(50°) ≈ 25.98 × 1.192 ≈ 30.96. h ≈ 45.96 m
+                </div>
+              </div>
+            </div>
+
+            <button class="btn" onclick="sim.reset();advanceToStep(1)">↺ Start Over</button>
+            <button class="btn btn-secondary" onclick="window.print()">🖨 Print Summary</button>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="panel-nav">
+        <button class="nav-btn" id="btnPrev" onclick="prevStep()">← Back</button>
+        <button class="nav-btn" id="btnNext" onclick="nextStep()">Next →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Achievement Toast -->
+<div class="achievement-toast" id="achievementToast">
+  <span id="achievementIcon">🏅</span>
+  <span id="achievementText">Achievement Unlocked!</span>
+</div>
+
+<!-- Teacher Dashboard -->
+<button class="teacher-toggle" onclick="toggleTeacher()" title="Teacher & Parent Dashboard">📋</button>
+<div class="teacher-dashboard" id="teacherDashboard">
+  <h3>📋 For Teachers & Parents</h3>
+  <p style="font-size:12px;color:var(--ink-light);margin-bottom:12px;">Topic: Height & Distance — Building & Tower (Class 10 Mathematics)<br>Curriculum: NCERT Ch.8, CBSE, ICSE</p>
+
+  <h3>Learning Objectives</h3>
+  <ul>
+    <li>Apply angle of depression using alternate interior angles</li>
+    <li>Set up two right triangles from one observation point</li>
+    <li>Use tan(45°) = 1 to find horizontal distance</li>
+    <li>Use tan(60°) = √3 to find height above observer</li>
+    <li>Add base height to get total object height</li>
+  </ul>
+
+  <h3>Common Errors</h3>
+  <ul style="margin-bottom:12px;">
+    <li style="color:var(--accent-warm);"><span style="color:var(--accent-warm);">✗</span> Forgetting to add building height to get total tower height</li>
+    <li style="color:var(--accent-warm);"><span style="color:var(--accent-warm);">✗</span> Confusing depression angle with elevation angle</li>
+    <li style="color:var(--accent-warm);"><span style="color:var(--accent-warm);">✗</span> Not using alternate angles for the depression triangle</li>
+  </ul>
+
+  <h3>Extension Activities</h3>
+  <ul>
+    <li>Find a tall building and estimate a nearby tower's height using a protractor</li>
+    <li>Verify: when depression = 45°, distance always equals observer height</li>
+    <li>Research: How do engineers measure skyscraper heights during construction?</li>
+  </ul>
+</div>
+
+<script>
+// ╔══════════════════════════════════════════╗
+// ║  SIMULATION ENGINE                       ║
+// ╚══════════════════════════════════════════╝
+
+class BuildingTowerSimulation {
+  constructor() {
+    this.canvas = document.getElementById('simCanvas');
+    this.ctx = this.canvas.getContext('2d');
+    this.elevationAngle = 60; // angle to tower top
+    this.targetElevationAngle = 60;
+    this.depressionAngle = 45; // fixed
+    this.buildingHeight = 7; // metres
+    this.isPlaying = true;
+    this.animationId = null;
+    this.time = 0;
+    this.showBothTriangles = false;
+    this.verificationMode = false;
+    this.clouds = [];
+    this.birds = [];
+
+    this.resize();
+    window.addEventListener('resize', () => this.resize());
+
+    this.initClouds();
+    this.initBirds();
+    this.gameLoop();
+  }
+
+  resize() {
+    const rect = this.canvas.parentElement.getBoundingClientRect();
+    this.canvas.width = rect.width;
+    this.canvas.height = rect.height;
+    this.groundY = this.canvas.height * 0.78;
+    this.buildingX = this.canvas.width * 0.25;
+    this.towerX = this.canvas.width * 0.72;
+    this.scale = Math.min(this.canvas.width, this.canvas.height) / 120;
+  }
+
+  initClouds() {
+    for (let i = 0; i < 4; i++) {
+      this.clouds.push({
+        x: Math.random() * 0.8 + 0.1,
+        y: Math.random() * 0.15 + 0.05,
+        size: Math.random() * 25 + 15,
+        speed: Math.random() * 0.0002 + 0.0001
+      });
+    }
+  }
+
+  initBirds() {
+    for (let i = 0; i < 2; i++) {
+      this.birds.push({
+        x: Math.random(),
+        y: Math.random() * 0.2 + 0.1,
+        speed: Math.random() * 0.0004 + 0.0002,
+        wingPhase: Math.random() * Math.PI * 2
+      });
+    }
+  }
+
+  setElevationAngle(deg) {
+    this.targetElevationAngle = parseFloat(deg);
+    document.getElementById('elevationSlider').value = this.targetElevationAngle;
+    document.getElementById('elevationValue').textContent = Math.round(this.targetElevationAngle);
+    this.updateMeasurements();
+  }
+
+  updateMeasurements() {
+    const rad = this.targetElevationAngle * Math.PI / 180;
+    const dist = this.buildingHeight / Math.tan(this.depressionAngle * Math.PI / 180);
+    const heightAbove = dist * Math.tan(rad);
+    const total = this.buildingHeight + heightAbove;
+    document.getElementById('distanceDisplay').textContent = dist.toFixed(2);
+    document.getElementById('heightAboveDisplay').textContent = heightAbove.toFixed(2);
+    document.getElementById('totalHeightDisplay').textContent = total.toFixed(2);
+  }
+
+  togglePlay() {
+    this.isPlaying = !this.isPlaying;
+  }
+
+  reset() {
+    this.elevationAngle = 60;
+    this.targetElevationAngle = 60;
+    this.showBothTriangles = false;
+    this.verificationMode = false;
+    this.setElevationAngle(60);
+  }
+
+  animateScan() {
+    let startAngle = 20;
+    let endAngle = 60;
+    let duration = 2500;
+    let startTime = null;
+
+    const animate = (timestamp) => {
+      if (!startTime) startTime = timestamp;
+      let progress = Math.min((timestamp - startTime) / duration, 1);
+      progress = 1 - Math.pow(1 - progress, 3);
+      this.elevationAngle = startAngle + (endAngle - startAngle) * progress;
+      this.targetElevationAngle = this.elevationAngle;
+      document.getElementById('elevationSlider').value = this.elevationAngle;
+      document.getElementById('elevationValue').textContent = Math.round(this.elevationAngle);
+      this.updateMeasurements();
+
+      if (progress < 1) requestAnimationFrame(animate);
+    };
+    requestAnimationFrame(animate);
+  }
+
+  highlightScene() {
+    this.highlightTimer = 90;
+  }
+
+  showBothTriangles() {
+    this.showBothTriangles = true;
+  }
+
+  animateVerification() {
+    this.verificationMode = true;
+    this.verificationTimer = 0;
+  }
+
+  gameLoop() {
+    if (this.isPlaying) {
+      this.time += 0.016;
+
+      const diff = this.targetElevationAngle - this.elevationAngle;
+      if (Math.abs(diff) > 0.1) {
+        this.elevationAngle += diff * 0.08;
+      }
+
+      if (this.highlightTimer > 0) this.highlightTimer--;
+      if (this.verificationMode) this.verificationTimer++;
+
+      this.draw();
+    }
+    this.animationId = requestAnimationFrame(() => this.gameLoop());
+  }
+
+  draw() {
+    const ctx = this.ctx;
+    const w = this.canvas.width;
+    const h = this.canvas.height;
+    const s = this.scale;
+
+    // Sky gradient
+    const skyGrad = ctx.createLinearGradient(0, 0, 0, this.groundY);
+    skyGrad.addColorStop(0, '#B8D4E3');
+    skyGrad.addColorStop(0.5, '#C8DCE8');
+    skyGrad.addColorStop(1, '#D8E4EC');
+    ctx.fillStyle = skyGrad;
+    ctx.fillRect(0, 0, w, this.groundY);
+
+    // Sun
+    const sunX = w * 0.88;
+    const sunY = h * 0.12;
+    const sunGlow = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, 40);
+    sunGlow.addColorStop(0, 'rgba(244,208,63,0.4)');
+    sunGlow.addColorStop(1, 'rgba(244,208,63,0)');
+    ctx.fillStyle = sunGlow;
+    ctx.beginPath();
+    ctx.arc(sunX, sunY, 40, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#F4D03F';
+    ctx.beginPath();
+    ctx.arc(sunX, sunY, 18, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Clouds
+    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+    this.clouds.forEach(cloud => {
+      const cx = (cloud.x + this.time * cloud.speed) % 1.2 - 0.1;
+      const cy = cloud.y;
+      ctx.beginPath();
+      ctx.arc(cx * w, cy * h, cloud.size, 0, Math.PI * 2);
+      ctx.arc(cx * w + cloud.size * 0.5, cy * h + 5, cloud.size * 0.7, 0, Math.PI * 2);
+      ctx.arc(cx * w - cloud.size * 0.4, cy * h + 8, cloud.size * 0.6, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    // Birds
+    ctx.strokeStyle = 'rgba(60,60,60,0.5)';
+    ctx.lineWidth = 1.5;
+    this.birds.forEach(bird => {
+      const bx = (bird.x + this.time * bird.speed) % 1.2 - 0.1;
+      const by = bird.y;
+      const wingY = Math.sin(this.time * 3 + bird.wingPhase) * 4;
+      ctx.beginPath();
+      ctx.moveTo(bx * w - 10, by * h + wingY);
+      ctx.quadraticCurveTo(bx * w, by * h - 4, bx * w + 10, by * h + wingY);
+      ctx.stroke();
+    });
+
+    // GROUND
+    ctx.fillStyle = '#8B7355';
+    ctx.fillRect(0, this.groundY, w, h - this.groundY);
+
+    // Ground texture
+    ctx.strokeStyle = '#7A6548';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < w; i += 30) {
+      ctx.beginPath();
+      ctx.moveTo(i, this.groundY);
+      ctx.lineTo(i + 5, this.groundY - 6);
+      ctx.lineTo(i + 10, this.groundY);
+      ctx.stroke();
+    }
+
+    // BUILDING
+    const buildingWidth = 50;
+    const buildingHeightPx = this.buildingHeight * s;
+    const buildingTopY = this.groundY - buildingHeightPx;
+
+    // Building body
+    ctx.fillStyle = '#A0A0A0';
+    ctx.fillRect(this.buildingX - buildingWidth/2, buildingTopY, buildingWidth, buildingHeightPx);
+
+    // Building windows
+    ctx.fillStyle = '#6B8CAE';
+    for (let row = 0; row < 3; row++) {
+      for (let col = 0; col < 2; col++) {
+        ctx.fillRect(
+          this.buildingX - buildingWidth/2 + 8 + col * 18,
+          buildingTopY + 10 + row * 20,
+          12, 12
+        );
+      }
+    }
+
+    // Building roof
+    ctx.fillStyle = '#808080';
+    ctx.beginPath();
+    ctx.moveTo(this.buildingX - buildingWidth/2 - 3, buildingTopY);
+    ctx.lineTo(this.buildingX, buildingTopY - 8);
+    ctx.lineTo(this.buildingX + buildingWidth/2 + 3, buildingTopY);
+    ctx.closePath();
+    ctx.fill();
+
+    // Building label
+    ctx.fillStyle = '#505050';
+    ctx.font = 'bold 12px Georgia';
+    ctx.textAlign = 'center';
+    ctx.fillText('Building', this.buildingX, this.groundY + 18);
+    ctx.font = '11px Georgia';
+    ctx.fillText('7 m', this.buildingX, this.groundY + 32);
+
+    // CABLE TOWER
+    const towerWidth = 16;
+    const dist = this.buildingHeight / Math.tan(this.depressionAngle * Math.PI / 180);
+    const heightAbove = dist * Math.tan(this.elevationAngle * Math.PI / 180);
+    const towerHeightPx = (this.buildingHeight + heightAbove) * s;
+    const towerTopY = this.groundY - towerHeightPx;
+
+    // Tower body
+    ctx.fillStyle = '#C4622D';
+    ctx.fillRect(this.towerX - towerWidth/2, towerTopY, towerWidth, towerHeightPx);
+
+    // Tower cross-bracing (X pattern)
+    ctx.strokeStyle = 'rgba(100,50,20,0.5)';
+    ctx.lineWidth = 1.5;
+    for (let i = 0; i < towerHeightPx; i += 25) {
+      ctx.beginPath();
+      ctx.moveTo(this.towerX - towerWidth/2, towerTopY + i);
+      ctx.lineTo(this.towerX + towerWidth/2, towerTopY + i + 20);
+      ctx.moveTo(this.towerX + towerWidth/2, towerTopY + i);
+      ctx.lineTo(this.towerX - towerWidth/2, towerTopY + i + 20);
+      ctx.stroke();
+    }
+
+    // Tower top (antenna)
+    ctx.strokeStyle = '#C4622D';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(this.towerX, towerTopY);
+    ctx.lineTo(this.towerX, towerTopY - 15);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(this.towerX - 6, towerTopY - 8);
+    ctx.lineTo(this.towerX + 6, towerTopY - 8);
+    ctx.stroke();
+
+    // Tower label
+    ctx.fillStyle = '#C4622D';
+    ctx.font = 'bold 12px Georgia';
+    ctx.textAlign = 'center';
+    ctx.fillText('Cable Tower', this.towerX, towerTopY - 22);
+    ctx.font = '11px Georgia';
+    const totalH = this.buildingHeight + heightAbove;
+    ctx.fillText(`h = ${totalH.toFixed(1)}m`, this.towerX, towerTopY - 36);
+
+    // OBSERVER (on building roof)
+    const observerY = buildingTopY - 5;
+
+    // Body
+    ctx.fillStyle = '#3B5B8C';
+    ctx.fillRect(this.buildingX - 6, observerY - 40, 12, 28);
+    // Head
+    ctx.beginPath();
+    ctx.arc(this.buildingX, observerY - 48, 8, 0, Math.PI * 2);
+    ctx.fill();
+    // Arm pointing
+    ctx.strokeStyle = '#3B5B8C';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(this.buildingX + 3, observerY - 35);
+    ctx.lineTo(this.towerX, towerTopY + 10);
+    ctx.stroke();
+
+    // Observer label
+    ctx.fillStyle = '#3B5B8C';
+    ctx.font = 'bold 10px Georgia';
+    ctx.textAlign = 'center';
+    ctx.fillText('Observer', this.buildingX, observerY - 58);
+
+    // HORIZONTAL LINE from observer to tower (eye level)
+    ctx.strokeStyle = 'rgba(59,91,140,0.4)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(this.buildingX, observerY - 48);
+    ctx.lineTo(this.towerX, observerY - 48);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = 'rgba(59,91,140,0.7)';
+    ctx.font = '10px Georgia';
+    ctx.textAlign = 'center';
+    ctx.fillText('Eye level', (this.buildingX + this.towerX) / 2, observerY - 56);
+
+    // LINE OF SIGHT — Elevation to tower top
+    ctx.strokeStyle = 'rgba(196,98,45,0.9)';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(this.buildingX, observerY - 48);
+    ctx.lineTo(this.towerX, towerTopY);
+    ctx.stroke();
+
+    // Elevation angle arc
+    const elevRad = this.elevationAngle * Math.PI / 180;
+    const arcRadius = 30;
+    ctx.strokeStyle = '#C4622D';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(this.buildingX, observerY - 48, arcRadius, -elevRad, 0, false);
+    ctx.stroke();
+
+    // Elevation angle label
+    ctx.fillStyle = '#C4622D';
+    ctx.font = 'bold 12px Georgia';
+    ctx.textAlign = 'left';
+    ctx.fillText(`${this.elevationAngle.toFixed(0)}° elev`, this.buildingX + 8, observerY - 62);
+
+    // LINE OF SIGHT — Depression to tower foot
+    ctx.strokeStyle = 'rgba(59,91,140,0.7)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 4]);
+    ctx.beginPath();
+    ctx.moveTo(this.buildingX, observerY - 48);
+    ctx.lineTo(this.towerX, this.groundY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Depression angle arc
+    const depRad = this.depressionAngle * Math.PI / 180;
+    ctx.strokeStyle = '#3B5B8C';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(this.buildingX, observerY - 48, arcRadius + 15, 0, depRad, false);
+    ctx.stroke();
+
+    // Depression angle label
+    ctx.fillStyle = '#3B5B8C';
+    ctx.font = 'bold 12px Georgia';
+    ctx.textAlign = 'left';
+    ctx.fillText(`${this.depressionAngle.toFixed(0)}° dep`, this.buildingX + 20, observerY - 30);
+
+    // DISTANCE label (ground)
+    ctx.strokeStyle = 'rgba(59,91,140,0.5)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    ctx.moveTo(this.buildingX, this.groundY + 12);
+    ctx.lineTo(this.towerX, this.groundY + 12);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = '#3B5B8C';
+    ctx.font = '12px Georgia';
+    ctx.textAlign = 'center';
+    ctx.fillText(`d = ${dist.toFixed(1)}m`, (this.buildingX + this.towerX) / 2, this.groundY + 26);
+
+    // Height above building label
+    ctx.fillStyle = '#C4622D';
+    ctx.font = '11px Georgia';
+    ctx.textAlign = 'left';
+    ctx.fillText(`${heightAbove.toFixed(1)}m`, this.towerX + 12, (observerY - 48 + towerTopY) / 2);
+
+    // Building height label
+    ctx.fillStyle = '#3B5B8C';
+    ctx.font = '10px Georgia';
+    ctx.textAlign = 'right';
+    ctx.fillText('7m', this.buildingX - 30, (this.groundY + buildingTopY) / 2);
+
+    // BOTH TRIANGLES overlay
+    if (this.showBothTriangles) {
+      // Depression triangle
+      ctx.strokeStyle = 'rgba(59,91,140,0.5)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(this.buildingX, observerY - 48);
+      ctx.lineTo(this.towerX, this.groundY);
+      ctx.lineTo(this.towerX, observerY - 48);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(59,91,140,0.08)';
+      ctx.fill();
+
+      // Elevation triangle
+      ctx.strokeStyle = 'rgba(196,98,45,0.5)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(this.buildingX, observerY - 48);
+      ctx.lineTo(this.towerX, towerTopY);
+      ctx.lineTo(this.towerX, observerY - 48);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(196,98,45,0.06)';
+      ctx.fill();
+
+      // Right angle markers
+      ctx.strokeStyle = '#3B5B8C';
+      ctx.lineWidth = 1.5;
+      const rSize = 8;
+      ctx.beginPath();
+      ctx.moveTo(this.towerX - rSize, observerY - 48);
+      ctx.lineTo(this.towerX - rSize, observerY - 48 + rSize);
+      ctx.lineTo(this.towerX, observerY - 48 + rSize);
+      ctx.stroke();
+
+      // Triangle labels
+      ctx.fillStyle = '#3B5B8C';
+      ctx.font = 'bold 10px Verdana';
+      ctx.textAlign = 'center';
+      ctx.fillText('Depression Δ', (this.buildingX + this.towerX) / 2, (observerY - 48 + this.groundY) / 2 + 10);
+
+      ctx.fillStyle = '#C4622D';
+      ctx.fillText('Elevation Δ', (this.buildingX + this.towerX) / 2, (observerY - 48 + towerTopY) / 2 - 10);
+    }
+
+    // Verification overlay
+    if (this.verificationMode && this.verificationTimer < 250) {
+      this.drawVerification(ctx, w, h);
+    }
+
+    // Highlight effect
+    if (this.highlightTimer > 0) {
+      ctx.strokeStyle = `rgba(212,168,67,${this.highlightTimer/90})`;
+      ctx.lineWidth = 4;
+      ctx.strokeRect(this.buildingX - 30, buildingTopY - 10, 60, buildingHeightPx + 20);
+      ctx.strokeRect(this.towerX - 15, towerTopY - 10, 30, towerHeightPx + 10);
+    }
+
+    // Ground label
+    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+    ctx.font = '11px Verdana';
+    ctx.textAlign = 'left';
+    ctx.fillText('Ground level', 20, this.groundY + 20);
+  }
+
+  drawVerification(ctx, w, h) {
+    const progress = Math.min(this.verificationTimer / 200, 1);
+
+    const yStart = h * 0.08;
+    const panelWidth = 320;
+    const panelX = (w - panelWidth) / 2;
+
+    ctx.fillStyle = 'rgba(250,250,245,0.95)';
+    ctx.strokeStyle = 'rgba(42,124,111,0.5)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(panelX, yStart - 10, panelWidth, 120, 10);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#2A7C6F';
+    ctx.font = 'bold 15px Georgia';
+    ctx.textAlign = 'center';
+
+    if (progress > 0.2) {
+      ctx.fillText('✓ d = 7 / tan(45°) = 7 m', w/2, yStart + 20);
+    }
+    if (progress > 0.5) {
+      ctx.fillText('✓ h − 7 = 7 × tan(60°) = 7√3', w/2, yStart + 48);
+    }
+    if (progress > 0.8) {
+      ctx.font = 'bold 17px Georgia';
+      ctx.fillText('✓ h = 7(1 + √3) ≈ 19.12 m', w/2, yStart + 80);
+    }
+  }
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  STEP MANAGEMENT                         ║
+// ╚══════════════════════════════════════════╝
+
+let currentStep = 1;
+const totalSteps = 8;
+let studentPrediction = null;
+let correctCount = 0;
+let streakCount = 0;
+
+function updateProgress() {
+  const pct = (currentStep / totalSteps) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('stepLabel').textContent = `Step ${Math.min(currentStep, 7)} of 7`;
+
+  document.getElementById('btnPrev').disabled = currentStep === 1;
+  document.getElementById('btnNext').disabled = currentStep === totalSteps;
+
+  document.querySelectorAll('.step-card').forEach(card => {
+    card.classList.remove('active');
+    if (parseInt(card.dataset.step) === currentStep) {
+      card.classList.add('active');
+    }
+  });
+}
+
+function advanceToStep(n) {
+  currentStep = n;
+  updateProgress();
+
+  if (n === 2) sim.setElevationAngle(60);
+  if (n === 4) sim.showBothTriangles = true;
+  if (n === 7) sim.animateVerification();
+}
+
+function nextStep() {
+  if (currentStep < totalSteps) {
+    advanceToStep(currentStep + 1);
+  }
+}
+
+function prevStep() {
+  if (currentStep > 1) {
+    advanceToStep(currentStep - 1);
+  }
+}
+
+function updatePrediction(val) {
+  document.getElementById('predictionValue').textContent = val;
+}
+
+function submitPrediction() {
+  studentPrediction = parseFloat(document.getElementById('predictionSlider').value);
+  const actual = 7 * (1 + Math.sqrt(3));
+  const diff = Math.abs(studentPrediction - actual);
+  const pctOff = (diff / actual) * 100;
+
+  let message = '';
+  let icon = '🏅';
+
+  if (pctOff < 10) {
+    message = 'Sharp Eye! Within 10%!';
+    icon = '👁';
+    correctCount++;
+    streakCount++;
+    showAchievement(icon, message);
+  } else if (pctOff < 25) {
+    message = 'Good intuition! Close guess.';
+    icon = '⭐';
+    streakCount++;
+    showAchievement(icon, message);
+  } else {
+    message = 'Interesting guess — this one has two triangles!';
+    streakCount = 0;
+  }
+
+  document.getElementById('correctCount').textContent = correctCount;
+  document.getElementById('streakCount').textContent = streakCount;
+
+  document.getElementById('predictionCompare').innerHTML = 
+    `You guessed: ${studentPrediction}m · Actual: 7(1+√3) ≈ ${actual.toFixed(2)}m · Off by ${pctOff.toFixed(1)}%`;
+
+  advanceToStep(4);
+}
+
+function showAchievement(icon, text) {
+  const toast = document.getElementById('achievementToast');
+  document.getElementById('achievementIcon').textContent = icon;
+  document.getElementById('achievementText').textContent = text;
+  toast.style.display = 'flex';
+  setTimeout(() => {
+    toast.style.display = 'none';
+  }, 3000);
+}
+
+function toggleTeacher() {
+  document.getElementById('teacherDashboard').classList.toggle('visible');
+}
+
+// ╔══════════════════════════════════════════╗
+// ║  KEYBOARD SHORTCUTS                      ║
+// ╚══════════════════════════════════════════╝
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === ' ') { e.preventDefault(); sim.togglePlay(); }
+  if (e.key === 'r' || e.key === 'R') sim.reset();
+  if (e.key === 'n' || e.key === 'N') nextStep();
+  if (e.key === 'p' || e.key === 'P') prevStep();
+  if (e.key === 't' || e.key === 'T') toggleTeacher();
+});
+
+// ╔══════════════════════════════════════════╗
+// ║  INITIALIZATION                          ║
+// ╚══════════════════════════════════════════╝
+
+const sim = new BuildingTowerSimulation();
+updateProgress();
+</script>
+
+</body>
+</html>
