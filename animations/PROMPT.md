@@ -24,7 +24,7 @@ CREATOR BRANDING
 - Always credit "Maths by Zosiama" as the creator:
   - a creator tag on screen for the whole video (small, clear of the captions)
   - "Maths by Zosiama" said in the intro or outro narration
-  - "Maths by Zosiama" on the end card, e.g. "Follow Maths by Zosiama for more!"
+  - the video always ends with "Follow Maths by Zosiama", both on screen and spoken
   - "Maths by Zosiama" as the author in the HTML page and in the exported file's metadata
 
 STYLE
@@ -53,7 +53,8 @@ TEACHING CONTENT (must all appear on screen AND in the narration)
 4. The solution step by step on a "solution board", one line per step, written as real
    fractions, with the matching triangle highlighted in the scene for each step.
 5. The answer in a big highlighted card, plus a quick check that the numbers agree.
-6. A short outro ("Follow for more …") that loops nicely.
+6. End every video with "Follow Maths by Zosiama": say it in the narration and show it as a
+   big end card in the last few seconds, then let the outro loop nicely.
 
 WORKFLOW
 - First, storyboard it as a list of beats with timings (and show me the list), then build it.
