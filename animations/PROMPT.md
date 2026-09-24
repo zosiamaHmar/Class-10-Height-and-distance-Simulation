@@ -13,8 +13,9 @@ on opposite sides of the bird. Find the distance of the bird from the girl."]]
 FORMAT
 - One HTML file with a single <canvas>. Every frame is drawn by code, frame by frame, as a pure
   function of time (draw(t)), so any frame can be rendered exactly.
-- No video models, no stock footage, no AI images. One real-life photo is allowed and should be
-  used in the hook (a public-domain or openly licensed photo embedded in the file; credit it).
+- No video models, no stock footage, no AI images. The hook image must match the question
+  (see HOOK). Any photo used must be public-domain or openly licensed, embedded in the file and
+  credited.
 - Output size: [[VERTICAL 1080×1920 (9:16) for YouTube Shorts + Instagram Reels]]
   [[or HORIZONTAL 1920×1080 (16:9) for regular YouTube]], 60 fps.
 - Keep captions, headline and answers inside the Shorts/Reels safe zone (clear of the top
@@ -40,7 +41,12 @@ AUDIENCE AND VOICE
 - Soft background music and small sound effects, mixed under the voice.
 
 HOOK (first 3 seconds)
-- Open on a real photo with a big on-screen question and a spoken hook such as
+- Open on an image of the question's own subject: the actual thing the problem is about (a
+  tower, a bird, a circus tent, a water tank, a motorcycle ride, a chase…). Never use a generic
+  building photo or any image that doesn't match the question.
+  - Use a real photo of that subject if a licensed one is available.
+  - Otherwise draw that subject in code as a bold, eye-catching hook illustration.
+- Put a big on-screen question over it and add a spoken hook such as
   "Wait! Can you solve this with only two angles? Stay till the end!"
 - Add "Pause & try it first!" and a thin progress bar at the top to hold attention.
 
@@ -75,6 +81,7 @@ EXPORTS
 | "safe zone" | Captions or answers hidden under the Shorts/Reels UI. |
 | "units for every quantity" | Bare numbers that a young viewer can't interpret. |
 | "Know first" section | Jumping into the solution before the formula is introduced. |
+| Hook image that matches the question | A generic photo that tells viewers nothing about the problem and loses them in the first seconds. |
 | Storyboard first | Timing problems found only after the video is built. |
 | "Maths by Zosiama" creator branding | Videos that get reposted without credit to the creator. |
 | Both .webm and .mp4 exports | Instagram and some editors don't accept .webm. |
