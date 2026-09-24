@@ -2095,10 +2095,12 @@ const pulse=t=>.55+.45*Math.sin(t*6);
 const bump=p=>1+.14*Math.sin(clamp(p)*Math.PI);
 
 /* ---------- 2.5D solids (flat vector) ---------- */
-const K=0.3;                                   // ellipse squash for circles seen from slightly above
+const K=0.3;
+const rgbOf=c=>c[0]==='#'?hex(c):c.match(/\d+/g).slice(0,3).map(Number);
+const mx=(a,b,t)=>{ const A=rgbOf(a),B=rgbOf(b); return `rgb(${A.map((v,i)=>Math.round(v+(B[i]-v)*t)).join(',')})`; };                                   // ellipse squash for circles seen from slightly above
 function outline(path,col=P.navy,w=4){ ctx.save(); ctx.strokeStyle=col; ctx.lineWidth=w; ctx.lineJoin='round'; ctx.beginPath(); path(); ctx.stroke(); ctx.restore(); }
 function glow(path,hl,t,col=P.amber){ if(hl<=0) return; ctx.save(); ctx.globalAlpha*=hl*pulse(t); ctx.strokeStyle=col; ctx.lineWidth=10; ctx.lineJoin='round'; ctx.beginPath(); path(); ctx.stroke(); ctx.restore(); }
-function sideGrad(cx,rx,col){ const g=ctx.createLinearGradient(cx-rx,0,cx+rx,0); g.addColorStop(0,mix(col,P.navy,.25)); g.addColorStop(.35,mix(col,P.cream,.25)); g.addColorStop(1,mix(col,P.navy,.35)); return g; }
+function sideGrad(cx,rx,col){ const g=ctx.createLinearGradient(cx-rx,0,cx+rx,0); g.addColorStop(0,mx(col,P.navy,.25)); g.addColorStop(.35,mx(col,P.cream,.25)); g.addColorStop(1,mx(col,P.navy,.35)); return g; }
 function cylinder(cx,yT,yB,rx,col,t,hl=0,topCol=null){
   const ry=rx*K, path=()=>{ ctx.moveTo(cx-rx,yT); ctx.lineTo(cx-rx,yB); ctx.ellipse(cx,yB,rx,ry,0,Math.PI,0,true); ctx.lineTo(cx+rx,yT); ctx.ellipse(cx,yT,rx,ry,0,0,Math.PI,false); ctx.closePath(); };
   ctx.save(); ctx.fillStyle=sideGrad(cx,rx,col); ctx.beginPath(); path(); ctx.fill(); ctx.restore(); outline(path);
@@ -2111,7 +2113,7 @@ function coneUp(cx,yB,yA,rx,col,t,hl=0){
 }
 function hemiDown(cx,yF,rx,col,t,hl=0){
   const ry=rx*K, path=()=>{ ctx.moveTo(cx-rx,yF); ctx.ellipse(cx,yF,rx,rx,0,Math.PI,0,true); ctx.ellipse(cx,yF,rx,ry,0,0,Math.PI,true); ctx.closePath(); };
-  ctx.save(); const g=ctx.createRadialGradient(cx-rx*.35,yF+rx*.2,rx*.1,cx,yF,rx*1.1); g.addColorStop(0,mix(col,P.cream,.4)); g.addColorStop(1,mix(col,P.navy,.3));
+  ctx.save(); const g=ctx.createRadialGradient(cx-rx*.35,yF+rx*.2,rx*.1,cx,yF,rx*1.1); g.addColorStop(0,mx(col,P.cream,.4)); g.addColorStop(1,mx(col,P.navy,.3));
   ctx.fillStyle=g; ctx.beginPath(); path(); ctx.fill(); ctx.restore(); outline(path); glow(path,hl,t);
 }
 function box(x,y,w,h,d,cols,t,hl=0){          // front face at (x,y) w×h, depth d going up-right
@@ -2233,7 +2235,7 @@ function drawConfetti(t){
 function draw(t){
   drawWorld(t);
   drawScene(t);
-  if(CFG.scale) label(CFG.scale,150,SAFE_TOP+170,22,P.cream,{pill:P.steel,alpha:prog(t,Bs(CFG.firstBeat)+1,.4)*(1-prog(t,Ls('bye',0)+1,.4)),weight:600});
+  if(CFG.scale) label(CFG.scale,34,SAFE_TOP+170,22,P.cream,{pill:P.steel,align:'left',alpha:prog(t,Bs(CFG.firstBeat)+1,.4)*(1-prog(t,Ls('bye',0)+1,.4)),weight:600});
   drawBoard(t);
   drawLower(t);
   drawHook(t);
@@ -2315,7 +2317,7 @@ function drawScene(t){
   label('5 cm',CX+RX+50,(YF+YB)/2,24,P.navy,{pill:P.amber,alpha:prog(t,Ls('step1',0)+2.8,.4)});
   // slant height
   const lA=prog(t,Ls('step2',0)+.6,.4), lDone=prog(t,Ls('step2',1)+2.6,.4), ang=Math.atan2(YCT-YA,RX);
-  label(lDone>0?'l = 13 cm':'l = ?',CX+RX/2+44,(YA+YCT)/2-10,28,P.navy,{pill:P.amber,rot:ang,alpha:lA,scale:bump(lDone)});
+  label(lDone>0?'l = 13 cm':'l = ?',CX-RX/2-44,(YA+YCT)/2-10,28,P.navy,{pill:P.amber,rot:-ang,alpha:lA,scale:bump(lDone)});
   // area of each part in the check
   const c=Ls('answer',1);
   label('204.29 cm²',CX,(YA+YCT)/2+60,26,P.navy,{pill:P.cream,alpha:prog(t,c+6,.4)});
