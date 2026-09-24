@@ -20,6 +20,13 @@ FORMAT
 - Keep captions, headline and answers inside the Shorts/Reels safe zone (clear of the top
   ~150 px, the bottom ~25 % and the right-hand buttons).
 
+CREATOR BRANDING
+- Always credit "Maths by Zosiama" as the creator:
+  - a creator tag on screen for the whole video (small, clear of the captions)
+  - "Maths by Zosiama" said in the intro or outro narration
+  - "Maths by Zosiama" on the end card, e.g. "Follow Maths by Zosiama for more!"
+  - "Maths by Zosiama" as the author in the HTML page and in the exported file's metadata
+
 STYLE
 - Pick ONE: [[flat vector | hand-drawn brush strokes | paper cut-out]].
 - One colour palette (5–6 named colours) used for everything.
@@ -68,4 +75,5 @@ EXPORTS
 | "units for every quantity" | Bare numbers that a young viewer can't interpret. |
 | "Know first" section | Jumping into the solution before the formula is introduced. |
 | Storyboard first | Timing problems found only after the video is built. |
+| "Maths by Zosiama" creator branding | Videos that get reposted without credit to the creator. |
 | Both .webm and .mp4 exports | Instagram and some editors don't accept .webm. |
