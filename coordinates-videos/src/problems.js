@@ -409,8 +409,8 @@
       ],
       sceneLines: [
         planeLine(21),
-        plot('A', 'A', A, { tp: [86, 0] }),
-        plot('B', 'B', B, { tp: [-84, 0], draw: [OP.seg('AB', A, B)] }),
+        plot('A', 'A', A, { tp: [-90, 0] }),
+        plot('B', 'B', B, { tp: [86, 0], draw: [OP.seg('AB', A, B)] }),
         L({ cap: 'P(−4, 6) is on AB. It cuts AB into two parts: AP and PB.', legend: { icon: 'ratio', s: 'P(−4, 6) cuts AB' }, draw: [OP.pt('P', Pp, 'P(−4, 6)', { col: 'coral', tp: [-92, 0] }), OP.pieces('parts', A, B, 2, 1, { cuts: [0, 2 / 9, 1], texts: ['?', '?'], side: -1 })] }),
       ],
       given: [
@@ -514,12 +514,12 @@
       sceneLines: [
         planeLine(36),
         L({ cap: 'Part (i): A(1, 3) and B(2, 7), and the line 3x + y − 9 = 0.', legend: { icon: 'line', s: '(i) AB and 3x + y − 9 = 0' }, draw: [
-          OP.pt('A', A, 'A(1, 3)', { tp: [-66, 6] }), OP.pt('B', B, 'B(2, 7)', { tp: [-64, -6] }), OP.seg('AB', A, B),
-          OP.line('L1', [3, 1, -9], '3x + y − 9 = 0', { lt: 0.12, lo: [118, 0] }), OP.pin('P1', Pi),
+          OP.pt('A', A, 'A(1, 3)', { tp: [-66, 6] }), OP.pt('B', B, 'B(2, 7)', { tp: [66, -6] }), OP.seg('AB', A, B),
+          OP.line('L1', [3, 1, -9], '3x + y − 9 = 0', { lt: 0.25, lo: [-122, 0] }), OP.pin('P1', Pi),
         ] }),
         L({ cap: 'Part (ii): C(3, −1) and D(8, 9), and the line x − y − 2 = 0.', legend: { icon: 'line', s: '(ii) CD and x − y − 2 = 0' }, draw: [
           OP.pt('C', Cc, 'C(3, −1)', { tp: [74, 8] }), OP.pt('D', Dd, 'D(8, 9)', { tp: [-66, 0] }), OP.seg('CD', Cc, Dd),
-          OP.line('L2', [1, -1, -2], 'x − y − 2 = 0', { col: 'coral', lt: 0.93, lo: [-112, 6] }), OP.pin('P2', Q),
+          OP.line('L2', [1, -1, -2], 'x − y − 2 = 0', { col: 'coral', lt: 0.8, lo: [96, 22] }), OP.pin('P2', Q),
         ] }),
       ],
       given: [

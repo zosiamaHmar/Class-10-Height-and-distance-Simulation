@@ -4,9 +4,27 @@ Nineteen animated explainers for the section formula chapter: dividing a line in
 
 | Q | Video | Length | Answer |
 |---|---|---|---|
-<!-- TABLE -->
+| 1 | [The point that cuts 3 : 1](q01-point-dividing-in-ratio-3-1/index.html) · [MP4](q01-point-dividing-in-ratio-3-1/q01-point-dividing-in-ratio-3-1.mp4) | 2:01 | P = (8, 4) |
+| 2 | [Midpoint (2p, q): find p and q](q02-midpoint-find-p-and-q/index.html) · [MP4](q02-midpoint-find-p-and-q/q02-midpoint-find-p-and-q.mp4) | 1:50 | p = 3,  q = 3 |
+| 3 | [AP is 2/5 of AB](q03-ap-is-two-fifths-of-ab/index.html) · [MP4](q03-ap-is-two-fifths-of-ab/q03-ap-is-two-fifths-of-ab.mp4) | 1:44 | P = (4, −1) |
+| 4 | [In what ratio does (−4, 6) cut AB?](q04-ratio-point-minus-4-6-divides-ab/index.html) · [MP4](q04-ratio-point-minus-4-6-divides-ab/q04-ratio-point-minus-4-6-divides-ab.mp4) | 1:52 | AP : PB = 2 : 7 |
+| 5 | [Points of trisection](q05-points-of-trisection/index.html) · [MP4](q05-points-of-trisection/q05-points-of-trisection.mp4) | 1:54 | P = (−1, 0),  Q = (−4, 2) |
+| 6 | [Where a line cuts a segment (two parts)](q06-ratio-lines-cut-segments/index.html) · [MP4](q06-ratio-lines-cut-segments/q06-ratio-lines-cut-segments.mp4) | 2:35 | (i) 3 : 4; (ii) 2 : 3 |
+| 7 | [Find k: P on AB and on a line](q07-find-k-point-on-line/index.html) · [MP4](q07-find-k-point-on-line/q07-find-k-point-on-line.mp4) | 1:58 | k = 2/3 |
+| 8 | [Parallelogram: find a and b](q08-parallelogram-find-a-and-b/index.html) · [MP4](q08-parallelogram-find-a-and-b/q08-parallelogram-find-a-and-b.mp4) | 2:00 | a = 1,  b = 3 |
+| 9 | [Where the y-axis cuts a segment](q09-y-axis-divides-segment/index.html) · [MP4](q09-y-axis-divides-segment/q09-y-axis-divides-segment.mp4) | 2:00 | ratio 5 : 1; P = ( 0, −13/3 ) |
+| 10 | [Where the x-axis cuts a segment](q10-x-axis-divides-segment/index.html) · [MP4](q10-x-axis-divides-segment/q10-x-axis-divides-segment.mp4) | 1:53 | ratio 1 : 1; P = ( −3/2, 0 ) |
+| 11 | [Parallelogram: find p](q11-parallelogram-find-p/index.html) · [MP4](q11-parallelogram-find-p/q11-parallelogram-find-p.mp4) | 1:48 | p = 7 |
+| 12 | [AP is 3/7 of AB](q12-ap-is-three-sevenths-of-ab/index.html) · [MP4](q12-ap-is-three-sevenths-of-ab/q12-ap-is-three-sevenths-of-ab.mp4) | 1:52 | P = ( −2/7, −20/7 ) |
+| 13 | [The other end of a diameter](q13-other-end-of-diameter/index.html) · [MP4](q13-other-end-of-diameter/q13-other-end-of-diameter.mp4) | 1:37 | A = (3, −10) |
+| 14 | [Midpoint on a line: find k](q14-midpoint-on-a-line-find-k/index.html) · [MP4](q14-midpoint-on-a-line-find-k/q14-midpoint-on-a-line-find-k.mp4) | 1:43 | k = 7 |
+| 15 | [The y-axis cuts a segment: ratio and point](q15-y-axis-divides-segment/index.html) · [MP4](q15-y-axis-divides-segment/q15-y-axis-divides-segment.mp4) | 1:47 | ratio 2 : 3; P = (0, 1) |
+| 16 | [A trisection point on a line: find k](q16-trisection-point-on-line-find-k/index.html) · [MP4](q16-trisection-point-on-line-find-k/q16-trisection-point-on-line-find-k.mp4) | 2:08 | k = −8 |
+| 17 | [A triangle from its three midpoints](q17-triangle-from-midpoints/index.html) · [MP4](q17-triangle-from-midpoints/q17-triangle-from-midpoints.mp4) | 2:27 | A(6, 9),  B(4, 5),  C(2, 3) |
+| 18 | [Median length and centroid](q18-median-length-and-centroid/index.html) · [MP4](q18-median-length-and-centroid/q18-median-length-and-centroid.mp4) | 2:10 | median AD = √65 ≈ 8.06 units; centroid G = ( 1/3, 5/3 ) |
+| 19 | [The third corner from the centroid (two parts)](q19-third-vertex-from-centroid/index.html) · [MP4](q19-third-vertex-from-centroid/q19-third-vertex-from-centroid.mp4) | 2:23 | (i) C = (5, 6); (ii) C = (4, −4) |
 
-Every video is under the 3-minute Shorts limit.
+Every video is under the 3-minute Shorts limit. The longest is Q6, which has two parts, at 2:35.
 
 Each folder contains three files:
 
