@@ -4,6 +4,7 @@ This is the shared pipeline behind every Maths by Zosiama explainer video. A vid
 
 - [`../set-videos/`](../set-videos/README.md): 10 set-theory videos (Venn diagrams)
 - [`../sim-videos/`](../sim-videos/README.md): the Heights & Distances simulations turned into videos (right triangles)
+- [`../solids-videos/`](../solids-videos/README.md): 12 Surface Areas & Volumes videos (combinations of solids, in 3D)
 
 | File | What it does |
 |---|---|

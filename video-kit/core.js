@@ -521,11 +521,19 @@
       ctx.restore();
     }
     function boardSolve(ctx, t, b) {
+      // steps may be split over pages (line.page); a new page slides in over the old one
+      const pg = (l) => l.page || 0;
+      const pages = [...new Set(b.lines.map(pg))];
+      let page = pages[0];
+      for (const l of b.lines) if (t >= l.start - 0.3) page = pg(l);
+      const lines = b.lines.filter((l) => pg(l) === page);
       boardFrame(ctx, b, t, 'SOLUTION', PAL.ink);
+      const pk = page === pages[0] ? 1 : ease.out(win(t, lines[0].start - 0.3, 0.35));
+      ctx.save(); ctx.globalAlpha *= pk; ctx.translate((1 - pk) * 80, 0);
       const rh = 78;
       let curI = -1;
-      b.lines.forEach((l, i) => { if (t >= l.start - 0.1) curI = i; });
-      b.lines.forEach((l, i) => {
+      lines.forEach((l, i) => { if (t >= l.start - 0.1) curI = i; });
+      lines.forEach((l, i) => {
         if (t < l.start - 0.1) return;
         const y = BY + 70 + rh * (i + 0.5);
         const rev = ease.inOut(win(t, l.start - 0.05, 0.8));
@@ -539,6 +547,7 @@
         math(ctx, l.m, BX + 76, y + 1, 48, { maxW: BW - 110, reveal: rev });
         ctx.restore();
       });
+      ctx.restore();
     }
     function boardAnswer(ctx, t, b) {
       const ans = b.lines[0];
