@@ -35,24 +35,16 @@ function script() {
   writeScript(ROOT, SIMS.map((p) => ({ id: p.id, slug: p.slug, title: p.title, beats: buildBeats(p), meta: meta(p), fileDescription: plainQ(p) })));
 }
 
+// each video is built with its own stage: engine.js (the kite) or balloon.js (two triangles)
 function html() {
-  buildPages(ROOT, {
-    fonts: ['fredoka', 'symbols'],
-    engine: [path.join(SRC, 'engine.js')],
-    videos: SIMS.filter((p) => pick(p.id)).map((p) => ({ id: p.id, slug: p.slug, P: p, pageTitle: `Sim ${p.num}: ${p.title}`, meta: meta(p) })),
-  });
+  for (const p of SIMS.filter((q) => pick(q.id))) {
+    buildPages(ROOT, {
+      fonts: ['fredoka', 'symbols'],
+      engine: [path.join(SRC, p.scene.engine || 'engine.js')],
+      videos: [{ id: p.id, slug: p.slug, P: p, pageTitle: `Sim ${p.num}: ${p.title}`, meta: meta(p) }],
+    });
+  }
 }
-
-const SHOWS = {
-  hook: 'The kite high in the sky, the string down to the peg, 60 m and 60° marked, a big “?”, “Pause & try it first!” sticker, progress bar',
-  question: 'Maths by Zosiama badge, full question card; key facts highlighted as they are read',
-  scene: 'Sky scene drawn to scale (1 m = 6 px): peg A, the kite C flies in, B drops below it, right triangle ABC',
-  given: '“What we know” card with units; 60 m height arrow, 60° angle, right-angle mark, x = ? on the string',
-  know: '“Know first!”: Opposite / Hypotenuse / Adjacent tags on the triangle, sin θ = Opposite/Hypotenuse, sin 60° = √3/2, √3 ≈ 1.732, why not tan',
-  solve: 'Solution board, one line per step with real fractions; the sides used glow on the triangle',
-  answer: 'Answer card, sine check, and the 60 m height laid along the string to show the string is longer',
-  outro: '“Follow Maths by Zosiama” end card with tapping follow button; dissolves back into the hook to loop',
-};
 
 function docs() {
   let md = '# Storyboard — Heights & Distances explainers (Maths by Zosiama)\n\n'
@@ -65,7 +57,7 @@ function docs() {
     md += '| # | Beat | Time | On screen | Narration |\n|---|---|---|---|---|\n';
     tl.beats.forEach((b, i) => {
       const said = b.lines.map((l) => l.cap.replace(/\|/g, '/')).join(' ');
-      md += `| ${i + 1} | ${b.type} | ${fmt(b.start)}–${fmt(b.end)} | ${SHOWS[b.type]} | ${said} |\n`;
+      md += `| ${i + 1} | ${b.type} | ${fmt(b.start)}–${fmt(b.end)} | ${p.shows[b.type]} | ${said} |\n`;
     });
     md += '\n';
   }

@@ -3,7 +3,7 @@
 This is the shared pipeline behind every Maths by Zosiama explainer video. A video project keeps only its problem scripts and a small topic engine; everything else lives here.
 
 - [`../set-videos/`](../set-videos/README.md): 10 set-theory videos (Venn diagrams)
-- [`../sim-videos/`](../sim-videos/README.md): the Heights & Distances simulations turned into videos (right triangles)
+- [`../sim-videos/`](../sim-videos/README.md): the Heights & Distances simulations turned into videos (the kite string, the drifting balloon)
 - [`../solids-videos/`](../solids-videos/README.md): 12 Surface Areas & Volumes videos (combinations of solids, in 3D)
 - [`../constructions-videos/`](../constructions-videos/README.md): 11 Constructions videos (ruler, compass and set square, drawn to scale)
 - [`../coordinates-videos/`](../coordinates-videos/README.md): 19 Coordinate Geometry videos (section formula, midpoint, centroid, on a coordinate plane)
