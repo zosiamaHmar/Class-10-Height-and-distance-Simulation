@@ -168,15 +168,29 @@
       if (last < str.length) out.push({ s: str.slice(last), c: base });
       return out;
     }
+    // ((top/bottom)) is a stacked fraction; top and bottom may hold their own (brackets)
     function parseMath(str, base, sym) {
       const out = [];
-      const re = /\(\(([^)]*?)\)\)/g;
-      let last = 0, m;
-      while ((m = re.exec(str))) {
-        if (m.index > last) out.push(...parseRun(str.slice(last, m.index), base, sym));
-        const cut = m[1].indexOf('/');
-        out.push({ frac: [parseRun(m[1].slice(0, cut), base, sym), parseRun(m[1].slice(cut + 1), base, sym)], c: base });
-        last = m.index + m[0].length;
+      let last = 0, i = 0;
+      while (i < str.length) {
+        if (str[i] === '(' && str[i + 1] === '(') {
+          let depth = 0, end = -1, cut = -1;
+          for (let j = i + 2; j < str.length; j++) {
+            const ch = str[j];
+            if (ch === '(') depth++;
+            else if (ch === ')') {
+              if (depth === 0) { if (str[j + 1] === ')') end = j; break; }
+              depth--;
+            } else if (ch === '/' && depth === 0 && cut < 0) cut = j;
+          }
+          if (end > 0 && cut > 0) {
+            if (i > last) out.push(...parseRun(str.slice(last, i), base, sym));
+            out.push({ frac: [parseRun(str.slice(i + 2, cut), base, sym), parseRun(str.slice(cut + 1, end), base, sym)], c: base });
+            i = end + 2; last = i;
+            continue;
+          }
+        }
+        i++;
       }
       if (last < str.length) out.push(...parseRun(str.slice(last), base, sym));
       return out;

@@ -6,6 +6,7 @@ This is the shared pipeline behind every Maths by Zosiama explainer video. A vid
 - [`../sim-videos/`](../sim-videos/README.md): the Heights & Distances simulations turned into videos (right triangles)
 - [`../solids-videos/`](../solids-videos/README.md): 12 Surface Areas & Volumes videos (combinations of solids, in 3D)
 - [`../constructions-videos/`](../constructions-videos/README.md): 11 Constructions videos (ruler, compass and set square, drawn to scale)
+- [`../coordinates-videos/`](../coordinates-videos/README.md): 19 Coordinate Geometry videos (section formula, midpoint, centroid, on a coordinate plane)
 
 | File | What it does |
 |---|---|
