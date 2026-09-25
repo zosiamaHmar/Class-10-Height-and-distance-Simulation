@@ -1,18 +1,18 @@
 #!/usr/bin/env node
-// Maths by Zosiama · Sets explainers — build pipeline.
+// Maths by Zosiama · Sets explainers — build (uses ../../video-kit).
 //
-//   node build.mjs script        storyboard (beats + lines) → build/script.json
+//   node build.mjs script        storyboard (beats + lines) → build/script.json + manifest.json
 //   node build.mjs audio [ids]   offline TTS + music + SFX → build/<id>/{timeline.json,mix.wav,mix.mp3}
 //   node build.mjs html  [ids]   one self-contained HTML page per video → ../<slug>/index.html
 //   node build.mjs docs          STORYBOARD.md + gallery index.html from the timelines
 //   node build.mjs all   [ids]   everything above
 //
-// The master MP4s are rendered afterwards with `node render.mjs [ids]`.
+// The master MP4s are rendered afterwards with `node ../../video-kit/render.mjs .. [ids]`.
 import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
-import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { writeScript, runAudio, buildPages, timeline, fmt } from '../../video-kit/kit.mjs';
 
 const require = createRequire(import.meta.url);
 const SRC = path.dirname(fileURLToPath(import.meta.url));
@@ -22,64 +22,25 @@ const { PROBLEMS, buildBeats } = require('./problems.js');
 
 const [cmd = 'all', ...ids] = process.argv.slice(2);
 const pick = (id) => !ids.length || ids.includes(id);
-const read = (p) => fs.readFileSync(path.join(SRC, p), 'utf8');
-const b64 = (p) => fs.readFileSync(p).toString('base64');
-const safeJs = (s) => s.replace(/<\/script/gi, '<\\/script');
-const fmt = (s) => `${Math.floor(s / 60)}:${(s % 60).toFixed(1).padStart(4, '0')}`;
+const plainQ = (p) => p.question.replace(/[⟦⟧]/g, '');
 
-function script() {
-  fs.mkdirSync(BUILD, { recursive: true });
-  const videos = PROBLEMS.map((p) => ({ id: p.id, slug: p.slug, title: p.title, beats: buildBeats(p) }));
-  fs.writeFileSync(path.join(BUILD, 'script.json'), JSON.stringify({ videos }, null, 1));
-  console.log(`storyboard: ${videos.length} videos → build/script.json`);
-}
-
-function audio() {
-  const r = spawnSync('python3', [path.join(SRC, 'audio.py'), path.join(BUILD, 'script.json'), BUILD, ...ids], { stdio: 'inherit' });
-  if (r.status !== 0) process.exit(r.status || 1);
-}
-
-function meta(p, tl) {
-  const plain = p.question.replace(/[⟦⟧]/g, '');
+function meta(p) {
   return {
     title: `Sets Q${p.num}: ${p.title} · Maths by Zosiama`,
-    author: 'Maths by Zosiama',
-    comment: 'Created by Maths by Zosiama. Follow Maths by Zosiama for more easy maths!',
-    description: `Question ${p.num}: ${plain} Answer: ${p.answer.card.join(', ').replace(/\{A\}/g, p.A.s).replace(/\{B\}/g, p.B.s).replace(/\[x\]/g, 'x')}.`,
-    duration: tl.duration,
+    description: `Question ${p.num}: ${plainQ(p)} Answer: ${p.answer.card.join(', ').replace(/\{A\}/g, p.A.s).replace(/\{B\}/g, p.B.s).replace(/\[x\]/g, 'x')}.`,
   };
 }
 
+function script() {
+  writeScript(ROOT, PROBLEMS.map((p) => ({ id: p.id, slug: p.slug, title: p.title, beats: buildBeats(p), meta: meta(p), fileDescription: plainQ(p) })));
+}
+
 function html() {
-  const tpl = read('template.html');
-  const fontsCss = [
-    ['Fredoka', 600, 'fonts/fredoka-600.woff2'], ['Fredoka', 700, 'fonts/fredoka-700.woff2'],
-    ['SetSym', 600, 'fonts/setsym.woff2'], ['SetSym', 700, 'fonts/setsym.woff2'],
-    ['Deva', 700, 'fonts/deva.woff2'],
-  ].map(([fam, w, f]) => `@font-face{font-family:"${fam}";font-weight:${w};font-style:normal;font-display:block;src:url(data:font/woff2;base64,${b64(path.join(SRC, f))}) format("woff2");}`).join('\n');
-  const mb = read('vendor/mediabunny.min.js');
-  const engine = read('engine.js');
-  const player = read('player.js');
-  for (const p of PROBLEMS) {
-    if (!pick(p.id)) continue;
-    const dir = path.join(BUILD, p.id);
-    const tl = JSON.parse(fs.readFileSync(path.join(dir, 'timeline.json'), 'utf8'));
-    const m = meta(p, tl);
-    const data = { P: p, TL: tl, META: m, AUDIO: b64(path.join(dir, 'mix.mp3')) };
-    const esc = (s) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
-    const out = tpl
-      .replace(/{{TITLE}}/g, esc(`Sets Q${p.num}: ${p.title}`))
-      .replace(/{{DESCRIPTION}}/g, esc(m.description))
-      .replace('{{FONTS_CSS}}', () => fontsCss)
-      .replace('{{MEDIABUNNY}}', () => safeJs(mb))
-      .replace('{{DATA}}', () => safeJs(JSON.stringify(data)))
-      .replace('{{ENGINE}}', () => safeJs(engine))
-      .replace('{{PLAYER}}', () => safeJs(player));
-    const outDir = path.join(ROOT, p.slug);
-    fs.mkdirSync(outDir, { recursive: true });
-    fs.writeFileSync(path.join(outDir, 'index.html'), out);
-    console.log(`${p.id}: ${p.slug}/index.html (${(out.length / 1024).toFixed(0)} KB, ${fmt(tl.duration)})`);
-  }
+  buildPages(ROOT, {
+    fonts: ['fredoka', 'symbols', 'devanagari'],
+    engine: [path.join(SRC, 'engine.js')],
+    videos: PROBLEMS.filter((p) => pick(p.id)).map((p) => ({ id: p.id, slug: p.slug, P: p, pageTitle: `Sets Q${p.num}: ${p.title}`, meta: meta(p) })),
+  });
 }
 
 const SHOWS = {
@@ -101,7 +62,7 @@ function docs() {
   for (const p of PROBLEMS) {
     const f = path.join(BUILD, p.id, 'timeline.json');
     if (!fs.existsSync(f)) continue;
-    const tl = JSON.parse(fs.readFileSync(f, 'utf8'));
+    const tl = timeline(ROOT, p.id);
     rows.push({ p, tl });
     md += `## Q${p.num} · ${p.title} — ${fmt(tl.duration)}\n\n> ${p.question.replace(/[⟦⟧]/g, '')}\n\n`;
     md += '| # | Beat | Time | On screen | Narration |\n|---|---|---|---|---|\n';
@@ -164,6 +125,6 @@ ${cards}
 }
 
 if (cmd === 'script' || cmd === 'all') script();
-if (cmd === 'audio' || cmd === 'all') audio();
+if (cmd === 'audio' || cmd === 'all') runAudio(ROOT, ids);
 if (cmd === 'html' || cmd === 'all') html();
 if (cmd === 'docs' || cmd === 'all') docs();

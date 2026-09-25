@@ -42,22 +42,19 @@ The creator tag "Maths by Zosiama" stays on screen for the whole video. All capt
 
 ## Rebuilding
 
-Requirements: Node 20+, Python 3.10+, ffmpeg with libx264, and the [Kokoro-82M](https://github.com/thewh1teagle/kokoro-onnx) ONNX voice files `kokoro-v1.0.onnx` and `voices-v1.0.bin` in `/opt/tts` (or set `KOKORO_DIR`).
+The shared pipeline lives in [`../video-kit/`](../video-kit/README.md). Its README lists what you need to install.
 
 ```bash
+(cd video-kit && npm install)                 # once: playwright, mediabunny, fonts
 cd set-videos/src
-npm install                                   # playwright, mediabunny, fonts
-pip install kokoro-onnx soundfile scipy numpy pyloudnorm
 node build.mjs all                            # storyboard → voice + music + SFX → HTML pages → docs
-node render.mjs                               # master MP4s (headless Chromium → ffmpeg)
-node render.mjs --thumbs                      # poster.png for each video
+node ../../video-kit/render.mjs ..            # master MP4s (headless Chromium → ffmpeg)
+node ../../video-kit/render.mjs .. --thumbs   # poster.png for each video
 ```
 
 - `src/problems.js` holds the 10 problems and their narration. `say` is what the voice reads and `cap` is the caption.
-- `src/audio.py` handles the offline TTS, the timeline, the synthesised music bed and sound effects, the ducking, and loudness at −14 LUFS.
-- `src/engine.js` is the canvas engine: layout, Venn diagram, board, captions, hook art and end card.
-- `src/player.js` is the page player and its Record/Export buttons.
-- `src/build.mjs` and `src/render.mjs` are the build and render pipeline.
+- `src/engine.js` is the Venn-diagram engine: the diagram, the dots drawn to scale, the scene card and the hook art. Everything else on screen comes from `video-kit/core.js`.
+- `src/build.mjs` builds the storyboard, audio, pages and docs using `video-kit/kit.mjs`.
 
 ## Credits
 
@@ -65,4 +62,4 @@ node render.mjs --thumbs                      # poster.png for each video
 - Narration: Kokoro-82M voice `af_heart` (Apache-2.0), generated offline.
 - Music and sound effects: synthesised in code (numpy).
 - Fonts: Fredoka and Noto Sans Devanagari (SIL Open Font License 1.1), and a small DejaVu Sans subset for ∪ ∩ ✓ (Bitstream Vera licence).
-- MP4/WebM muxing in the page: [Mediabunny](https://github.com/Vanilagy/mediabunny) (MPL-2.0), bundled unmodified in `src/vendor/`.
+- MP4/WebM muxing in the page: [Mediabunny](https://github.com/Vanilagy/mediabunny) (MPL-2.0), bundled unmodified in `video-kit/vendor/`.
