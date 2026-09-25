@@ -20,7 +20,7 @@ import sys
 import numpy as np
 import pyloudnorm as pyln
 import soundfile as sf
-from scipy.signal import resample_poly
+from scipy.signal import lfilter, resample_poly
 
 SR = 48000
 VOICE = os.environ.get('SETS_VOICE', 'af_heart')
@@ -97,7 +97,8 @@ def layout(video):
             line['start'] = round(t, 3)
             line['end'] = round(t + len(y) / SR, 3)
             clips.append((line['start'], y))
-            t = line['end'] + LINE_GAP
+            # a line that draws on screen (compass, ruler…) keeps the floor until its drawing is done
+            t = max(line['end'], line['start'] + line.get('min', 0)) + LINE_GAP
             if line.get('answer') or line.get('rule'):
                 t += 0.45          # let the big moments land
             if line.get('solve'):
@@ -279,6 +280,20 @@ def sfx_bank():
     air = rng.standard_normal(len(t)) * np.exp(-t * 14) * 0.25
     B['hit'] = 0.6 * boom + 0.25 * air
 
+    # drawing sounds: pencil on paper (ruler lines), compass arcs, compass steps
+    def band(x, lo, hi):
+        k1, k2 = 1 - np.exp(-2 * np.pi * hi / SR), 1 - np.exp(-2 * np.pi * lo / SR)
+        return lfilter([k1], [1, k1 - 1], x) - lfilter([k2], [1, k2 - 1], x)
+
+    t = t_(0.5)
+    wob = 0.7 + 0.3 * np.sin(2 * np.pi * 11 * t)
+    B['pencil'] = 0.5 * band(rng.standard_normal(len(t)), 1800, 6000) * np.sin(np.pi * t / t[-1]) ** 0.7 * wob
+    t = t_(0.55)
+    click = np.sin(2 * np.pi * 2600 * t) * np.exp(-t * 120)
+    B['compass'] = 0.4 * band(rng.standard_normal(len(t)), 1200, 4200) * np.sin(np.pi * t / t[-1]) ** 0.8 + 0.08 * click
+    t = t_(0.06)
+    B['tick'] = 0.16 * np.sin(2 * np.pi * 2300 * t) * np.exp(-t * 80)
+
     # ta-da: bright major chord + bell
     y = np.zeros(int(2.0 * SR))
     for i, n in enumerate((72, 76, 79, 84)):
@@ -333,6 +348,8 @@ def build(video, outdir):
                     at = 0.0
                 add(fx, at, bank[name])
                 sfx_list.append({'t': round(at, 3), 'name': name})
+            for f in line.get('fx', []):   # drawing sounds, timed to the line's drawing steps
+                add(fx, line['start'] + f['dt'], bank[f['name']])
         if b['type'] in ('given', 'know', 'solve', 'answer') and b['lines']:
             add(fx, max(0, b['start'] + 0.05), 0.55 * bank['whoosh'])
             sfx_list.append({'t': round(b['start'] + 0.05, 3), 'name': 'whoosh'})

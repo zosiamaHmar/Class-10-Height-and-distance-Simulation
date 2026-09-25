@@ -5,11 +5,12 @@ This is the shared pipeline behind every Maths by Zosiama explainer video. A vid
 - [`../set-videos/`](../set-videos/README.md): 10 set-theory videos (Venn diagrams)
 - [`../sim-videos/`](../sim-videos/README.md): the Heights & Distances simulations turned into videos (right triangles)
 - [`../solids-videos/`](../solids-videos/README.md): 12 Surface Areas & Volumes videos (combinations of solids, in 3D)
+- [`../constructions-videos/`](../constructions-videos/README.md): 11 Constructions videos (ruler, compass and set square, drawn to scale)
 
 | File | What it does |
 |---|---|
 | `core.js` | The shared canvas code. It holds the palette and fonts, maths text with stacked fractions, the progress bar, creator tag and chapter chip, captions, the hook sticker and question, the intro and question card, and the *What we know*, *Know first*, *Solution* and *Answer* cards. It also draws the "Follow Maths by Zosiama" end card, the swipe transitions and the seamless loop. Every frame is a pure function of time. |
-| `audio.py` | Handles the audio. It speaks every line offline with Kokoro and lays the lines out on a timeline, which is where every timing comes from. It also synthesises the music bed and sound effects, ducks the music under the voice and normalises to −14 LUFS. |
+| `audio.py` | Handles the audio. It speaks every line offline with Kokoro and lays the lines out on a timeline, which is where every timing comes from. It also synthesises the music bed and sound effects (including pencil and compass sounds timed to a line's drawing), ducks the music under the voice and normalises to −14 LUFS. A line that draws on screen can ask for a minimum length (`min`), so the voice waits for the drawing. |
 | `player.js`, `template.html` | Produce the self-contained page: one `<canvas>`, Play/Seek, the **CC** toggle, **● Record .webm** and **⇩ Export MP4** (WebCodecs, H.264 + AAC falling back to VP9 + Opus). |
 | `kit.mjs` | Build helpers for projects: `writeScript`, `runAudio` and `buildPages`. |
 | `render.mjs` | Renders the MP4 master. Headless Chromium draws each frame of the page, and ffmpeg encodes it as H.264 High, yuv420p, 60 fps, with AAC at 48 kHz, `+faststart`, and "Maths by Zosiama" in the metadata. |
